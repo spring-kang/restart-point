@@ -18,12 +18,13 @@ dist/
 target/
 out/
 *.class
-*.jar
 
 # Gradle
 .gradle/
 backend/.gradle/
 backend/build/
+# Gradle Wrapper JAR는 포함 (CI/CD에 필요)
+!**/gradle/wrapper/gradle-wrapper.jar
 
 # Environment
 .env
