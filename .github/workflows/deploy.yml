@@ -25,10 +25,11 @@ jobs:
         run: npm install -g @railway/cli
 
       - name: Deploy to Railway
-        run: railway up --service backend
+        run: railway up --service ${{ secrets.RAILWAY_SERVICE_ID }}
         working-directory: backend
         env:
           RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+          RAILWAY_PROJECT_ID: ${{ secrets.RAILWAY_PROJECT_ID }}
 
   # Frontend를 Vercel에 배포 (Vercel GitHub Integration 사용 시 이 job은 필요 없음)
   deploy-frontend:
