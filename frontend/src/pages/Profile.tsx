@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { User, Briefcase, Code, Globe, Clock, Users, Target, Lightbulb } from 'lucide-react';
 import { profileService, type ProfileRequest } from '../services/profileService';
+import { useAuthStore } from '../stores/authStore';
 import type { Profile } from '../types';
 
 const JOB_ROLES = [
@@ -38,6 +39,7 @@ const DOMAIN_OPTIONS = [
 
 export default function ProfilePage() {
   const navigate = useNavigate();
+  const { isAuthenticated } = useAuthStore();
   const [profile, setProfile] = useState<Profile | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
@@ -56,9 +58,18 @@ export default function ProfilePage() {
     introduction: '',
   });
 
+  // 비로그인 사용자 리다이렉트
   useEffect(() => {
-    loadProfile();
-  }, []);
+    if (!isAuthenticated) {
+      navigate('/login', { replace: true });
+    }
+  }, [isAuthenticated, navigate]);
+
+  useEffect(() => {
+    if (isAuthenticated) {
+      loadProfile();
+    }
+  }, [isAuthenticated]);
 
   const loadProfile = async () => {
     try {
@@ -131,6 +142,11 @@ export default function ProfilePage() {
       setIsSaving(false);
     }
   };
+
+  // 비로그인 상태면 렌더링하지 않음
+  if (!isAuthenticated) {
+    return null;
+  }
 
   if (isLoading) {
     return (

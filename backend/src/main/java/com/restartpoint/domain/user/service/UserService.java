@@ -35,6 +35,11 @@ public class UserService {
             throw new BusinessException(ErrorCode.INVALID_INPUT_VALUE, "이미 수료 인증이 완료되었습니다.");
         }
 
+        // 인증 대기 중인 경우 재신청 방지
+        if (user.getCertificationStatus() == CertificationStatus.PENDING) {
+            throw new BusinessException(ErrorCode.INVALID_INPUT_VALUE, "이미 수료 인증 요청이 진행 중입니다. 운영자 검토를 기다려주세요.");
+        }
+
         user.requestCertification(
                 request.getBootcampName(),
                 request.getBootcampGeneration(),

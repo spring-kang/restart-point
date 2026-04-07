@@ -1,12 +1,12 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Award, Building2, Calendar, Link as LinkIcon, CheckCircle, Clock, XCircle } from 'lucide-react';
+import { Award, Building2, Calendar, Link as LinkIcon, CheckCircle, Clock, XCircle, RefreshCw } from 'lucide-react';
 import { useAuthStore } from '../stores/authStore';
 import { authService } from '../services/authService';
 
 export default function Certification() {
   const navigate = useNavigate();
-  const { user, updateUser } = useAuthStore();
+  const { user, updateUser, isAuthenticated } = useAuthStore();
 
   const [formData, setFormData] = useState({
     bootcampName: '',
@@ -16,6 +16,41 @@ export default function Certification() {
   });
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+
+  // 비로그인 사용자 리다이렉트
+  useEffect(() => {
+    if (!isAuthenticated) {
+      navigate('/login', { replace: true });
+    }
+  }, [isAuthenticated, navigate]);
+
+  // 페이지 진입 시 최신 사용자 정보 조회
+  useEffect(() => {
+    const refreshUserStatus = async () => {
+      if (!isAuthenticated) return;
+      try {
+        const freshUser = await authService.getMe();
+        updateUser(freshUser);
+      } catch (err) {
+        console.error('Failed to refresh user status:', err);
+      }
+    };
+    refreshUserStatus();
+  }, [isAuthenticated, updateUser]);
+
+  // 수동 새로고침 함수
+  const handleRefresh = async () => {
+    setIsRefreshing(true);
+    try {
+      const freshUser = await authService.getMe();
+      updateUser(freshUser);
+    } catch (err) {
+      console.error('Failed to refresh user status:', err);
+    } finally {
+      setIsRefreshing(false);
+    }
+  };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -92,6 +127,11 @@ export default function Certification() {
     }
   };
 
+  // 비로그인 상태면 렌더링하지 않음
+  if (!isAuthenticated) {
+    return null;
+  }
+
   // 이미 인증 완료 또는 대기 중인 경우
   if (user?.certificationStatus === 'APPROVED' || user?.certificationStatus === 'PENDING') {
     return (
@@ -101,7 +141,15 @@ export default function Certification() {
           <h1 className="text-2xl font-bold text-neutral-900 mb-2">수료 인증</h1>
         </div>
         {renderStatus()}
-        <div className="text-center mt-6">
+        <div className="flex justify-center gap-4 mt-6">
+          <button
+            onClick={handleRefresh}
+            disabled={isRefreshing}
+            className="btn-secondary flex items-center gap-2 disabled:opacity-50"
+          >
+            <RefreshCw className={`w-4 h-4 ${isRefreshing ? 'animate-spin' : ''}`} />
+            {isRefreshing ? '확인 중...' : '상태 새로고침'}
+          </button>
           <button onClick={() => navigate('/')} className="btn-secondary">
             홈으로 돌아가기
           </button>
