@@ -90,6 +90,26 @@ public class Season extends BaseTimeEntity {
         this.status = status;
     }
 
+    public void update(String title, String description,
+                       LocalDateTime recruitmentStartAt, LocalDateTime recruitmentEndAt,
+                       LocalDateTime teamBuildingStartAt, LocalDateTime teamBuildingEndAt,
+                       LocalDateTime projectStartAt, LocalDateTime projectEndAt,
+                       LocalDateTime reviewStartAt, LocalDateTime reviewEndAt,
+                       Integer expertReviewWeight, Integer candidateReviewWeight) {
+        this.title = title;
+        this.description = description;
+        this.recruitmentStartAt = recruitmentStartAt;
+        this.recruitmentEndAt = recruitmentEndAt;
+        this.teamBuildingStartAt = teamBuildingStartAt;
+        this.teamBuildingEndAt = teamBuildingEndAt;
+        this.projectStartAt = projectStartAt;
+        this.projectEndAt = projectEndAt;
+        this.reviewStartAt = reviewStartAt;
+        this.reviewEndAt = reviewEndAt;
+        this.expertReviewWeight = expertReviewWeight != null ? expertReviewWeight : 70;
+        this.candidateReviewWeight = candidateReviewWeight != null ? candidateReviewWeight : 30;
+    }
+
     public boolean isRecruiting() {
         LocalDateTime now = LocalDateTime.now();
         return status == SeasonStatus.RECRUITING &&

@@ -6,6 +6,8 @@ import Login from './pages/Login';
 import Signup from './pages/Signup';
 import Certification from './pages/Certification';
 import Profile from './pages/Profile';
+import Seasons from './pages/Seasons';
+import SeasonDetail from './pages/SeasonDetail';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -27,10 +29,10 @@ function App() {
             <Route path="signup" element={<Signup />} />
             <Route path="certification" element={<Certification />} />
             <Route path="profile" element={<Profile />} />
+            <Route path="seasons" element={<Seasons />} />
+            <Route path="seasons/:seasonId" element={<SeasonDetail />} />
             {/* 추후 추가될 라우트 */}
-            {/* <Route path="seasons" element={<Seasons />} /> */}
-            {/* <Route path="seasons/:id" element={<SeasonDetail />} /> */}
-            {/* <Route path="teams" element={<Teams />} /> */}
+            {/* <Route path="seasons/:seasonId/teams" element={<Teams />} /> */}
             {/* <Route path="teams/:id" element={<TeamDetail />} /> */}
             {/* <Route path="my-team" element={<MyTeam />} /> */}
           </Route>

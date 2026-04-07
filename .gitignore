@@ -34,3 +34,4 @@ backend/build/
 # Logs
 *.log
 logs/
+.vercel
