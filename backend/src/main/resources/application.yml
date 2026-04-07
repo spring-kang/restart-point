@@ -52,10 +52,10 @@ spring:
       on-profile: prod
 
   datasource:
-    url: ${DATABASE_URL:jdbc:postgresql://localhost:5432/restartpoint}
+    url: jdbc:postgresql://${PGHOST:localhost}:${PGPORT:5432}/${PGDATABASE:restartpoint}
     driver-class-name: org.postgresql.Driver
-    username: ${DB_USERNAME:}
-    password: ${DB_PASSWORD:}
+    username: ${PGUSER:postgres}
+    password: ${PGPASSWORD:}
 
   jpa:
     hibernate:
