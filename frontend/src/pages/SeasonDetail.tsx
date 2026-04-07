@@ -47,7 +47,7 @@ export default function SeasonDetailPage() {
     return (
       <div className="max-w-3xl mx-auto px-4 py-12">
         <div className="text-center">
-          <p className="text-red-500 mb-4">{error || '시즌을 찾을 수 ��습니다.'}</p>
+          <p className="text-red-500 mb-4">{error || '시즌을 찾을 수 없습니다.'}</p>
           <Link to="/seasons" className="btn-secondary">
             시즌 목록으로
           </Link>
@@ -60,7 +60,7 @@ export default function SeasonDetailPage() {
     <div className="max-w-4xl mx-auto px-4 py-12">
       <Link to="/seasons" className="inline-flex items-center gap-2 text-neutral-600 hover:text-neutral-900 mb-6">
         <ChevronLeft className="w-5 h-5" />
-        시�� 목록
+        시즌 목록
       </Link>
 
       <div className="card mb-8">
@@ -87,7 +87,7 @@ export default function SeasonDetailPage() {
         {!isAuthenticated && season.canJoin && (
           <div className="bg-primary-50 border border-primary-200 rounded-xl p-4">
             <p className="text-primary-700">
-              이 시즌에 참여하려면 <Link to="/login" className="font-semibold underline">로그인</Link>이 ���요합니다.
+              이 시즌에 참여하려면 <Link to="/login" className="font-semibold underline">로그인</Link>이 필요합니다.
             </p>
           </div>
         )}
@@ -95,7 +95,7 @@ export default function SeasonDetailPage() {
         {isAuthenticated && user?.certificationStatus !== 'APPROVED' && season.canJoin && (
           <div className="bg-amber-50 border border-amber-200 rounded-xl p-4">
             <p className="text-amber-700">
-              이 시즌에 참여하려��� <Link to="/certification" className="font-semibold underline">수료 인��</Link>이 필요합니다.
+              이 시즌에 참여하려면 <Link to="/certification" className="font-semibold underline">수료 인증</Link>이 필요합니다.
             </p>
           </div>
         )}
@@ -105,7 +105,7 @@ export default function SeasonDetailPage() {
       <div className="card mb-8">
         <h2 className="text-lg font-bold text-neutral-900 mb-6 flex items-center gap-2">
           <Calendar className="w-5 h-5 text-primary-500" />
-          시��� 일정
+          시즌 일정
         </h2>
 
         <div className="space-y-6">
@@ -117,7 +117,7 @@ export default function SeasonDetailPage() {
             isActive={season.status === 'RECRUITING'}
           />
           <TimelineItem
-            title="팀빌딩 기��"
+            title="팀빌딩 기간"
             icon={<Users className="w-5 h-5" />}
             start={season.teamBuildingStartAt}
             end={season.teamBuildingEndAt}
@@ -131,7 +131,7 @@ export default function SeasonDetailPage() {
             isActive={season.status === 'IN_PROGRESS'}
           />
           <TimelineItem
-            title="심사 기��"
+            title="심사 기간"
             icon={<Award className="w-5 h-5" />}
             start={season.reviewStartAt}
             end={season.reviewEndAt}

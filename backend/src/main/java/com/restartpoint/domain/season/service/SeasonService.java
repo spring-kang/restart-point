@@ -99,8 +99,20 @@ public class SeasonService {
         seasonRepository.delete(season);
     }
 
-    // 시즌 상세 조회
+    // 시즌 상세 조회 (공개 API - DRAFT 제외)
     public SeasonResponse getSeason(Long seasonId) {
+        Season season = findSeasonById(seasonId);
+
+        // DRAFT 상태의 시즌은 공개 API에서 접근 불가
+        if (season.getStatus() == SeasonStatus.DRAFT) {
+            throw new BusinessException(ErrorCode.SEASON_NOT_FOUND);
+        }
+
+        return SeasonResponse.from(season);
+    }
+
+    // 시즌 상세 조회 (운영자용 - DRAFT 포함)
+    public SeasonResponse getSeasonForAdmin(Long seasonId) {
         Season season = findSeasonById(seasonId);
         return SeasonResponse.from(season);
     }
@@ -119,9 +131,9 @@ public class SeasonService {
                 .toList();
     }
 
-    // 현재 참여 가능한 시즌 조회
+    // 현재 참여 가능한 시즌 조회 (모집 중 또는 팀빌딩 중)
     public List<SeasonResponse> getActiveSeasons() {
-        return seasonRepository.findByStatus(SeasonStatus.RECRUITING)
+        return seasonRepository.findActiveSeasons()
                 .stream()
                 .map(SeasonResponse::from)
                 .toList();

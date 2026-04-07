@@ -83,7 +83,7 @@ export const seasonService = {
     return response.data.data;
   },
 
-  // 시즌 상태 ���경
+  // 시즌 상태 변경
   async updateSeasonStatus(seasonId: number, status: SeasonStatus): Promise<Season> {
     const response = await api.patch(`/admin/seasons/${seasonId}/status`, { status });
     return response.data.data;
@@ -98,11 +98,11 @@ export const seasonService = {
 // 상태 라벨
 export const SEASON_STATUS_LABELS: Record<SeasonStatus, string> = {
   DRAFT: '초안',
-  RECRUITING: '모집 ���',
+  RECRUITING: '모집 중',
   TEAM_BUILDING: '팀빌딩',
   IN_PROGRESS: '진행 중',
   REVIEWING: '심사 중',
-  COMPLETED: '��료',
+  COMPLETED: '완료',
 };
 
 // 상태 색상

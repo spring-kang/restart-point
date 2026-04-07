@@ -53,6 +53,13 @@ public class SeasonController {
         return ResponseEntity.ok(ApiResponse.success(seasons));
     }
 
+    // 시즌 상세 조회 (DRAFT 포함)
+    @GetMapping("/admin/seasons/{seasonId}")
+    public ResponseEntity<ApiResponse<SeasonResponse>> getSeasonForAdmin(@PathVariable Long seasonId) {
+        SeasonResponse season = seasonService.getSeasonForAdmin(seasonId);
+        return ResponseEntity.ok(ApiResponse.success(season));
+    }
+
     // 시즌 생성
     @PostMapping("/admin/seasons")
     public ResponseEntity<ApiResponse<SeasonResponse>> createSeason(
