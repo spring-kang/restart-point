@@ -2,6 +2,10 @@ import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import Layout from './components/layout/Layout';
 import Home from './pages/Home';
+import Login from './pages/Login';
+import Signup from './pages/Signup';
+import Certification from './pages/Certification';
+import Profile from './pages/Profile';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -19,11 +23,11 @@ function App() {
         <Routes>
           <Route path="/" element={<Layout />}>
             <Route index element={<Home />} />
+            <Route path="login" element={<Login />} />
+            <Route path="signup" element={<Signup />} />
+            <Route path="certification" element={<Certification />} />
+            <Route path="profile" element={<Profile />} />
             {/* 추후 추가될 라우트 */}
-            {/* <Route path="login" element={<Login />} /> */}
-            {/* <Route path="signup" element={<Signup />} /> */}
-            {/* <Route path="profile" element={<Profile />} /> */}
-            {/* <Route path="certification" element={<Certification />} /> */}
             {/* <Route path="seasons" element={<Seasons />} /> */}
             {/* <Route path="seasons/:id" element={<SeasonDetail />} /> */}
             {/* <Route path="teams" element={<Teams />} /> */}
