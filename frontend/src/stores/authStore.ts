@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import type { User } from '../types';
+import { authService } from '../services/authService';
 
 interface AuthState {
   user: User | null;
@@ -9,11 +10,12 @@ interface AuthState {
   setAuth: (user: User, token: string) => void;
   logout: () => void;
   updateUser: (user: Partial<User>) => void;
+  refreshUser: () => Promise<void>;
 }
 
 export const useAuthStore = create<AuthState>()(
   persist(
-    (set) => ({
+    (set, get) => ({
       user: null,
       accessToken: null,
       isAuthenticated: false,
@@ -40,6 +42,16 @@ export const useAuthStore = create<AuthState>()(
         set((state) => ({
           user: state.user ? { ...state.user, ...updatedFields } : null,
         }));
+      },
+
+      refreshUser: async () => {
+        try {
+          const user = await authService.getMe();
+          set({ user });
+        } catch (error) {
+          // 토큰이 만료되었거나 유효하지 않은 경우 로그아웃
+          get().logout();
+        }
       },
     }),
     {

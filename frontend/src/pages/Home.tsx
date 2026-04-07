@@ -1,9 +1,10 @@
 import { Link } from 'react-router-dom';
-import { ArrowRight, Users, Target, TrendingUp, Sparkles } from 'lucide-react';
+import { ArrowRight, Users, Target, TrendingUp, Sparkles, Mail } from 'lucide-react';
 import { useAuthStore } from '../stores/authStore';
 
 export default function Home() {
-  const { isAuthenticated } = useAuthStore();
+  const { isAuthenticated, user } = useAuthStore();
+  const needsEmailVerification = isAuthenticated && user && !user.emailVerified;
 
   const features = [
     {
@@ -30,6 +31,28 @@ export default function Home() {
 
   return (
     <div>
+      {/* 이메일 인증 배너 */}
+      {needsEmailVerification && (
+        <div className="bg-amber-50 border-b border-amber-200">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3">
+            <div className="flex items-center justify-between gap-4">
+              <div className="flex items-center gap-3">
+                <Mail className="w-5 h-5 text-amber-600" />
+                <p className="text-amber-800">
+                  이메일 인증이 필요합니다. 인증을 완료해야 모든 기능을 이용할 수 있습니다.
+                </p>
+              </div>
+              <Link
+                to="/verify-email"
+                className="whitespace-nowrap bg-amber-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-amber-700 transition-colors"
+              >
+                인증하기
+              </Link>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* 히어로 섹션 */}
       <section className="bg-gradient-to-br from-primary-50 via-white to-secondary-50 py-20 lg:py-32">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">

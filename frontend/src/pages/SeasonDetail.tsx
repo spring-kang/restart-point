@@ -31,6 +31,7 @@ export default function SeasonDetailPage() {
 
   const canParticipate = () => {
     if (!isAuthenticated || !user) return false;
+    if (!user.emailVerified) return false;
     if (user.certificationStatus !== 'APPROVED') return false;
     return season?.canJoin ?? false;
   };
@@ -92,7 +93,15 @@ export default function SeasonDetailPage() {
           </div>
         )}
 
-        {isAuthenticated && user?.certificationStatus !== 'APPROVED' && season.canJoin && (
+        {isAuthenticated && user && !user.emailVerified && season.canJoin && (
+          <div className="bg-amber-50 border border-amber-200 rounded-xl p-4">
+            <p className="text-amber-700">
+              이 시즌에 참여하려면 <Link to="/verify-email" className="font-semibold underline">이메일 인증</Link>이 필요합니다.
+            </p>
+          </div>
+        )}
+
+        {isAuthenticated && user?.emailVerified && user?.certificationStatus !== 'APPROVED' && season.canJoin && (
           <div className="bg-amber-50 border border-amber-200 rounded-xl p-4">
             <p className="text-amber-700">
               이 시즌에 참여하려면 <Link to="/certification" className="font-semibold underline">수료 인증</Link>이 필요합니다.

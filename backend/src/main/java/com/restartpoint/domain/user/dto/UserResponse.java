@@ -16,6 +16,7 @@ public class UserResponse {
     private String email;
     private String name;
     private Role role;
+    private boolean emailVerified;
     private CertificationStatus certificationStatus;
     private String bootcampName;
     private String bootcampGeneration;
@@ -29,6 +30,7 @@ public class UserResponse {
                 .email(user.getEmail())
                 .name(user.getName())
                 .role(user.getRole())
+                .emailVerified(user.isEmailVerified())
                 .certificationStatus(user.getCertificationStatus())
                 .bootcampName(user.getBootcampName())
                 .bootcampGeneration(user.getBootcampGeneration())
