@@ -31,6 +31,8 @@ public class SecurityConfig {
                         .requestMatchers("/api/v1/auth/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/v1/seasons/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/v1/teams/**").permitAll()
+                        // Actuator (헬스체크)
+                        .requestMatchers("/actuator/**").permitAll()
                         // H2 콘솔
                         .requestMatchers("/h2-console/**").permitAll()
                         // 관리자 전용
