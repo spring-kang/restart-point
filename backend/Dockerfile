@@ -18,9 +18,5 @@ COPY --from=build /app/build/libs/*.jar app.jar
 # 포트 노출
 EXPOSE 8080
 
-# 헬스체크
-HEALTHCHECK --interval=30s --timeout=3s --start-period=60s --retries=3 \
-  CMD wget -q --spider http://localhost:8080/actuator/health || exit 1
-
-# 애플리케이션 실행
+# 애플리케이션 실행 (Railway의 헬스체크 사용)
 ENTRYPOINT ["java", "-Dspring.profiles.active=prod", "-jar", "app.jar"]
