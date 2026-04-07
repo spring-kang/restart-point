@@ -16,8 +16,14 @@ vendor/
 build/
 dist/
 target/
+out/
 *.class
 *.jar
+
+# Gradle
+.gradle/
+backend/.gradle/
+backend/build/
 
 # Environment
 .env
