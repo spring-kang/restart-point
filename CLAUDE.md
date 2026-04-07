@@ -86,15 +86,19 @@ src/main/java/com/restartpoint/
 ## Git 브랜치 전략
 
 ```
-main
-├── develop
-│   ├── feature/FR-01-user-auth
-│   ├── feature/FR-02-profile
-│   ├── feature/FR-03-season
-│   └── ...
-├── release/v1.0.0
+main (프로덕션)
+├── feature/FR-01-user-auth
+├── feature/FR-02-profile
+├── feature/FR-03-season
+├── fix/버그명
+├── chore/작업명
 └── hotfix/critical-bug
 ```
+
+**작업 흐름:**
+1. `main`에서 feature 브랜치 생성
+2. 구현 및 테스트
+3. PR 생성 → 리뷰 → main 머지
 
 ### 커밋 메시지 형식
 
