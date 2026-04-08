@@ -1,8 +1,16 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Eye, EyeOff, Mail, Lock } from 'lucide-react';
+import { Eye, EyeOff, Mail, Lock, AlertCircle } from 'lucide-react';
+import axios from 'axios';
 import { useAuthStore } from '../stores/authStore';
 import { authService } from '../services/authService';
+
+// 에러 코드별 사용자 친화적 메시지 및 안내
+const ERROR_MESSAGES: Record<string, { message: string; hint?: string }> = {
+  USER_001: { message: '등록되지 않은 이메일입니다.', hint: '회원가입을 진행해주세요.' },
+  USER_003: { message: '비밀번호가 일치하지 않습니다.', hint: '비밀번호를 다시 확인해주세요.' },
+  USER_006: { message: '이메일 인증이 필요합니다.', hint: '가입 시 사용한 이메일의 인증을 완료해주세요.' },
+};
 
 export default function Login() {
   const navigate = useNavigate();
@@ -13,28 +21,36 @@ export default function Login() {
     password: '',
   });
   const [showPassword, setShowPassword] = useState(false);
-  const [error, setError] = useState('');
+  const [error, setError] = useState<{ message: string; hint?: string; code?: string } | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
-    setError('');
+    setError(null);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
-    setError('');
+    setError(null);
 
     try {
       const response = await authService.login(formData);
       setAuth(response.user, response.accessToken);
       navigate('/');
     } catch (err: unknown) {
-      const errorMessage = err instanceof Error && 'response' in err
-        ? (err as { response?: { data?: { message?: string } } }).response?.data?.message
-        : null;
-      setError(errorMessage || '로그인에 실패했습니다.');
+      if (axios.isAxiosError(err) && err.response?.data) {
+        const { errorCode, message } = err.response.data;
+        const customError = errorCode ? ERROR_MESSAGES[errorCode] : null;
+
+        setError({
+          message: customError?.message || message || '로그인에 실패했습니다.',
+          hint: customError?.hint,
+          code: errorCode,
+        });
+      } else {
+        setError({ message: '네트워크 오류가 발생했습니다. 잠시 후 다시 시도해주세요.' });
+      }
     } finally {
       setIsLoading(false);
     }
@@ -51,8 +67,21 @@ export default function Login() {
 
           <form onSubmit={handleSubmit} className="space-y-5">
             {error && (
-              <div className="bg-red-50 text-red-600 px-4 py-3 rounded-xl text-sm">
-                {error}
+              <div className="bg-red-50 border border-red-200 px-4 py-3 rounded-xl">
+                <div className="flex items-start gap-3">
+                  <AlertCircle className="w-5 h-5 text-red-500 flex-shrink-0 mt-0.5" />
+                  <div className="flex-1">
+                    <p className="text-red-700 font-medium text-sm">{error.message}</p>
+                    {error.hint && (
+                      <p className="text-red-600 text-sm mt-1">{error.hint}</p>
+                    )}
+                    {error.code === 'USER_001' && (
+                      <Link to="/signup" className="text-primary-600 text-sm font-medium hover:underline mt-2 inline-block">
+                        회원가입 하러 가기 &rarr;
+                      </Link>
+                    )}
+                  </div>
+                </div>
               </div>
             )}
 

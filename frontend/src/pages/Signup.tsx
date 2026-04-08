@@ -47,8 +47,12 @@ export default function Signup() {
       setSignupToken('');
     } catch (err: unknown) {
       let errorMessage = '인증 코드 발송에 실패했습니다.';
-      if (axios.isAxiosError(err) && err.response?.data?.message) {
-        errorMessage = err.response.data.message;
+      if (axios.isAxiosError(err)) {
+        if (err.response?.data?.message) {
+          errorMessage = err.response.data.message;
+        } else {
+          errorMessage = '서버에 연결할 수 없습니다. 잠시 후 다시 시도해주세요.';
+        }
       }
       setError(errorMessage);
     } finally {
@@ -127,8 +131,12 @@ export default function Signup() {
       inputRefs.current[0]?.focus();
     } catch (err: unknown) {
       let errorMessage = '재발송에 실패했습니다.';
-      if (axios.isAxiosError(err) && err.response?.data?.message) {
-        errorMessage = err.response.data.message;
+      if (axios.isAxiosError(err)) {
+        if (err.response?.data?.message) {
+          errorMessage = err.response.data.message;
+        } else {
+          errorMessage = '서버에 연결할 수 없습니다. 잠시 후 다시 시도해주세요.';
+        }
       }
       setError(errorMessage);
     } finally {
