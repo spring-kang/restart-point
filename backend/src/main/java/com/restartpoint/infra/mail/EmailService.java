@@ -1,35 +1,40 @@
 package com.restartpoint.infra.mail;
 
-import lombok.RequiredArgsConstructor;
+import com.resend.Resend;
+import com.resend.core.exception.ResendException;
+import com.resend.services.emails.model.CreateEmailOptions;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.mail.javamail.JavaMailSender;
-import org.springframework.mail.javamail.MimeMessageHelper;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
-import jakarta.mail.MessagingException;
-import jakarta.mail.internet.MimeMessage;
-
 @Slf4j
 @Service
-@RequiredArgsConstructor
 public class EmailService {
 
-    private final JavaMailSender mailSender;
+    private final Resend resend;
+    private final String fromEmail;
+
+    public EmailService(
+            @Value("${resend.api-key}") String apiKey,
+            @Value("${resend.from-email:onboarding@resend.dev}") String fromEmail) {
+        this.resend = new Resend(apiKey);
+        this.fromEmail = fromEmail;
+    }
 
     @Async
     public void sendVerificationCode(String to, String code) {
         try {
-            MimeMessage message = mailSender.createMimeMessage();
-            MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
+            CreateEmailOptions params = CreateEmailOptions.builder()
+                    .from("Re:Start Point <" + fromEmail + ">")
+                    .to(to)
+                    .subject("[Re:Start Point] 이메일 인증 코드")
+                    .html(buildVerificationEmailContent(code))
+                    .build();
 
-            helper.setTo(to);
-            helper.setSubject("[Re:Start Point] 이메일 인증 코드");
-            helper.setText(buildVerificationEmailContent(code), true);
-
-            mailSender.send(message);
+            resend.emails().send(params);
             log.info("인증 이메일 발송 완료: {}", to);
-        } catch (MessagingException e) {
+        } catch (ResendException e) {
             log.error("인증 이메일 발송 실패: {}", to, e);
             throw new RuntimeException("이메일 발송에 실패했습니다.", e);
         }

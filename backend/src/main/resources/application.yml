@@ -44,27 +44,16 @@ email:
   verification:
     expiration-minutes: 10
 
+# Resend 설정
+resend:
+  api-key: ${RESEND_API_KEY:re_test}
+  from-email: ${RESEND_FROM_EMAIL:onboarding@resend.dev}
+
 ---
 spring:
   config:
     activate:
       on-profile: local
-
-  mail:
-    host: smtp.gmail.com
-    port: 587
-    username: ${MAIL_USERNAME:test@gmail.com}
-    password: ${MAIL_PASSWORD:}
-    properties:
-      mail:
-        smtp:
-          auth: true
-          starttls:
-            enable: true
-            required: true
-          connectiontimeout: 5000
-          timeout: 5000
-          writetimeout: 5000
 
 ---
 spring:
@@ -89,22 +78,6 @@ spring:
   h2:
     console:
       enabled: false
-
-  mail:
-    host: smtp.gmail.com
-    port: 587
-    username: ${MAIL_USERNAME:}
-    password: ${MAIL_PASSWORD:}
-    properties:
-      mail:
-        smtp:
-          auth: true
-          starttls:
-            enable: true
-            required: true
-          connectiontimeout: 5000
-          timeout: 5000
-          writetimeout: 5000
 
 server:
   port: ${PORT:8080}
