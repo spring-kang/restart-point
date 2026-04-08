@@ -237,6 +237,7 @@ interface CreateTeamModalProps {
 function CreateTeamModal({ seasonId, onClose, onCreated }: CreateTeamModalProps) {
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
+  const [leaderRole, setLeaderRole] = useState<JobRole | ''>('');
   const [recruitingPlanner, setRecruitingPlanner] = useState(false);
   const [recruitingUxui, setRecruitingUxui] = useState(false);
   const [recruitingFrontend, setRecruitingFrontend] = useState(false);
@@ -250,6 +251,10 @@ function CreateTeamModal({ seasonId, onClose, onCreated }: CreateTeamModalProps)
       setError('팀 이름을 입력해주세요.');
       return;
     }
+    if (!leaderRole) {
+      setError('본인의 역할을 선택해주세요.');
+      return;
+    }
 
     setIsSubmitting(true);
     setError('');
@@ -259,6 +264,7 @@ function CreateTeamModal({ seasonId, onClose, onCreated }: CreateTeamModalProps)
         name: name.trim(),
         description: description.trim() || undefined,
         seasonId,
+        leaderRole,
         recruitingPlanner,
         recruitingUxui,
         recruitingFrontend,
@@ -304,6 +310,35 @@ function CreateTeamModal({ seasonId, onClose, onCreated }: CreateTeamModalProps)
                 placeholder="팀의 목표나 프로젝트 아이디어를 소개해주세요"
                 maxLength={2000}
               />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-neutral-700 mb-2">
+                본인 역할 <span className="text-red-500">*</span>
+              </label>
+              <p className="text-xs text-neutral-500 mb-3">팀에서 맡을 본인의 역할을 선택해주세요</p>
+              <div className="grid grid-cols-2 gap-3">
+                {(['PLANNER', 'UXUI', 'FRONTEND', 'BACKEND'] as JobRole[]).map((role) => (
+                  <label
+                    key={role}
+                    className={`flex items-center gap-2 p-3 rounded-lg border cursor-pointer transition-colors ${
+                      leaderRole === role
+                        ? 'border-primary-500 bg-primary-50'
+                        : 'border-neutral-200 hover:bg-neutral-50'
+                    }`}
+                  >
+                    <input
+                      type="radio"
+                      name="leaderRole"
+                      value={role}
+                      checked={leaderRole === role}
+                      onChange={(e) => setLeaderRole(e.target.value as JobRole)}
+                      className="w-4 h-4 text-primary-500"
+                    />
+                    <span className="text-sm">{JOB_ROLE_LABELS[role]}</span>
+                  </label>
+                ))}
+              </div>
             </div>
 
             <div>

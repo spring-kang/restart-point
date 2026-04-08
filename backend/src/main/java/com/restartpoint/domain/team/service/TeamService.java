@@ -40,9 +40,19 @@ public class TeamService {
         User user = findUserById(userId);
         Season season = findSeasonById(request.getSeasonId());
 
+        // 수료 인증 확인
+        if (!user.isCertified()) {
+            throw new BusinessException(ErrorCode.CERTIFICATION_REQUIRED);
+        }
+
         // 팀빌딩 기간인지 확인
         if (season.getStatus() != SeasonStatus.TEAM_BUILDING) {
             throw new BusinessException(ErrorCode.SEASON_NOT_TEAM_BUILDING);
+        }
+
+        // 이미 해당 시즌에서 팀에 소속되어 있는지 확인
+        if (isUserInTeamForSeason(user, season)) {
+            throw new BusinessException(ErrorCode.ALREADY_IN_TEAM);
         }
 
         Team team = Team.builder()
@@ -57,6 +67,17 @@ public class TeamService {
                 .build();
 
         Team savedTeam = teamRepository.save(team);
+
+        // 리더를 팀원으로 추가 (ACCEPTED 상태)
+        TeamMember leaderMember = TeamMember.builder()
+                .team(savedTeam)
+                .user(user)
+                .role(request.getLeaderRole())
+                .build();
+        leaderMember.accept();
+        teamMemberRepository.save(leaderMember);
+        savedTeam.addMember(leaderMember);
+
         return TeamResponse.from(savedTeam);
     }
 
@@ -130,6 +151,11 @@ public class TeamService {
         User user = findUserById(userId);
         Team team = findTeamById(teamId);
 
+        // 수료 인증 확인
+        if (!user.isCertified()) {
+            throw new BusinessException(ErrorCode.CERTIFICATION_REQUIRED);
+        }
+
         // 팀이 모집 중인지 확인
         if (team.getStatus() != TeamStatus.RECRUITING) {
             throw new BusinessException(ErrorCode.SEASON_NOT_RECRUITING);
@@ -138,6 +164,11 @@ public class TeamService {
         // 팀이 가득 찼는지 확인
         if (team.isFull()) {
             throw new BusinessException(ErrorCode.TEAM_FULL);
+        }
+
+        // 이미 해당 시즌에서 팀에 소속되어 있는지 확인
+        if (isUserInTeamForSeason(user, team.getSeason())) {
+            throw new BusinessException(ErrorCode.ALREADY_IN_TEAM);
         }
 
         // 이미 지원했는지 확인
@@ -194,6 +225,11 @@ public class TeamService {
 
         if (team.isFull()) {
             throw new BusinessException(ErrorCode.TEAM_FULL);
+        }
+
+        // 지원자가 이미 다른 팀에 소속되어 있는지 확인
+        if (isUserInTeamForSeason(member.getUser(), team.getSeason())) {
+            throw new BusinessException(ErrorCode.ALREADY_IN_TEAM, "해당 사용자는 이미 다른 팀에 소속되어 있습니다.");
         }
 
         member.accept();
@@ -286,5 +322,18 @@ public class TeamService {
         if (!isRecruiting) {
             throw new BusinessException(ErrorCode.INVALID_INPUT_VALUE, "현재 모집 중인 역할이 아닙니다.");
         }
+    }
+
+    // 사용자가 해당 시즌에서 이미 팀에 소속되어 있는지 확인
+    private boolean isUserInTeamForSeason(User user, Season season) {
+        // 리더로서 팀이 있는지 확인
+        boolean isLeader = teamRepository.findByLeader(user).stream()
+                .anyMatch(t -> t.getSeason().getId().equals(season.getId()));
+        if (isLeader) {
+            return true;
+        }
+
+        // 팀원으로서 ACCEPTED 상태인 팀이 있는지 확인
+        return teamMemberRepository.existsAcceptedMemberInSeason(user, season);
     }
 }

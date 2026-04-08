@@ -102,6 +102,7 @@ export interface TeamRequest {
   name: string;
   description?: string;
   seasonId: number;
+  leaderRole: JobRole;
   recruitingPlanner?: boolean;
   recruitingUxui?: boolean;
   recruitingFrontend?: boolean;
