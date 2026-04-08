@@ -9,7 +9,14 @@ type Step = 'email' | 'verify' | 'signup';
 
 export default function Signup() {
   const navigate = useNavigate();
-  const { setAuth } = useAuthStore();
+  const { isAuthenticated, setAuth } = useAuthStore();
+
+  // 이미 로그인된 상태면 메인 페이지로 리다이렉트
+  useEffect(() => {
+    if (isAuthenticated) {
+      navigate('/', { replace: true });
+    }
+  }, [isAuthenticated, navigate]);
 
   const [step, setStep] = useState<Step>('email');
   const [email, setEmail] = useState('');
