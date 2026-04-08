@@ -48,7 +48,7 @@ export const useAuthStore = create<AuthState>()(
         try {
           const user = await authService.getMe();
           set({ user });
-        } catch (error) {
+        } catch {
           // 토큰이 만료되었거나 유효하지 않은 경우 로그아웃
           get().logout();
         }

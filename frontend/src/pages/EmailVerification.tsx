@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { Mail, RefreshCw, CheckCircle, ArrowLeft } from 'lucide-react';
+import axios from 'axios';
 import { authService } from '../services/authService';
 import { useAuthStore } from '../stores/authStore';
 
@@ -81,8 +82,11 @@ export default function EmailVerification() {
       setSuccess(true);
       await refreshUser();
       setTimeout(() => navigate('/'), 2000);
-    } catch (err: any) {
-      const errorMessage = err.response?.data?.message || '인증에 실패했습니다.';
+    } catch (err: unknown) {
+      let errorMessage = '인증에 실패했습니다.';
+      if (axios.isAxiosError(err) && err.response?.data?.message) {
+        errorMessage = err.response.data.message;
+      }
       setError(errorMessage);
       setCode(['', '', '', '', '', '']);
       inputRefs.current[0]?.focus();
@@ -102,8 +106,11 @@ export default function EmailVerification() {
       setCountdown(60);
       setCode(['', '', '', '', '', '']);
       inputRefs.current[0]?.focus();
-    } catch (err: any) {
-      const errorMessage = err.response?.data?.message || '재발송에 실패했습니다.';
+    } catch (err: unknown) {
+      let errorMessage = '재발송에 실패했습니다.';
+      if (axios.isAxiosError(err) && err.response?.data?.message) {
+        errorMessage = err.response.data.message;
+      }
       setError(errorMessage);
     } finally {
       setIsResending(false);
