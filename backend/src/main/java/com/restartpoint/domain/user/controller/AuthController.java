@@ -3,6 +3,7 @@ package com.restartpoint.domain.user.controller;
 import com.restartpoint.domain.user.dto.AuthResponse;
 import com.restartpoint.domain.user.dto.EmailVerificationConfirmRequest;
 import com.restartpoint.domain.user.dto.EmailVerificationRequest;
+import com.restartpoint.domain.user.dto.EmailVerificationResponse;
 import com.restartpoint.domain.user.dto.LoginRequest;
 import com.restartpoint.domain.user.dto.SignupRequest;
 import com.restartpoint.domain.user.service.AuthService;
@@ -48,10 +49,10 @@ public class AuthController {
 
     // 이메일 인증 코드 확인
     @PostMapping("/email/verify")
-    public ResponseEntity<ApiResponse<Void>> verifyEmail(
+    public ResponseEntity<ApiResponse<EmailVerificationResponse>> verifyEmail(
             @Valid @RequestBody EmailVerificationConfirmRequest request) {
-        emailVerificationService.verifyCode(request.getEmail(), request.getCode());
-        return ResponseEntity.ok(ApiResponse.success(null, "이메일 인증이 완료되었습니다. 회원가입을 진행해주세요."));
+        EmailVerificationResponse response = emailVerificationService.verifyCode(request.getEmail(), request.getCode());
+        return ResponseEntity.ok(ApiResponse.success(response, "이메일 인증이 완료되었습니다. 회원가입을 진행해주세요."));
     }
 
     // 이메일 인증 상태 확인

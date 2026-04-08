@@ -7,6 +7,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Optional;
 
 public interface EmailVerificationRepository extends JpaRepository<EmailVerification, Long> {
@@ -15,16 +16,13 @@ public interface EmailVerificationRepository extends JpaRepository<EmailVerifica
     Optional<EmailVerification> findTopByEmailAndUsedFalseAndExpiresAtAfterOrderByCreatedAtDesc(
             String email, LocalDateTime now);
 
-    // 이메일로 사용되지 않은 코드 모두 만료 처리
-    @Modifying
-    @Query("UPDATE EmailVerification e SET e.used = true WHERE e.email = :email AND e.used = false")
-    void invalidateAllByEmail(@Param("email") String email);
+    List<EmailVerification> findAllByEmailOrderByCreatedAtDesc(String email);
 
     // 만료된 코드 삭제 (스케줄러용)
     @Modifying
     @Query("DELETE FROM EmailVerification e WHERE e.expiresAt < :now")
     void deleteExpired(@Param("now") LocalDateTime now);
 
-    // 인증 완료된 이메일 조회 (회원가입용)
-    Optional<EmailVerification> findTopByEmailAndVerifiedTrueOrderByVerifiedAtDesc(String email);
+    // 인증 완료된 회원가입 세션 조회
+    Optional<EmailVerification> findTopByEmailAndSignupTokenOrderByVerifiedAtDesc(String email, String signupToken);
 }

@@ -38,6 +38,14 @@ public class EmailVerification extends BaseTimeEntity {
     // 인증 완료 후 회원가입 가능 시간 (30분)
     private LocalDateTime verifiedAt;
 
+    @Column(length = 100)
+    private String signupToken;
+
+    private LocalDateTime signupTokenExpiresAt;
+
+    @Column(nullable = false)
+    private boolean signupCompleted = false;
+
     @Builder
     public EmailVerification(String email, String code, int expirationMinutes) {
         this.email = email;
@@ -57,17 +65,38 @@ public class EmailVerification extends BaseTimeEntity {
         this.used = true;
     }
 
-    public void markAsVerified() {
+    public void markAsVerified(String signupToken, int signupWindowMinutes) {
         this.verified = true;
         this.verifiedAt = LocalDateTime.now();
         this.used = true;
+        this.signupToken = signupToken;
+        this.signupTokenExpiresAt = this.verifiedAt.plusMinutes(signupWindowMinutes);
+        this.signupCompleted = false;
     }
 
-    // 인증 완료 후 30분 내 회원가입 가능
-    public boolean isVerifiedAndValid() {
-        if (!this.verified || this.verifiedAt == null) {
+    public boolean hasActiveSignupToken() {
+        if (!this.verified || this.signupCompleted || this.signupToken == null || this.signupTokenExpiresAt == null) {
             return false;
         }
-        return LocalDateTime.now().isBefore(this.verifiedAt.plusMinutes(30));
+        return LocalDateTime.now().isBefore(this.signupTokenExpiresAt);
+    }
+
+    public boolean isSignupTokenExpired() {
+        return this.signupTokenExpiresAt != null && LocalDateTime.now().isAfter(this.signupTokenExpiresAt);
+    }
+
+    public void completeSignup() {
+        this.signupCompleted = true;
+        this.signupToken = null;
+        this.signupTokenExpiresAt = null;
+    }
+
+    public void invalidateForNewAttempt() {
+        this.used = true;
+        this.verified = false;
+        this.verifiedAt = null;
+        this.signupToken = null;
+        this.signupTokenExpiresAt = null;
+        this.signupCompleted = false;
     }
 }

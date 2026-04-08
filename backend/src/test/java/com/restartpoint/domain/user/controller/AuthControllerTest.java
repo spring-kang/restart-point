@@ -2,6 +2,7 @@ package com.restartpoint.domain.user.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.restartpoint.domain.user.dto.AuthResponse;
+import com.restartpoint.domain.user.dto.EmailVerificationResponse;
 import com.restartpoint.domain.user.dto.UserResponse;
 import com.restartpoint.domain.user.entity.CertificationStatus;
 import com.restartpoint.domain.user.entity.Role;
@@ -58,13 +59,31 @@ class AuthControllerTest {
                         .content(objectMapper.writeValueAsString(Map.of(
                                 "email", "test@example.com",
                                 "password", "password123",
-                                "name", "테스터"
+                                "name", "테스터",
+                                "signupToken", "signup-token"
                         ))))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.success").value(true))
                 .andExpect(jsonPath("$.message").value("회원가입이 완료되었습니다."))
                 .andExpect(jsonPath("$.data.accessToken").value("access-token"))
                 .andExpect(jsonPath("$.data.user.email").value("test@example.com"));
+    }
+
+    @Test
+    @DisplayName("이메일 인증 요청이 성공하면 회원가입 토큰을 반환한다")
+    void verifyEmailReturnsSignupToken() throws Exception {
+        given(emailVerificationService.verifyCode("test@example.com", "123456"))
+                .willReturn(new EmailVerificationResponse("signup-token"));
+
+        mockMvc.perform(post("/api/v1/auth/email/verify")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(Map.of(
+                                "email", "test@example.com",
+                                "code", "123456"
+                        ))))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.data.signupToken").value("signup-token"));
     }
 
     @Test

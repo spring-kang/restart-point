@@ -43,6 +43,7 @@ jwt:
 email:
   verification:
     expiration-minutes: 10
+    signup-window-minutes: 30
 
 # Resend 설정
 resend:

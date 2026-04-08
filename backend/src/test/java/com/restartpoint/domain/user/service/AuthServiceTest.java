@@ -23,6 +23,7 @@ import java.util.Optional;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.BDDMockito.then;
 import static org.mockito.BDDMockito.given;
 
 @ExtendWith(MockitoExtension.class)
@@ -46,9 +47,8 @@ class AuthServiceTest {
     @Test
     @DisplayName("회원가입 시 이메일 인증 확인 후 비밀번호를 암호화하고 액세스 토큰을 반환한다")
     void signupSucceeds() {
-        SignupRequest request = createSignupRequest("test@example.com", "password123", "테스터");
+        SignupRequest request = createSignupRequest("test@example.com", "password123", "테스터", "signup-token");
         given(userRepository.existsByEmail("test@example.com")).willReturn(false);
-        // 이메일 인증 완료 상태로 설정 (validateEmailVerified는 void, 예외를 던지지 않으면 통과)
         given(passwordEncoder.encode("password123")).willReturn("encoded-password");
         given(userRepository.save(any(User.class))).willAnswer(invocation -> {
             User savedUser = invocation.getArgument(0);
@@ -63,12 +63,14 @@ class AuthServiceTest {
         assertThat(response.getUser().getId()).isEqualTo(1L);
         assertThat(response.getUser().getEmail()).isEqualTo("test@example.com");
         assertThat(response.getUser().getRole()).isEqualTo(Role.USER);
+        then(emailVerificationService).should()
+                .validateAndConsumeSignupToken("test@example.com", "signup-token");
     }
 
     @Test
     @DisplayName("이미 사용 중인 이메일이면 회원가입에 실패한다")
     void signupFailsWhenEmailAlreadyExists() {
-        SignupRequest request = createSignupRequest("duplicate@example.com", "password123", "중복유저");
+        SignupRequest request = createSignupRequest("duplicate@example.com", "password123", "중복유저", "signup-token");
         given(userRepository.existsByEmail("duplicate@example.com")).willReturn(true);
 
         assertThatThrownBy(() -> authService.signup(request))
@@ -137,11 +139,12 @@ class AuthServiceTest {
         return user;
     }
 
-    private SignupRequest createSignupRequest(String email, String password, String name) {
+    private SignupRequest createSignupRequest(String email, String password, String name, String signupToken) {
         SignupRequest request = new SignupRequest();
         setField(request, "email", email);
         setField(request, "password", password);
         setField(request, "name", name);
+        setField(request, "signupToken", signupToken);
         return request;
     }
 

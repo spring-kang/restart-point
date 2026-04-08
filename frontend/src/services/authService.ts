@@ -1,5 +1,13 @@
 import api from './api';
-import type { ApiResponse, AuthResponse, LoginRequest, SignupRequest, User, CertificationRequest } from '../types';
+import type {
+  ApiResponse,
+  AuthResponse,
+  LoginRequest,
+  SignupRequest,
+  User,
+  CertificationRequest,
+  EmailVerificationResponse,
+} from '../types';
 
 export interface EmailVerificationRequest {
   email: string;
@@ -37,8 +45,9 @@ export const authService = {
   },
 
   // 이메일 인증 코드 확인
-  verifyEmail: async (data: EmailVerificationConfirmRequest): Promise<void> => {
-    await api.post<ApiResponse<void>>('/auth/email/verify', data);
+  verifyEmail: async (data: EmailVerificationConfirmRequest): Promise<EmailVerificationResponse> => {
+    const response = await api.post<ApiResponse<EmailVerificationResponse>>('/auth/email/verify', data);
+    return response.data.data;
   },
 
   // 이메일 인증 코드 재발송

@@ -20,4 +20,7 @@ public class SignupRequest {
 
     @NotBlank(message = "이름은 필수입니다.")
     private String name;
+
+    @NotBlank(message = "회원가입 토큰은 필수입니다.")
+    private String signupToken;
 }

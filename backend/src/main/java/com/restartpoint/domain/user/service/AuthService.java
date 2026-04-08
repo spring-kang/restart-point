@@ -31,8 +31,8 @@ public class AuthService {
             throw new BusinessException(ErrorCode.EMAIL_ALREADY_EXISTS);
         }
 
-        // 이메일 인증 완료 여부 확인
-        emailVerificationService.validateEmailVerified(request.getEmail());
+        // 인증 완료된 회원가입 세션 소비
+        emailVerificationService.validateAndConsumeSignupToken(request.getEmail(), request.getSignupToken());
 
         // 사용자 생성 (이메일 인증 완료 상태로)
         User user = User.builder()

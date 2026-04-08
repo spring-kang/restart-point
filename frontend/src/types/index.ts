@@ -109,11 +109,16 @@ export interface SignupRequest {
   email: string;
   password: string;
   name: string;
+  signupToken: string;
 }
 
 export interface AuthResponse {
   accessToken: string;
   user: User;
+}
+
+export interface EmailVerificationResponse {
+  signupToken: string;
 }
 
 // 수료 인증 요청 타입

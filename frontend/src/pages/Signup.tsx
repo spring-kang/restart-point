@@ -23,6 +23,7 @@ export default function Signup() {
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [countdown, setCountdown] = useState(0);
+  const [signupToken, setSignupToken] = useState('');
   const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
 
   // 재발송 카운트다운
@@ -43,6 +44,7 @@ export default function Signup() {
       await authService.sendVerificationCode(email);
       setStep('verify');
       setCountdown(60);
+      setSignupToken('');
     } catch (err: unknown) {
       let errorMessage = '인증 코드 발송에 실패했습니다.';
       if (axios.isAxiosError(err) && err.response?.data?.message) {
@@ -95,7 +97,8 @@ export default function Signup() {
     setError('');
 
     try {
-      await authService.verifyEmail({ email, code: fullCode });
+      const response = await authService.verifyEmail({ email, code: fullCode });
+      setSignupToken(response.signupToken);
       setStep('signup');
     } catch (err: unknown) {
       let errorMessage = '인증에 실패했습니다.';
@@ -120,6 +123,7 @@ export default function Signup() {
       await authService.resendVerificationCode(email);
       setCountdown(60);
       setCode(['', '', '', '', '', '']);
+      setSignupToken('');
       inputRefs.current[0]?.focus();
     } catch (err: unknown) {
       let errorMessage = '재발송에 실패했습니다.';
@@ -155,6 +159,7 @@ export default function Signup() {
         email,
         password: formData.password,
         name: formData.name,
+        signupToken,
       });
       setAuth(response.user, response.accessToken);
       navigate('/');
@@ -237,7 +242,7 @@ export default function Signup() {
       <div className="min-h-[calc(100vh-64px)] flex items-center justify-center py-12 px-4">
         <div className="w-full max-w-md">
           <button
-            onClick={() => setStep('email')}
+            onClick={() => { setStep('email'); setSignupToken(''); }}
             className="inline-flex items-center gap-2 text-neutral-600 hover:text-neutral-900 mb-6"
           >
             <ArrowLeft className="w-4 h-4" />
@@ -400,7 +405,7 @@ export default function Signup() {
 
             <button
               type="submit"
-              disabled={isLoading}
+              disabled={isLoading || !signupToken}
               className="btn-primary w-full disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {isLoading ? '가입 중...' : '회원가입 완료'}

@@ -1,6 +1,7 @@
 package com.restartpoint.domain.user.service;
 
 import com.restartpoint.domain.user.entity.EmailVerification;
+import com.restartpoint.domain.user.dto.EmailVerificationResponse;
 import com.restartpoint.domain.user.repository.EmailVerificationRepository;
 import com.restartpoint.domain.user.repository.UserRepository;
 import com.restartpoint.global.exception.BusinessException;
@@ -14,6 +15,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.security.SecureRandom;
 import java.time.LocalDateTime;
+import java.util.UUID;
 
 @Slf4j
 @Service
@@ -29,6 +31,9 @@ public class EmailVerificationService {
     @Value("${email.verification.expiration-minutes:10}")
     private int expirationMinutes;
 
+    @Value("${email.verification.signup-window-minutes:30}")
+    private int signupWindowMinutes;
+
     // 인증 코드 발송 (회원가입 전)
     @Transactional
     public void sendVerificationCode(String email) {
@@ -38,7 +43,7 @@ public class EmailVerificationService {
         }
 
         // 기존 미사용 코드 무효화
-        emailVerificationRepository.invalidateAllByEmail(email);
+        invalidateExistingAttempts(email);
 
         // 6자리 인증 코드 생성
         String code = generateVerificationCode();
@@ -59,7 +64,7 @@ public class EmailVerificationService {
 
     // 인증 코드 확인 (회원가입 전)
     @Transactional
-    public void verifyCode(String email, String code) {
+    public EmailVerificationResponse verifyCode(String email, String code) {
         // 유효한 인증 코드 조회
         EmailVerification verification = emailVerificationRepository
                 .findTopByEmailAndUsedFalseAndExpiresAtAfterOrderByCreatedAtDesc(email, LocalDateTime.now())
@@ -74,9 +79,10 @@ public class EmailVerificationService {
         }
 
         // 인증 완료 처리 (회원가입 가능 상태로 변경)
-        verification.markAsVerified();
+        verification.markAsVerified(generateSignupToken(), signupWindowMinutes);
 
         log.info("이메일 인증 완료: email={}", email);
+        return new EmailVerificationResponse(verification.getSignupToken());
     }
 
     // 인증 코드 재발송
@@ -93,20 +99,39 @@ public class EmailVerificationService {
     // 이메일 인증 완료 여부 확인 (회원가입 시 호출)
     public boolean isEmailVerified(String email) {
         return emailVerificationRepository
-                .findTopByEmailAndVerifiedTrueOrderByVerifiedAtDesc(email)
-                .map(EmailVerification::isVerifiedAndValid)
-                .orElse(false);
+                .findAllByEmailOrderByCreatedAtDesc(email)
+                .stream()
+                .anyMatch(EmailVerification::hasActiveSignupToken);
     }
 
-    // 인증 완료된 이메일인지 확인하고 예외 발생
-    public void validateEmailVerified(String email) {
-        if (!isEmailVerified(email)) {
-            throw new BusinessException(ErrorCode.EMAIL_NOT_VERIFIED);
+    @Transactional
+    public void validateAndConsumeSignupToken(String email, String signupToken) {
+        EmailVerification verification = emailVerificationRepository
+                .findTopByEmailAndSignupTokenOrderByVerifiedAtDesc(email, signupToken)
+                .orElseThrow(() -> new BusinessException(ErrorCode.SIGNUP_TOKEN_NOT_FOUND));
+
+        if (!verification.hasActiveSignupToken()) {
+            if (verification.isSignupTokenExpired()) {
+                throw new BusinessException(ErrorCode.SIGNUP_TOKEN_EXPIRED);
+            }
+            throw new BusinessException(ErrorCode.SIGNUP_TOKEN_NOT_FOUND);
         }
+
+        verification.completeSignup();
     }
 
     private String generateVerificationCode() {
         int code = secureRandom.nextInt(900000) + 100000; // 100000 ~ 999999
         return String.valueOf(code);
+    }
+
+    private String generateSignupToken() {
+        return UUID.randomUUID().toString();
+    }
+
+    private void invalidateExistingAttempts(String email) {
+        for (EmailVerification verification : emailVerificationRepository.findAllByEmailOrderByCreatedAtDesc(email)) {
+            verification.invalidateForNewAttempt();
+        }
     }
 }

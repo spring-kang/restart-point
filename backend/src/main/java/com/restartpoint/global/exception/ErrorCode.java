@@ -32,6 +32,8 @@ public enum ErrorCode {
     VERIFICATION_CODE_NOT_FOUND(HttpStatus.NOT_FOUND, "VERIFY_001", "인증 코드를 찾을 수 없습니다."),
     INVALID_VERIFICATION_CODE(HttpStatus.BAD_REQUEST, "VERIFY_002", "인증 코드가 일치하지 않습니다."),
     VERIFICATION_CODE_EXPIRED(HttpStatus.BAD_REQUEST, "VERIFY_003", "인증 코드가 만료되었습니다."),
+    SIGNUP_TOKEN_NOT_FOUND(HttpStatus.NOT_FOUND, "VERIFY_004", "회원가입 세션을 찾을 수 없습니다."),
+    SIGNUP_TOKEN_EXPIRED(HttpStatus.BAD_REQUEST, "VERIFY_005", "회원가입 세션이 만료되었습니다."),
 
     // 프로필 에러
     PROFILE_NOT_FOUND(HttpStatus.NOT_FOUND, "PROFILE_001", "프로필을 찾을 수 없습니다."),
