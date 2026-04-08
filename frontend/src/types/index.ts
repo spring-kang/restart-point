@@ -152,3 +152,24 @@ export interface CertificationRequest {
   graduationDate: string;
   certificateUrl: string;
 }
+
+// AI 매칭 관련 타입
+export type ScheduleRisk = 'LOW' | 'MEDIUM' | 'HIGH';
+
+export interface TeamRecommendation {
+  team: Team;
+  matchScore: number;
+  reasons: string[];
+  balanceAnalysis: string;
+  scheduleRisk: ScheduleRisk;
+  missingRoles: string[];
+}
+
+export interface MemberRecommendation {
+  profile: Profile & { userName?: string };
+  matchScore: number;
+  reasons: string[];
+  balanceAnalysis: string;
+  scheduleRisk: ScheduleRisk;
+  complementarySkills: string[];
+}
