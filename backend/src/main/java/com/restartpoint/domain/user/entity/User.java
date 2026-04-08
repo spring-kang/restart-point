@@ -35,7 +35,7 @@ public class User extends BaseTimeEntity {
     private CertificationStatus certificationStatus;
 
     // 이메일 인증 여부
-    @Column(nullable = false)
+    @Column(nullable = false, columnDefinition = "boolean default false")
     private boolean emailVerified = false;
 
     // 수료 인증 관련 정보
