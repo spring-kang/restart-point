@@ -27,9 +27,6 @@ import org.springframework.test.web.servlet.MockMvc;
 
 import java.util.List;
 
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyInt;
-import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -56,7 +53,7 @@ class TeamMatchingControllerTest {
                 createTeamRecommendation(1L, "팀A", 85),
                 createTeamRecommendation(2L, "팀B", 72)
         );
-        given(teamMatchingService.recommendTeamsForUser(any(), eq(1L), eq(5)))
+        given(teamMatchingService.recommendTeamsForUser(eq(1L), eq(1L), eq(5)))
                 .willReturn(recommendations);
         SecurityContextHolder.setContext(userSecurityContext());
 
@@ -78,7 +75,7 @@ class TeamMatchingControllerTest {
     @Test
     @DisplayName("프로필이 없으면 404 에러를 반환한다")
     void recommendTeamsReturnsNotFoundWhenProfileNotFound() throws Exception {
-        given(teamMatchingService.recommendTeamsForUser(any(), eq(1L), eq(5)))
+        given(teamMatchingService.recommendTeamsForUser(eq(1L), eq(1L), eq(5)))
                 .willThrow(new BusinessException(ErrorCode.PROFILE_NOT_FOUND));
         SecurityContextHolder.setContext(userSecurityContext());
 
@@ -94,7 +91,7 @@ class TeamMatchingControllerTest {
     @Test
     @DisplayName("이미 팀에 소속된 경우 409 에러를 반환한다")
     void recommendTeamsReturnsConflictWhenAlreadyInTeam() throws Exception {
-        given(teamMatchingService.recommendTeamsForUser(any(), eq(1L), eq(5)))
+        given(teamMatchingService.recommendTeamsForUser(eq(1L), eq(1L), eq(5)))
                 .willThrow(new BusinessException(ErrorCode.ALREADY_IN_TEAM));
         SecurityContextHolder.setContext(userSecurityContext());
 
@@ -114,7 +111,7 @@ class TeamMatchingControllerTest {
                 createMemberRecommendation(1L, "유저A", JobRole.BACKEND, 90),
                 createMemberRecommendation(2L, "유저B", JobRole.FRONTEND, 78)
         );
-        given(teamMatchingService.recommendMembersForTeam(any(), eq(1L), eq(5)))
+        given(teamMatchingService.recommendMembersForTeam(eq(1L), eq(1L), eq(5)))
                 .willReturn(recommendations);
         SecurityContextHolder.setContext(userSecurityContext());
 
@@ -133,7 +130,7 @@ class TeamMatchingControllerTest {
     @Test
     @DisplayName("팀 리더가 아닌 경우 403 에러를 반환한다")
     void recommendMembersReturnsForbiddenWhenNotLeader() throws Exception {
-        given(teamMatchingService.recommendMembersForTeam(any(), eq(1L), eq(5)))
+        given(teamMatchingService.recommendMembersForTeam(eq(1L), eq(1L), eq(5)))
                 .willThrow(new BusinessException(ErrorCode.NOT_TEAM_LEADER));
         SecurityContextHolder.setContext(userSecurityContext());
 
@@ -148,7 +145,7 @@ class TeamMatchingControllerTest {
     @Test
     @DisplayName("추천 가능한 후보가 없으면 404 에러를 반환한다")
     void recommendTeamsReturnsNotFoundWhenNoCandidate() throws Exception {
-        given(teamMatchingService.recommendTeamsForUser(any(), eq(1L), eq(5)))
+        given(teamMatchingService.recommendTeamsForUser(eq(1L), eq(1L), eq(5)))
                 .willThrow(new BusinessException(ErrorCode.NO_MATCHING_CANDIDATES));
         SecurityContextHolder.setContext(userSecurityContext());
 

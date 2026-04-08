@@ -5,6 +5,7 @@ import com.restartpoint.domain.matching.dto.TeamRecommendationResponse;
 import com.restartpoint.domain.matching.service.TeamMatchingService;
 import com.restartpoint.global.common.ApiResponse;
 import com.restartpoint.global.security.CurrentUser;
+import com.restartpoint.global.security.CustomUserPrincipal;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -25,11 +26,11 @@ public class TeamMatchingController {
     @GetMapping("/teams")
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<ApiResponse<List<TeamRecommendationResponse>>> recommendTeams(
-            @CurrentUser Long userId,
+            @CurrentUser CustomUserPrincipal principal,
             @RequestParam Long seasonId,
             @RequestParam(defaultValue = "5") int limit) {
         List<TeamRecommendationResponse> recommendations =
-                teamMatchingService.recommendTeamsForUser(userId, seasonId, limit);
+                teamMatchingService.recommendTeamsForUser(principal.getUserId(), seasonId, limit);
         return ResponseEntity.ok(ApiResponse.success(recommendations));
     }
 
@@ -39,11 +40,11 @@ public class TeamMatchingController {
     @GetMapping("/teams/{teamId}/members")
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<ApiResponse<List<MemberRecommendationResponse>>> recommendMembers(
-            @CurrentUser Long userId,
+            @CurrentUser CustomUserPrincipal principal,
             @PathVariable Long teamId,
             @RequestParam(defaultValue = "5") int limit) {
         List<MemberRecommendationResponse> recommendations =
-                teamMatchingService.recommendMembersForTeam(userId, teamId, limit);
+                teamMatchingService.recommendMembersForTeam(principal.getUserId(), teamId, limit);
         return ResponseEntity.ok(ApiResponse.success(recommendations));
     }
 }
