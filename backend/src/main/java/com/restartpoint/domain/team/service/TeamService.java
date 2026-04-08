@@ -111,10 +111,11 @@ public class TeamService {
                 .toList();
     }
 
-    // 내가 멤버로 속한 팀 목록 조회
+    // 내가 멤버로 속한 팀 목록 조회 (리더인 팀 제외)
     public List<TeamResponse> getTeamsAsMember(Long userId) {
         User user = findUserById(userId);
         return teamRepository.findTeamsByMember(user).stream()
+                .filter(team -> !team.getLeader().getId().equals(userId))
                 .map(TeamResponse::simpleFrom)
                 .toList();
     }
@@ -271,10 +272,11 @@ public class TeamService {
         teamMemberRepository.delete(member);
     }
 
-    // 내 지원 현황 조회
+    // 내 지원 현황 조회 (리더로서 자동 생성된 레코드 제외)
     public List<TeamMemberResponse> getMyApplications(Long userId) {
         User user = findUserById(userId);
         return teamMemberRepository.findByUser(user).stream()
+                .filter(member -> !member.getTeam().getLeader().getId().equals(userId))
                 .map(TeamMemberResponse::from)
                 .toList();
     }
