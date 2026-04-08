@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Eye, EyeOff, Mail, Lock, AlertCircle } from 'lucide-react';
 import axios from 'axios';
@@ -14,7 +14,14 @@ const ERROR_MESSAGES: Record<string, { message: string; hint?: string }> = {
 
 export default function Login() {
   const navigate = useNavigate();
-  const { setAuth } = useAuthStore();
+  const { isAuthenticated, setAuth } = useAuthStore();
+
+  // 이미 로그인된 상태면 메인 페이지로 리다이렉트
+  useEffect(() => {
+    if (isAuthenticated) {
+      navigate('/', { replace: true });
+    }
+  }, [isAuthenticated, navigate]);
 
   const [formData, setFormData] = useState({
     email: '',
