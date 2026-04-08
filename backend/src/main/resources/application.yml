@@ -90,4 +90,4 @@ jwt:
 # CORS 설정
 app:
   cors:
-    allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:5173}
+    allowed-origins: ${CORS_ALLOWED_ORIGINS:https://restart-point.com,http://localhost:5173}
