@@ -29,7 +29,7 @@ public class AuthController {
     public ResponseEntity<ApiResponse<AuthResponse>> signup(@Valid @RequestBody SignupRequest request) {
         AuthResponse response = authService.signup(request);
         return ResponseEntity.status(HttpStatus.CREATED)
-                .body(ApiResponse.success(response, "회원가입이 완료되었습니다. 이메일 인증을 진행해주세요."));
+                .body(ApiResponse.success(response, "회원가입이 완료되었습니다."));
     }
 
     @PostMapping("/login")
@@ -51,7 +51,15 @@ public class AuthController {
     public ResponseEntity<ApiResponse<Void>> verifyEmail(
             @Valid @RequestBody EmailVerificationConfirmRequest request) {
         emailVerificationService.verifyCode(request.getEmail(), request.getCode());
-        return ResponseEntity.ok(ApiResponse.success(null, "이메일 인증이 완료되었습니다."));
+        return ResponseEntity.ok(ApiResponse.success(null, "이메일 인증이 완료되었습니다. 회원가입을 진행해주세요."));
+    }
+
+    // 이메일 인증 상태 확인
+    @PostMapping("/email/status")
+    public ResponseEntity<ApiResponse<Boolean>> checkEmailVerificationStatus(
+            @Valid @RequestBody EmailVerificationRequest request) {
+        boolean verified = emailVerificationService.isEmailVerified(request.getEmail());
+        return ResponseEntity.ok(ApiResponse.success(verified, verified ? "인증된 이메일입니다." : "인증되지 않은 이메일입니다."));
     }
 
     // 이메일 인증 코드 재발송

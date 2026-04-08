@@ -31,6 +31,13 @@ public class EmailVerification extends BaseTimeEntity {
     @Column(nullable = false)
     private boolean used = false;
 
+    // 인증 완료 여부 (회원가입 전까지 유효)
+    @Column(nullable = false)
+    private boolean verified = false;
+
+    // 인증 완료 후 회원가입 가능 시간 (30분)
+    private LocalDateTime verifiedAt;
+
     @Builder
     public EmailVerification(String email, String code, int expirationMinutes) {
         this.email = email;
@@ -48,5 +55,19 @@ public class EmailVerification extends BaseTimeEntity {
 
     public void markAsUsed() {
         this.used = true;
+    }
+
+    public void markAsVerified() {
+        this.verified = true;
+        this.verifiedAt = LocalDateTime.now();
+        this.used = true;
+    }
+
+    // 인증 완료 후 30분 내 회원가입 가능
+    public boolean isVerifiedAndValid() {
+        if (!this.verified || this.verifiedAt == null) {
+            return false;
+        }
+        return LocalDateTime.now().isBefore(this.verifiedAt.plusMinutes(30));
     }
 }

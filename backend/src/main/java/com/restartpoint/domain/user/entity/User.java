@@ -52,12 +52,13 @@ public class User extends BaseTimeEntity {
     private String certificateUrl;
 
     @Builder
-    public User(String email, String password, String name, Role role) {
+    public User(String email, String password, String name, Role role, boolean emailVerified) {
         this.email = email;
         this.password = password;
         this.name = name;
         this.role = role;
         this.certificationStatus = CertificationStatus.NONE;
+        this.emailVerified = emailVerified;
     }
 
     public void requestCertification(String bootcampName, String bootcampGeneration,

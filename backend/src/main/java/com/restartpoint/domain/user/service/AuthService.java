@@ -10,7 +10,6 @@ import com.restartpoint.global.exception.BusinessException;
 import com.restartpoint.global.exception.ErrorCode;
 import com.restartpoint.global.security.JwtTokenProvider;
 import lombok.RequiredArgsConstructor;
-import org.springframework.context.ApplicationContext;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -23,7 +22,7 @@ public class AuthService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtTokenProvider jwtTokenProvider;
-    private final ApplicationContext applicationContext;
+    private final EmailVerificationService emailVerificationService;
 
     @Transactional
     public AuthResponse signup(SignupRequest request) {
@@ -32,12 +31,16 @@ public class AuthService {
             throw new BusinessException(ErrorCode.EMAIL_ALREADY_EXISTS);
         }
 
-        // 사용자 생성
+        // 이메일 인증 완료 여부 확인
+        emailVerificationService.validateEmailVerified(request.getEmail());
+
+        // 사용자 생성 (이메일 인증 완료 상태로)
         User user = User.builder()
                 .email(request.getEmail())
                 .password(passwordEncoder.encode(request.getPassword()))
                 .name(request.getName())
                 .role(Role.USER)
+                .emailVerified(true)
                 .build();
 
         User savedUser = userRepository.save(user);
@@ -48,11 +51,6 @@ public class AuthService {
                 savedUser.getEmail(),
                 savedUser.getRole().name()
         );
-
-        // 이메일 인증 코드 발송 (트랜잭션 커밋 후 실행을 위해 ApplicationContext 사용)
-        EmailVerificationService emailVerificationService =
-                applicationContext.getBean(EmailVerificationService.class);
-        emailVerificationService.sendVerificationCode(savedUser.getEmail());
 
         return AuthResponse.of(token, savedUser);
     }
@@ -65,6 +63,11 @@ public class AuthService {
         // 비밀번호 검증
         if (!passwordEncoder.matches(request.getPassword(), user.getPassword())) {
             throw new BusinessException(ErrorCode.INVALID_PASSWORD);
+        }
+
+        // 이메일 인증 여부 확인 (기존 미인증 사용자 차단)
+        if (!user.isEmailVerified()) {
+            throw new BusinessException(ErrorCode.EMAIL_NOT_VERIFIED);
         }
 
         // 토큰 생성

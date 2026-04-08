@@ -4,7 +4,6 @@ import Layout from './components/layout/Layout';
 import Home from './pages/Home';
 import Login from './pages/Login';
 import Signup from './pages/Signup';
-import EmailVerification from './pages/EmailVerification';
 import Certification from './pages/Certification';
 import Profile from './pages/Profile';
 import Seasons from './pages/Seasons';
@@ -28,7 +27,6 @@ function App() {
             <Route index element={<Home />} />
             <Route path="login" element={<Login />} />
             <Route path="signup" element={<Signup />} />
-            <Route path="verify-email" element={<EmailVerification />} />
             <Route path="certification" element={<Certification />} />
             <Route path="profile" element={<Profile />} />
             <Route path="seasons" element={<Seasons />} />

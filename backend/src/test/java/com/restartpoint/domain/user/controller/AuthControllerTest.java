@@ -62,7 +62,7 @@ class AuthControllerTest {
                         ))))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.success").value(true))
-                .andExpect(jsonPath("$.message").value("회원가입이 완료되었습니다. 이메일 인증을 진행해주세요."))
+                .andExpect(jsonPath("$.message").value("회원가입이 완료되었습니다."))
                 .andExpect(jsonPath("$.data.accessToken").value("access-token"))
                 .andExpect(jsonPath("$.data.user.email").value("test@example.com"));
     }
