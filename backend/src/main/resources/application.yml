@@ -39,6 +39,16 @@ jwt:
   secret: restart-point-jwt-secret-key-for-development-environment-2024
   expiration: 86400000  # 24시간
 
+# 이메일 인증 설정
+email:
+  verification:
+    expiration-minutes: 10
+
+# Resend 설정
+resend:
+  api-key: ${RESEND_API_KEY:re_test}
+  from-email: ${RESEND_FROM_EMAIL:onboarding@resend.dev}
+
 ---
 spring:
   config:

@@ -25,6 +25,13 @@ public enum ErrorCode {
     INVALID_PASSWORD(HttpStatus.BAD_REQUEST, "USER_003", "비밀번호가 일치하지 않습니다."),
     CERTIFICATION_REQUIRED(HttpStatus.FORBIDDEN, "USER_004", "수료 인증이 필요합니다."),
     CERTIFICATION_PENDING(HttpStatus.FORBIDDEN, "USER_005", "수료 인증 승인 대기 중입니다."),
+    EMAIL_NOT_VERIFIED(HttpStatus.FORBIDDEN, "USER_006", "이메일 인증이 필요합니다."),
+    EMAIL_ALREADY_VERIFIED(HttpStatus.BAD_REQUEST, "USER_007", "이미 인증된 이메일입니다."),
+
+    // 이메일 인증 에러
+    VERIFICATION_CODE_NOT_FOUND(HttpStatus.NOT_FOUND, "VERIFY_001", "인증 코드를 찾을 수 없습니다."),
+    INVALID_VERIFICATION_CODE(HttpStatus.BAD_REQUEST, "VERIFY_002", "인증 코드가 일치하지 않습니다."),
+    VERIFICATION_CODE_EXPIRED(HttpStatus.BAD_REQUEST, "VERIFY_003", "인증 코드가 만료되었습니다."),
 
     // 프로필 에러
     PROFILE_NOT_FOUND(HttpStatus.NOT_FOUND, "PROFILE_001", "프로필을 찾을 수 없습니다."),
@@ -34,6 +41,10 @@ public enum ErrorCode {
     SEASON_NOT_FOUND(HttpStatus.NOT_FOUND, "SEASON_001", "시즌을 찾을 수 없습니다."),
     SEASON_NOT_RECRUITING(HttpStatus.BAD_REQUEST, "SEASON_002", "현재 모집 중인 시즌이 아닙니다."),
     SEASON_NOT_TEAM_BUILDING(HttpStatus.BAD_REQUEST, "SEASON_003", "현재 팀빌딩 기간이 아닙니다."),
+    INVALID_SEASON_STATUS(HttpStatus.BAD_REQUEST, "SEASON_004", "해당 상태에서는 이 작업을 수행할 수 없습니다."),
+    INVALID_DATE_RANGE(HttpStatus.BAD_REQUEST, "SEASON_005", "날짜 범위가 올바르지 않습니다."),
+    INVALID_REVIEW_WEIGHT(HttpStatus.BAD_REQUEST, "SEASON_006", "심사 비중의 합이 100%여야 합니다."),
+    INVALID_STATUS_TRANSITION(HttpStatus.BAD_REQUEST, "SEASON_007", "유효하지 않은 상태 전환입니다."),
 
     // 팀 에러
     TEAM_NOT_FOUND(HttpStatus.NOT_FOUND, "TEAM_001", "팀을 찾을 수 없습니다."),

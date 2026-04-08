@@ -15,6 +15,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.context.ApplicationContext;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.lang.reflect.Field;
@@ -37,6 +38,12 @@ class AuthServiceTest {
     @Mock
     private JwtTokenProvider jwtTokenProvider;
 
+    @Mock
+    private ApplicationContext applicationContext;
+
+    @Mock
+    private EmailVerificationService emailVerificationService;
+
     @InjectMocks
     private AuthService authService;
 
@@ -52,6 +59,7 @@ class AuthServiceTest {
             return savedUser;
         });
         given(jwtTokenProvider.createToken(1L, "test@example.com", "USER")).willReturn("access-token");
+        given(applicationContext.getBean(EmailVerificationService.class)).willReturn(emailVerificationService);
 
         AuthResponse response = authService.signup(request);
 

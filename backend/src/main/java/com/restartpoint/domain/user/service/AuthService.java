@@ -10,6 +10,7 @@ import com.restartpoint.global.exception.BusinessException;
 import com.restartpoint.global.exception.ErrorCode;
 import com.restartpoint.global.security.JwtTokenProvider;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationContext;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -22,6 +23,7 @@ public class AuthService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtTokenProvider jwtTokenProvider;
+    private final ApplicationContext applicationContext;
 
     @Transactional
     public AuthResponse signup(SignupRequest request) {
@@ -46,6 +48,11 @@ public class AuthService {
                 savedUser.getEmail(),
                 savedUser.getRole().name()
         );
+
+        // 이메일 인증 코드 발송 (트랜잭션 커밋 후 실행을 위해 ApplicationContext 사용)
+        EmailVerificationService emailVerificationService =
+                applicationContext.getBean(EmailVerificationService.class);
+        emailVerificationService.sendVerificationCode(savedUser.getEmail());
 
         return AuthResponse.of(token, savedUser);
     }

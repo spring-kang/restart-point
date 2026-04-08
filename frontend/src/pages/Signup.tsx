@@ -49,7 +49,8 @@ export default function Signup() {
         name: formData.name,
       });
       setAuth(response.user, response.accessToken);
-      navigate('/');
+      // 이메일 인증 페이지로 이동
+      navigate('/verify-email');
     } catch (err: unknown) {
       const errorMessage = err instanceof Error && 'response' in err
         ? (err as { response?: { data?: { message?: string } } }).response?.data?.message

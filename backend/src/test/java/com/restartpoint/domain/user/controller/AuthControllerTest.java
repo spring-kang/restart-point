@@ -6,6 +6,7 @@ import com.restartpoint.domain.user.dto.UserResponse;
 import com.restartpoint.domain.user.entity.CertificationStatus;
 import com.restartpoint.domain.user.entity.Role;
 import com.restartpoint.domain.user.service.AuthService;
+import com.restartpoint.domain.user.service.EmailVerificationService;
 import com.restartpoint.global.security.JwtAuthenticationFilter;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -38,6 +39,9 @@ class AuthControllerTest {
     private AuthService authService;
 
     @MockBean
+    private EmailVerificationService emailVerificationService;
+
+    @MockBean
     private JwtAuthenticationFilter jwtAuthenticationFilter;
 
     @Test
@@ -58,7 +62,7 @@ class AuthControllerTest {
                         ))))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.success").value(true))
-                .andExpect(jsonPath("$.message").value("회원가입이 완료되었습니다."))
+                .andExpect(jsonPath("$.message").value("회원가입이 완료되었습니다. 이메일 인증을 진행해주세요."))
                 .andExpect(jsonPath("$.data.accessToken").value("access-token"))
                 .andExpect(jsonPath("$.data.user.email").value("test@example.com"));
     }
