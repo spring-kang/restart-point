@@ -32,7 +32,7 @@ public class EmailVerification extends BaseTimeEntity {
     private boolean used = false;
 
     // 인증 완료 여부 (회원가입 전까지 유효)
-    @Column(nullable = false)
+    @Column(nullable = false, columnDefinition = "boolean default false")
     private boolean verified = false;
 
     // 인증 완료 후 회원가입 가능 시간 (30분)
@@ -43,7 +43,7 @@ public class EmailVerification extends BaseTimeEntity {
 
     private LocalDateTime signupTokenExpiresAt;
 
-    @Column(nullable = false)
+    @Column(nullable = false, columnDefinition = "boolean default false")
     private boolean signupCompleted = false;
 
     @Builder
