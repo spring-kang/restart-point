@@ -5,8 +5,8 @@
   "framework": "vite",
   "rewrites": [
     {
-      "source": "/api/:path*",
-      "destination": "${VITE_API_URL}/api/:path*"
+      "source": "/api/v1/:path*",
+      "destination": "${VITE_API_URL}/:path*"
     },
     {
       "source": "/((?!api/).*)",
