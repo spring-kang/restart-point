@@ -69,26 +69,50 @@ export interface Team {
   name: string;
   description?: string;
   seasonId: number;
+  seasonTitle?: string;
   leaderId: number;
+  leaderName?: string;
+  leaderEmail?: string;
   status: TeamStatus;
   recruitingPlanner: boolean;
   recruitingUxui: boolean;
   recruitingFrontend: boolean;
   recruitingBackend: boolean;
   memberCount: number;
+  maxMemberCount: number;
+  members?: TeamMember[];
   createdAt: string;
-  updatedAt: string;
+  updatedAt?: string;
 }
 
 export interface TeamMember {
   id: number;
-  teamId: number;
+  teamId?: number;
   userId: number;
   userName: string;
+  userEmail?: string;
   role: JobRole;
   status: TeamMemberStatus;
   applicationMessage?: string;
   createdAt: string;
+}
+
+// 팀 요청 타입
+export interface TeamRequest {
+  name: string;
+  description?: string;
+  seasonId: number;
+  leaderRole: JobRole;
+  recruitingPlanner?: boolean;
+  recruitingUxui?: boolean;
+  recruitingFrontend?: boolean;
+  recruitingBackend?: boolean;
+}
+
+// 팀 지원 요청 타입
+export interface TeamApplyRequest {
+  role: JobRole;
+  applicationMessage?: string;
 }
 
 // API 응답 타입

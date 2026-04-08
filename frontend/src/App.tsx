@@ -8,6 +8,8 @@ import Certification from './pages/Certification';
 import Profile from './pages/Profile';
 import Seasons from './pages/Seasons';
 import SeasonDetail from './pages/SeasonDetail';
+import Teams from './pages/Teams';
+import TeamDetail from './pages/TeamDetail';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -31,10 +33,8 @@ function App() {
             <Route path="profile" element={<Profile />} />
             <Route path="seasons" element={<Seasons />} />
             <Route path="seasons/:seasonId" element={<SeasonDetail />} />
-            {/* 추후 추가될 라우트 */}
-            {/* <Route path="seasons/:seasonId/teams" element={<Teams />} /> */}
-            {/* <Route path="teams/:id" element={<TeamDetail />} /> */}
-            {/* <Route path="my-team" element={<MyTeam />} /> */}
+            <Route path="seasons/:seasonId/teams" element={<Teams />} />
+            <Route path="teams/:teamId" element={<TeamDetail />} />
           </Route>
         </Routes>
       </BrowserRouter>
