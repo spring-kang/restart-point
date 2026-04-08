@@ -1,7 +1,6 @@
 package com.restartpoint.domain.user.service;
 
 import com.restartpoint.domain.user.entity.EmailVerification;
-import com.restartpoint.domain.user.entity.User;
 import com.restartpoint.domain.user.repository.EmailVerificationRepository;
 import com.restartpoint.domain.user.repository.UserRepository;
 import com.restartpoint.global.exception.BusinessException;
@@ -30,15 +29,13 @@ public class EmailVerificationService {
     @Value("${email.verification.expiration-minutes:10}")
     private int expirationMinutes;
 
-    // 인증 코드 발송
+    // 인증 코드 발송 (회원가입 전)
     @Transactional
     public void sendVerificationCode(String email) {
-        // 이미 인증된 사용자인지 확인
-        userRepository.findByEmail(email).ifPresent(user -> {
-            if (user.isEmailVerified()) {
-                throw new BusinessException(ErrorCode.EMAIL_ALREADY_VERIFIED);
-            }
-        });
+        // 이미 가입된 이메일인지 확인
+        if (userRepository.existsByEmail(email)) {
+            throw new BusinessException(ErrorCode.EMAIL_ALREADY_EXISTS);
+        }
 
         // 기존 미사용 코드 무효화
         emailVerificationRepository.invalidateAllByEmail(email);
@@ -60,7 +57,7 @@ public class EmailVerificationService {
         log.info("인증 코드 발송: email={}", email);
     }
 
-    // 인증 코드 확인
+    // 인증 코드 확인 (회원가입 전)
     @Transactional
     public void verifyCode(String email, String code) {
         // 유효한 인증 코드 조회
@@ -76,13 +73,8 @@ public class EmailVerificationService {
             throw new BusinessException(ErrorCode.INVALID_VERIFICATION_CODE);
         }
 
-        // 코드 사용 처리
-        verification.markAsUsed();
-
-        // 사용자 이메일 인증 완료 처리
-        User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
-        user.verifyEmail();
+        // 인증 완료 처리 (회원가입 가능 상태로 변경)
+        verification.markAsVerified();
 
         log.info("이메일 인증 완료: email={}", email);
     }
@@ -90,15 +82,27 @@ public class EmailVerificationService {
     // 인증 코드 재발송
     @Transactional
     public void resendVerificationCode(String email) {
-        // 사용자 존재 확인
-        User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
-
-        if (user.isEmailVerified()) {
-            throw new BusinessException(ErrorCode.EMAIL_ALREADY_VERIFIED);
+        // 이미 가입된 이메일인지 확인
+        if (userRepository.existsByEmail(email)) {
+            throw new BusinessException(ErrorCode.EMAIL_ALREADY_EXISTS);
         }
 
         sendVerificationCode(email);
+    }
+
+    // 이메일 인증 완료 여부 확인 (회원가입 시 호출)
+    public boolean isEmailVerified(String email) {
+        return emailVerificationRepository
+                .findTopByEmailAndVerifiedTrueOrderByVerifiedAtDesc(email)
+                .map(EmailVerification::isVerifiedAndValid)
+                .orElse(false);
+    }
+
+    // 인증 완료된 이메일인지 확인하고 예외 발생
+    public void validateEmailVerified(String email) {
+        if (!isEmailVerified(email)) {
+            throw new BusinessException(ErrorCode.EMAIL_NOT_VERIFIED);
+        }
     }
 
     private String generateVerificationCode() {
