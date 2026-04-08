@@ -8,18 +8,17 @@ import org.springframework.http.MediaType;
 import org.springframework.web.reactive.function.client.WebClient;
 
 @Configuration
-public class ClaudeConfig {
+public class GroqConfig {
 
-    @Value("${claude.api-key}")
+    @Value("${groq.api-key}")
     private String apiKey;
 
     @Bean
-    public WebClient claudeWebClient() {
+    public WebClient groqWebClient() {
         return WebClient.builder()
-                .baseUrl("https://api.anthropic.com/v1")
+                .baseUrl("https://api.groq.com/openai/v1")
                 .defaultHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
-                .defaultHeader("x-api-key", apiKey)
-                .defaultHeader("anthropic-version", "2023-06-01")
+                .defaultHeader(HttpHeaders.AUTHORIZATION, "Bearer " + apiKey)
                 .build();
     }
 }

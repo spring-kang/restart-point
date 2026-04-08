@@ -50,11 +50,11 @@ resend:
   api-key: ${RESEND_API_KEY:re_test}
   from-email: ${RESEND_FROM_EMAIL:onboarding@resend.dev}
 
-# Claude AI 설정
-claude:
-  api-key: ${CLAUDE_API_KEY:}
-  model: ${CLAUDE_MODEL:claude-sonnet-4-20250514}
-  max-tokens: ${CLAUDE_MAX_TOKENS:4096}
+# Groq AI 설정 (무료 오픈소스 LLM)
+groq:
+  api-key: ${GROQ_API_KEY:}
+  model: ${GROQ_MODEL:llama-3.1-70b-versatile}
+  max-tokens: ${GROQ_MAX_TOKENS:4096}
 
 ---
 spring:

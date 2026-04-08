@@ -19,7 +19,7 @@ import com.restartpoint.domain.user.entity.User;
 import com.restartpoint.domain.user.repository.UserRepository;
 import com.restartpoint.global.exception.BusinessException;
 import com.restartpoint.global.exception.ErrorCode;
-import com.restartpoint.infra.ai.ClaudeService;
+import com.restartpoint.infra.ai.GroqService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -34,7 +34,7 @@ import java.util.stream.Collectors;
 @Transactional(readOnly = true)
 public class TeamMatchingService {
 
-    private final ClaudeService claudeService;
+    private final GroqService groqService;
     private final UserRepository userRepository;
     private final ProfileRepository profileRepository;
     private final TeamRepository teamRepository;
@@ -115,7 +115,7 @@ public class TeamMatchingService {
         String userPrompt = buildTeamRecommendationPrompt(userProfile, recruitingTeams);
 
         // Claude API 호출
-        String aiResponse = claudeService.chat(TEAM_RECOMMENDATION_SYSTEM_PROMPT, userPrompt);
+        String aiResponse = groqService.chat(TEAM_RECOMMENDATION_SYSTEM_PROMPT, userPrompt);
 
         if (aiResponse == null || aiResponse.isBlank()) {
             // AI 응답 실패 시 기본 추천 로직
@@ -164,7 +164,7 @@ public class TeamMatchingService {
         String userPrompt = buildMemberRecommendationPrompt(team, candidateProfiles);
 
         // Claude API 호출
-        String aiResponse = claudeService.chat(MEMBER_RECOMMENDATION_SYSTEM_PROMPT, userPrompt);
+        String aiResponse = groqService.chat(MEMBER_RECOMMENDATION_SYSTEM_PROMPT, userPrompt);
 
         if (aiResponse == null || aiResponse.isBlank()) {
             // AI 응답 실패 시 기본 추천 로직
