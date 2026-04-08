@@ -6,6 +6,7 @@ import com.restartpoint.domain.user.dto.UserResponse;
 import com.restartpoint.domain.user.entity.CertificationStatus;
 import com.restartpoint.domain.user.entity.Role;
 import com.restartpoint.domain.user.service.AuthService;
+import com.restartpoint.domain.user.service.EmailVerificationService;
 import com.restartpoint.global.security.JwtAuthenticationFilter;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -36,6 +37,9 @@ class AuthControllerTest {
 
     @MockBean
     private AuthService authService;
+
+    @MockBean
+    private EmailVerificationService emailVerificationService;
 
     @MockBean
     private JwtAuthenticationFilter jwtAuthenticationFilter;

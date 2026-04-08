@@ -34,6 +34,10 @@ public class User extends BaseTimeEntity {
     @Column(nullable = false)
     private CertificationStatus certificationStatus;
 
+    // 이메일 인증 여부
+    @Column(nullable = false, columnDefinition = "boolean default false")
+    private boolean emailVerified = false;
+
     // 수료 인증 관련 정보
     @Column(name = "bootcamp_name")
     private String bootcampName;
@@ -48,12 +52,13 @@ public class User extends BaseTimeEntity {
     private String certificateUrl;
 
     @Builder
-    public User(String email, String password, String name, Role role) {
+    public User(String email, String password, String name, Role role, boolean emailVerified) {
         this.email = email;
         this.password = password;
         this.name = name;
         this.role = role;
         this.certificationStatus = CertificationStatus.NONE;
+        this.emailVerified = emailVerified;
     }
 
     public void requestCertification(String bootcampName, String bootcampGeneration,
@@ -75,5 +80,13 @@ public class User extends BaseTimeEntity {
 
     public boolean isCertified() {
         return this.certificationStatus == CertificationStatus.APPROVED;
+    }
+
+    public void verifyEmail() {
+        this.emailVerified = true;
+    }
+
+    public boolean isEmailVerified() {
+        return this.emailVerified;
     }
 }

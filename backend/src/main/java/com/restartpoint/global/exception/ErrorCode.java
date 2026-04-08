@@ -25,6 +25,13 @@ public enum ErrorCode {
     INVALID_PASSWORD(HttpStatus.BAD_REQUEST, "USER_003", "비밀번호가 일치하지 않습니다."),
     CERTIFICATION_REQUIRED(HttpStatus.FORBIDDEN, "USER_004", "수료 인증이 필요합니다."),
     CERTIFICATION_PENDING(HttpStatus.FORBIDDEN, "USER_005", "수료 인증 승인 대기 중입니다."),
+    EMAIL_NOT_VERIFIED(HttpStatus.FORBIDDEN, "USER_006", "이메일 인증이 필요합니다."),
+    EMAIL_ALREADY_VERIFIED(HttpStatus.BAD_REQUEST, "USER_007", "이미 인증된 이메일입니다."),
+
+    // 이메일 인증 에러
+    VERIFICATION_CODE_NOT_FOUND(HttpStatus.NOT_FOUND, "VERIFY_001", "인증 코드를 찾을 수 없습니다."),
+    INVALID_VERIFICATION_CODE(HttpStatus.BAD_REQUEST, "VERIFY_002", "인증 코드가 일치하지 않습니다."),
+    VERIFICATION_CODE_EXPIRED(HttpStatus.BAD_REQUEST, "VERIFY_003", "인증 코드가 만료되었습니다."),
 
     // 프로필 에러
     PROFILE_NOT_FOUND(HttpStatus.NOT_FOUND, "PROFILE_001", "프로필을 찾을 수 없습니다."),

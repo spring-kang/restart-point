@@ -22,6 +22,7 @@ public class AuthService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtTokenProvider jwtTokenProvider;
+    private final EmailVerificationService emailVerificationService;
 
     @Transactional
     public AuthResponse signup(SignupRequest request) {
@@ -30,12 +31,16 @@ public class AuthService {
             throw new BusinessException(ErrorCode.EMAIL_ALREADY_EXISTS);
         }
 
-        // 사용자 생성
+        // 이메일 인증 완료 여부 확인
+        emailVerificationService.validateEmailVerified(request.getEmail());
+
+        // 사용자 생성 (이메일 인증 완료 상태로)
         User user = User.builder()
                 .email(request.getEmail())
                 .password(passwordEncoder.encode(request.getPassword()))
                 .name(request.getName())
                 .role(Role.USER)
+                .emailVerified(true)
                 .build();
 
         User savedUser = userRepository.save(user);
@@ -58,6 +63,11 @@ public class AuthService {
         // 비밀번호 검증
         if (!passwordEncoder.matches(request.getPassword(), user.getPassword())) {
             throw new BusinessException(ErrorCode.INVALID_PASSWORD);
+        }
+
+        // 이메일 인증 여부 확인 (기존 미인증 사용자 차단)
+        if (!user.isEmailVerified()) {
+            throw new BusinessException(ErrorCode.EMAIL_NOT_VERIFIED);
         }
 
         // 토큰 생성

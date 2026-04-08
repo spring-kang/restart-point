@@ -31,6 +31,7 @@ export default function SeasonDetailPage() {
 
   const canParticipate = () => {
     if (!isAuthenticated || !user) return false;
+    // 모든 사용자는 회원가입 시 이메일 인증 완료됨
     if (user.certificationStatus !== 'APPROVED') return false;
     return season?.canJoin ?? false;
   };

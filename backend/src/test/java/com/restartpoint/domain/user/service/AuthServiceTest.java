@@ -37,14 +37,18 @@ class AuthServiceTest {
     @Mock
     private JwtTokenProvider jwtTokenProvider;
 
+    @Mock
+    private EmailVerificationService emailVerificationService;
+
     @InjectMocks
     private AuthService authService;
 
     @Test
-    @DisplayName("회원가입 시 비밀번호를 암호화하고 액세스 토큰을 반환한다")
+    @DisplayName("회원가입 시 이메일 인증 확인 후 비밀번호를 암호화하고 액세스 토큰을 반환한다")
     void signupSucceeds() {
         SignupRequest request = createSignupRequest("test@example.com", "password123", "테스터");
         given(userRepository.existsByEmail("test@example.com")).willReturn(false);
+        // 이메일 인증 완료 상태로 설정 (validateEmailVerified는 void, 예외를 던지지 않으면 통과)
         given(passwordEncoder.encode("password123")).willReturn("encoded-password");
         given(userRepository.save(any(User.class))).willAnswer(invocation -> {
             User savedUser = invocation.getArgument(0);
@@ -127,6 +131,7 @@ class AuthServiceTest {
                 .password(password)
                 .name(name)
                 .role(Role.USER)
+                .emailVerified(true)
                 .build();
         setField(user, "id", id);
         return user;
