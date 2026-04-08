@@ -21,7 +21,7 @@ export default function Layout() {
               부트캠프 수료 이후의 성장을 다시 시작하는 AI 프로젝트 러닝 플랫폼
             </p>
             <p className="text-xs text-neutral-400">
-              © 2024 Re:Start Point. All rights reserved.
+              © {new Date().getFullYear()} Re:Start Point. All rights reserved.
             </p>
           </div>
         </div>
