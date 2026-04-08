@@ -50,6 +50,12 @@ resend:
   api-key: ${RESEND_API_KEY:re_test}
   from-email: ${RESEND_FROM_EMAIL:onboarding@resend.dev}
 
+# Claude AI 설정
+claude:
+  api-key: ${CLAUDE_API_KEY:}
+  model: ${CLAUDE_MODEL:claude-sonnet-4-20250514}
+  max-tokens: ${CLAUDE_MAX_TOKENS:4096}
+
 ---
 spring:
   config:

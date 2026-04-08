@@ -1,9 +1,10 @@
 import { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import { ChevronLeft, Users, Settings, Check, X, Clock, UserPlus } from 'lucide-react';
+import { ChevronLeft, Users, Settings, Check, X as XIcon, Clock, UserPlus, Sparkles, CheckCircle, AlertTriangle } from 'lucide-react';
 import { teamService, TEAM_STATUS_LABELS, TEAM_STATUS_COLORS, JOB_ROLE_LABELS, JOB_ROLE_COLORS } from '../services/teamService';
+import { matchingService, SCHEDULE_RISK_LABELS, SCHEDULE_RISK_COLORS } from '../services/matchingService';
 import { useAuthStore } from '../stores/authStore';
-import type { Team, TeamMember, JobRole } from '../types';
+import type { Team, TeamMember, JobRole, MemberRecommendation } from '../types';
 
 export default function TeamDetailPage() {
   const { teamId } = useParams<{ teamId: string }>();
@@ -14,6 +15,7 @@ export default function TeamDetailPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
   const [showApplyModal, setShowApplyModal] = useState(false);
+  const [showAIRecommendation, setShowAIRecommendation] = useState(false);
   const [activeTab, setActiveTab] = useState<'info' | 'members' | 'applications'>('info');
 
   const isLeader = user && team && user.id === team.leaderId;
@@ -134,10 +136,21 @@ export default function TeamDetailPage() {
           </div>
 
           {isLeader && (
-            <button className="btn-secondary flex items-center gap-2">
-              <Settings className="w-4 h-4" />
-              팀 설정
-            </button>
+            <div className="flex gap-2">
+              {team.status === 'RECRUITING' && getRecruitingRoles(team).length > 0 && (
+                <button
+                  onClick={() => setShowAIRecommendation(true)}
+                  className="btn-secondary flex items-center gap-2"
+                >
+                  <Sparkles className="w-4 h-4" />
+                  AI 추천
+                </button>
+              )}
+              <button className="btn-secondary flex items-center gap-2">
+                <Settings className="w-4 h-4" />
+                팀 설정
+              </button>
+            </div>
           )}
         </div>
 
@@ -302,7 +315,7 @@ export default function TeamDetailPage() {
                       onClick={() => handleRejectApplication(app.id)}
                       className="btn-secondary flex-1 flex items-center justify-center gap-2 text-sm"
                     >
-                      <X className="w-4 h-4" />
+                      <XIcon className="w-4 h-4" />
                       거절
                     </button>
                   </div>
@@ -325,6 +338,14 @@ export default function TeamDetailPage() {
             setShowApplyModal(false);
             navigate(`/seasons/${team.seasonId}/teams`);
           }}
+        />
+      )}
+
+      {/* AI 멤버 추천 모달 */}
+      {showAIRecommendation && team && isLeader && (
+        <AIMemberRecommendationModal
+          teamId={team.id}
+          onClose={() => setShowAIRecommendation(false)}
         />
       )}
     </div>
@@ -427,6 +448,208 @@ function ApplyModal({ teamId, recruitingRoles, onClose, onApplied }: ApplyModalP
               </button>
             </div>
           </form>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+interface AIMemberRecommendationModalProps {
+  teamId: number;
+  onClose: () => void;
+}
+
+function AIMemberRecommendationModal({ teamId, onClose }: AIMemberRecommendationModalProps) {
+  const [recommendations, setRecommendations] = useState<MemberRecommendation[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState('');
+
+  useEffect(() => {
+    loadRecommendations();
+  }, [teamId]);
+
+  const loadRecommendations = async () => {
+    setIsLoading(true);
+    setError('');
+    try {
+      const data = await matchingService.getMemberRecommendations(teamId, 5);
+      setRecommendations(data);
+    } catch (err: unknown) {
+      console.error('Failed to load recommendations:', err);
+      const error = err as { response?: { data?: { message?: string; errorCode?: string } } };
+      if (error.response?.data?.errorCode === 'TEAM_002') {
+        setError('팀 정원이 가득 찼습니다.');
+      } else if (error.response?.data?.errorCode === 'AI_002') {
+        setError('현재 추천 가능한 멤버가 없습니다. 나중에 다시 시도해주세요.');
+      } else {
+        setError(error.response?.data?.message || 'AI 추천을 불러오는데 실패했습니다.');
+      }
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const getScoreColor = (score: number) => {
+    if (score >= 80) return 'text-green-600';
+    if (score >= 60) return 'text-yellow-600';
+    return 'text-red-600';
+  };
+
+  const getScoreBgColor = (score: number) => {
+    if (score >= 80) return 'bg-green-100';
+    if (score >= 60) return 'bg-yellow-100';
+    return 'bg-red-100';
+  };
+
+  const getRiskIcon = (risk: string) => {
+    switch (risk) {
+      case 'LOW':
+        return <CheckCircle className="w-4 h-4 text-green-600" />;
+      case 'MEDIUM':
+        return <Clock className="w-4 h-4 text-yellow-600" />;
+      case 'HIGH':
+        return <AlertTriangle className="w-4 h-4 text-red-600" />;
+      default:
+        return null;
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+      <div className="bg-white rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-hidden flex flex-col">
+        <div className="p-6 border-b border-neutral-200">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-primary-100 rounded-full flex items-center justify-center">
+                <Sparkles className="w-5 h-5 text-primary-600" />
+              </div>
+              <div>
+                <h2 className="text-xl font-bold text-neutral-900">AI 멤버 추천</h2>
+                <p className="text-sm text-neutral-500">팀에 맞는 멤버를 찾아드립니다</p>
+              </div>
+            </div>
+            <button onClick={onClose} className="text-neutral-400 hover:text-neutral-600">
+              <XIcon className="w-6 h-6" />
+            </button>
+          </div>
+        </div>
+
+        <div className="flex-1 overflow-y-auto p-6">
+          {isLoading ? (
+            <div className="flex flex-col items-center justify-center py-12">
+              <div className="w-12 h-12 border-4 border-primary-200 border-t-primary-500 rounded-full animate-spin mb-4" />
+              <p className="text-neutral-500">AI가 최적의 팀원을 분석 중입니다...</p>
+            </div>
+          ) : error ? (
+            <div className="text-center py-12">
+              <p className="text-neutral-600 mb-4">{error}</p>
+              <button onClick={loadRecommendations} className="btn-secondary">
+                다시 시도
+              </button>
+            </div>
+          ) : recommendations.length === 0 ? (
+            <div className="text-center py-12">
+              <p className="text-neutral-500">추천 가능한 멤버가 없습니다.</p>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {recommendations.map((rec, index) => (
+                <div
+                  key={rec.profile.id}
+                  className="border border-neutral-200 rounded-xl p-4"
+                >
+                  <div className="flex items-start gap-4">
+                    {/* 순위 표시 */}
+                    <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold ${getScoreBgColor(rec.matchScore)} ${getScoreColor(rec.matchScore)}`}>
+                      {index + 1}
+                    </div>
+
+                    <div className="flex-1">
+                      {/* 프로필 기본 정보 */}
+                      <div className="flex items-start justify-between mb-2">
+                        <div>
+                          <h3 className="font-semibold text-neutral-900">
+                            {rec.profile.userName || '익명 사용자'}
+                          </h3>
+                          <div className="flex items-center gap-2 mt-1">
+                            <span className={`text-xs ${JOB_ROLE_COLORS[rec.profile.jobRole]} px-2 py-0.5 rounded`}>
+                              {JOB_ROLE_LABELS[rec.profile.jobRole]}
+                            </span>
+                            {rec.profile.availableHoursPerWeek && (
+                              <span className="text-xs text-neutral-500">
+                                주 {rec.profile.availableHoursPerWeek}시간 가능
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                        <div className={`px-3 py-1 rounded-full text-sm font-bold ${getScoreBgColor(rec.matchScore)} ${getScoreColor(rec.matchScore)}`}>
+                          {rec.matchScore}점
+                        </div>
+                      </div>
+
+                      {/* 기술 스택 */}
+                      {rec.profile.techStacks && rec.profile.techStacks.length > 0 && (
+                        <div className="mb-3">
+                          <p className="text-xs font-medium text-neutral-500 mb-1">기술 스택</p>
+                          <div className="flex flex-wrap gap-1">
+                            {rec.profile.techStacks.slice(0, 5).map((tech, idx) => (
+                              <span key={idx} className="px-2 py-0.5 bg-neutral-100 text-neutral-600 rounded text-xs">
+                                {tech}
+                              </span>
+                            ))}
+                            {rec.profile.techStacks.length > 5 && (
+                              <span className="text-xs text-neutral-400">+{rec.profile.techStacks.length - 5}</span>
+                            )}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* 추천 이유 */}
+                      <div className="mb-3">
+                        <p className="text-xs font-medium text-neutral-500 mb-1">추천 이유</p>
+                        <ul className="text-sm text-neutral-700 space-y-1">
+                          {rec.reasons.slice(0, 3).map((reason, idx) => (
+                            <li key={idx} className="flex items-start gap-2">
+                              <span className="text-primary-500">•</span>
+                              {reason}
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+
+                      {/* 팀 밸런스 분석 */}
+                      <div className="bg-neutral-50 rounded-lg p-3 mb-3">
+                        <p className="text-xs font-medium text-neutral-500 mb-1">팀 밸런스 영향</p>
+                        <p className="text-sm text-neutral-700">{rec.balanceAnalysis}</p>
+                      </div>
+
+                      {/* 일정 위험도 & 보완 가능한 스킬 */}
+                      <div className="flex flex-wrap gap-2 items-center">
+                        <div className={`flex items-center gap-1 px-2 py-1 rounded text-xs ${SCHEDULE_RISK_COLORS[rec.scheduleRisk]}`}>
+                          {getRiskIcon(rec.scheduleRisk)}
+                          일정 충돌 위험: {SCHEDULE_RISK_LABELS[rec.scheduleRisk]}
+                        </div>
+                        {rec.complementarySkills && rec.complementarySkills.length > 0 && (
+                          <div className="text-xs text-neutral-500">
+                            보완 스킬: {rec.complementarySkills.slice(0, 3).join(', ')}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        <div className="p-6 border-t border-neutral-200 bg-neutral-50">
+          <p className="text-xs text-neutral-500 text-center mb-4">
+            AI 추천은 참고용입니다. 실제 채용은 지원자의 자기소개와 포트폴리오를 확인하세요.
+          </p>
+          <button onClick={onClose} className="btn-secondary w-full">
+            닫기
+          </button>
         </div>
       </div>
     </div>

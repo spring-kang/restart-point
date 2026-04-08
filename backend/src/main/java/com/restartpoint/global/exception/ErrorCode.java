@@ -54,7 +54,12 @@ public enum ErrorCode {
     ALREADY_IN_TEAM(HttpStatus.CONFLICT, "TEAM_003", "이미 팀에 소속되어 있습니다."),
     NOT_TEAM_LEADER(HttpStatus.FORBIDDEN, "TEAM_004", "팀 리더만 수행할 수 있는 작업입니다."),
     ALREADY_APPLIED(HttpStatus.CONFLICT, "TEAM_005", "이미 지원한 팀입니다."),
-    APPLICATION_NOT_FOUND(HttpStatus.NOT_FOUND, "TEAM_006", "지원 내역을 찾을 수 없습니다.");
+    APPLICATION_NOT_FOUND(HttpStatus.NOT_FOUND, "TEAM_006", "지원 내역을 찾을 수 없습니다."),
+    TEAM_NOT_RECRUITING(HttpStatus.BAD_REQUEST, "TEAM_007", "모집 중인 팀이 아닙니다."),
+
+    // AI 에러
+    AI_SERVICE_ERROR(HttpStatus.SERVICE_UNAVAILABLE, "AI_001", "AI 서비스에 일시적인 문제가 발생했습니다."),
+    NO_MATCHING_CANDIDATES(HttpStatus.NOT_FOUND, "AI_002", "추천 가능한 후보가 없습니다.");
 
     private final HttpStatus httpStatus;
     private final String code;
