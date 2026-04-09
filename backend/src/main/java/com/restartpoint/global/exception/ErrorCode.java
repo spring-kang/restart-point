@@ -57,6 +57,19 @@ public enum ErrorCode {
     APPLICATION_NOT_FOUND(HttpStatus.NOT_FOUND, "TEAM_006", "지원 내역을 찾을 수 없습니다."),
     TEAM_NOT_RECRUITING(HttpStatus.BAD_REQUEST, "TEAM_007", "모집 중인 팀이 아닙니다."),
 
+    // 프로젝트 에러
+    PROJECT_NOT_FOUND(HttpStatus.NOT_FOUND, "PROJECT_001", "프로젝트를 찾을 수 없습니다."),
+    PROJECT_ALREADY_EXISTS(HttpStatus.CONFLICT, "PROJECT_002", "이미 프로젝트가 존재합니다."),
+    INVALID_PROJECT_STATUS(HttpStatus.BAD_REQUEST, "PROJECT_003", "해당 상태에서는 이 작업을 수행할 수 없습니다."),
+    PROJECT_ALREADY_SUBMITTED(HttpStatus.BAD_REQUEST, "PROJECT_004", "이미 제출된 프로젝트입니다."),
+    SUBMISSION_DEADLINE_PASSED(HttpStatus.BAD_REQUEST, "PROJECT_005", "제출 마감이 지났습니다."),
+    SEASON_NOT_IN_PROGRESS(HttpStatus.BAD_REQUEST, "PROJECT_006", "현재 프로젝트 진행 기간이 아닙니다."),
+    NOT_TEAM_MEMBER(HttpStatus.FORBIDDEN, "PROJECT_007", "팀원만 수행할 수 있는 작업입니다."),
+
+    // 체크포인트 에러
+    CHECKPOINT_NOT_FOUND(HttpStatus.NOT_FOUND, "CHECKPOINT_001", "체크포인트를 찾을 수 없습니다."),
+    CHECKPOINT_ALREADY_EXISTS(HttpStatus.CONFLICT, "CHECKPOINT_002", "해당 주차에 이미 체크포인트가 존재합니다."),
+
     // AI 에러
     AI_SERVICE_ERROR(HttpStatus.SERVICE_UNAVAILABLE, "AI_001", "AI 서비스에 일시적인 문제가 발생했습니다."),
     NO_MATCHING_CANDIDATES(HttpStatus.NOT_FOUND, "AI_002", "추천 가능한 후보가 없습니다.");

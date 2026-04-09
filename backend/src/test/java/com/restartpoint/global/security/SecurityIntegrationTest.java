@@ -1,9 +1,13 @@
 package com.restartpoint.global.security;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.restartpoint.domain.project.repository.CheckpointRepository;
+import com.restartpoint.domain.project.repository.ProjectRepository;
 import com.restartpoint.domain.season.entity.Season;
 import com.restartpoint.domain.season.entity.SeasonStatus;
 import com.restartpoint.domain.season.repository.SeasonRepository;
+import com.restartpoint.domain.team.repository.TeamMemberRepository;
+import com.restartpoint.domain.team.repository.TeamRepository;
 import com.restartpoint.domain.user.entity.Role;
 import com.restartpoint.domain.user.entity.User;
 import com.restartpoint.domain.user.repository.UserRepository;
@@ -42,8 +46,25 @@ class SecurityIntegrationTest {
     @Autowired
     private SeasonRepository seasonRepository;
 
+    @Autowired
+    private CheckpointRepository checkpointRepository;
+
+    @Autowired
+    private ProjectRepository projectRepository;
+
+    @Autowired
+    private TeamMemberRepository teamMemberRepository;
+
+    @Autowired
+    private TeamRepository teamRepository;
+
     @BeforeEach
     void setUp() {
+        // 외래 키 순서에 따라 삭제
+        checkpointRepository.deleteAll();
+        projectRepository.deleteAll();
+        teamMemberRepository.deleteAll();
+        teamRepository.deleteAll();
         seasonRepository.deleteAll();
         userRepository.deleteAll();
     }
