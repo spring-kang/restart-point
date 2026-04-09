@@ -70,8 +70,9 @@ export default function ProjectWorkspace() {
         // 프로젝트가 없는 경우
         setProject(null);
       }
-    } catch (err: any) {
-      setError(err.response?.data?.message || '데이터를 불러오는데 실패했습니다.');
+    } catch (err: unknown) {
+      const errorMessage = err instanceof Error ? err.message : '데이터를 불러오는데 실패했습니다.';
+      setError(errorMessage);
     } finally {
       setLoading(false);
     }
@@ -98,8 +99,9 @@ export default function ProjectWorkspace() {
         notionUrl: '',
         demoUrl: '',
       });
-    } catch (err: any) {
-      setError(err.response?.data?.message || '프로젝트 생성에 실패했습니다.');
+    } catch (err: unknown) {
+      const errorMessage = err instanceof Error ? err.message : '프로젝트 생성에 실패했습니다.';
+      setError(errorMessage);
     }
   };
 
@@ -110,8 +112,9 @@ export default function ProjectWorkspace() {
       const updated = await projectService.updateProject(project.id, editForm);
       setProject(updated);
       setIsEditing(false);
-    } catch (err: any) {
-      setError(err.response?.data?.message || '프로젝트 수정에 실패했습니다.');
+    } catch (err: unknown) {
+      const errorMessage = err instanceof Error ? err.message : '프로젝트 수정에 실패했습니다.';
+      setError(errorMessage);
     }
   };
 
@@ -121,8 +124,9 @@ export default function ProjectWorkspace() {
     try {
       const updated = await projectService.startProject(project.id);
       setProject(updated);
-    } catch (err: any) {
-      setError(err.response?.data?.message || '프로젝트 시작에 실패했습니다.');
+    } catch (err: unknown) {
+      const errorMessage = err instanceof Error ? err.message : '프로젝트 시작에 실패했습니다.';
+      setError(errorMessage);
     }
   };
 
@@ -143,8 +147,9 @@ export default function ProjectWorkspace() {
         blockers: '',
         nextWeekPlan: '',
       });
-    } catch (err: any) {
-      setError(err.response?.data?.message || '체크포인트 생성에 실패했습니다.');
+    } catch (err: unknown) {
+      const errorMessage = err instanceof Error ? err.message : '체크포인트 생성에 실패했습니다.';
+      setError(errorMessage);
     }
   };
 
@@ -172,8 +177,9 @@ export default function ProjectWorkspace() {
           cp.id === checkpointId ? updatedCheckpoint : cp
         ),
       });
-    } catch (err: any) {
-      setError(err.response?.data?.message || 'AI 피드백 재생성에 실패했습니다.');
+    } catch (err: unknown) {
+      const errorMessage = err instanceof Error ? err.message : 'AI 피드백 재생성에 실패했습니다.';
+      setError(errorMessage);
     } finally {
       setRegeneratingFeedback(null);
     }
