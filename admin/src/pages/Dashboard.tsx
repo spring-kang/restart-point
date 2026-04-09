@@ -2,8 +2,8 @@ import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Calendar, UserCheck, Clock, ArrowRight } from 'lucide-react';
 import adminService from '../services/adminService';
-import type { Season, CertificationRequest } from '../types';
-import { SEASON_STATUS_LABELS, SEASON_STATUS_COLORS, JOB_ROLE_LABELS } from '../types';
+import type { Season, User } from '../types';
+import { SEASON_STATUS_LABELS, SEASON_STATUS_COLORS } from '../types';
 
 interface StatCard {
   title: string;
@@ -15,7 +15,7 @@ interface StatCard {
 
 export default function DashboardPage() {
   const [seasons, setSeasons] = useState<Season[]>([]);
-  const [pendingCertifications, setPendingCertifications] = useState<CertificationRequest[]>([]);
+  const [pendingCertifications, setPendingCertifications] = useState<User[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
@@ -28,7 +28,7 @@ export default function DashboardPage() {
         adminService.getSeasons(),
         adminService.getPendingCertifications(),
       ]);
-      setSeasons(seasonsData);
+      setSeasons(seasonsData.content);
       setPendingCertifications(certificationsData);
     } catch (error) {
       console.error('Failed to load dashboard data:', error);
@@ -121,15 +121,15 @@ export default function DashboardPage() {
               {activeSeasons.slice(0, 3).map((season) => (
                 <Link
                   key={season.id}
-                  to={`/seasons/${season.id}`}
+                  to="/seasons"
                   className="block p-3 rounded-lg border border-gray-200 hover:border-primary-300 transition-colors"
                 >
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="font-medium text-gray-900">{season.name}</p>
+                      <p className="font-medium text-gray-900">{season.title}</p>
                       <p className="text-sm text-gray-500">
-                        {new Date(season.projectStartDate).toLocaleDateString('ko-KR')} ~{' '}
-                        {new Date(season.projectEndDate).toLocaleDateString('ko-KR')}
+                        {new Date(season.projectStartAt).toLocaleDateString('ko-KR')} ~{' '}
+                        {new Date(season.projectEndAt).toLocaleDateString('ko-KR')}
                       </p>
                     </div>
                     <span
@@ -164,19 +164,19 @@ export default function DashboardPage() {
             </p>
           ) : (
             <div className="space-y-3">
-              {pendingCertifications.slice(0, 5).map((cert) => (
+              {pendingCertifications.slice(0, 5).map((user) => (
                 <div
-                  key={cert.id}
+                  key={user.id}
                   className="flex items-center justify-between p-3 rounded-lg border border-gray-200"
                 >
                   <div>
-                    <p className="font-medium text-gray-900">{cert.userName}</p>
+                    <p className="font-medium text-gray-900">{user.name}</p>
                     <p className="text-sm text-gray-500">
-                      {cert.bootcampName} {cert.cohort} · {JOB_ROLE_LABELS[cert.jobRole]}
+                      {user.bootcampName || '부트캠프 미입력'} {user.bootcampGeneration || ''}
                     </p>
                   </div>
                   <span className="text-xs text-gray-500">
-                    {new Date(cert.requestedAt).toLocaleDateString('ko-KR')}
+                    {new Date(user.createdAt).toLocaleDateString('ko-KR')}
                   </span>
                 </div>
               ))}

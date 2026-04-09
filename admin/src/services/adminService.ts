@@ -1,10 +1,12 @@
 import api from './api';
-import type { ApiResponse, Season, SeasonCreateRequest, CertificationRequest } from '../types';
+import type { ApiResponse, Page, Season, SeasonCreateRequest, User } from '../types';
 
 export const adminService = {
   // Season APIs
-  getSeasons: async (): Promise<Season[]> => {
-    const response = await api.get<ApiResponse<Season[]>>('/admin/seasons');
+  getSeasons: async (page = 0, size = 20): Promise<Page<Season>> => {
+    const response = await api.get<ApiResponse<Page<Season>>>('/admin/seasons', {
+      params: { page, size },
+    });
     return response.data.data;
   },
 
@@ -32,18 +34,21 @@ export const adminService = {
     await api.delete(`/admin/seasons/${seasonId}`);
   },
 
-  // Certification APIs
-  getPendingCertifications: async (): Promise<CertificationRequest[]> => {
-    const response = await api.get<ApiResponse<CertificationRequest[]>>('/admin/users/certifications/pending');
+  // Certification APIs (returns User, not CertificationRequest)
+  getPendingCertifications: async (): Promise<User[]> => {
+    const response = await api.get<ApiResponse<User[]>>('/admin/users/certifications/pending');
     return response.data.data;
   },
 
-  approveCertification: async (userId: number): Promise<void> => {
-    await api.post(`/admin/users/${userId}/certification/approve`);
+  approveCertification: async (userId: number): Promise<User> => {
+    const response = await api.post<ApiResponse<User>>(`/admin/users/${userId}/certification/approve`);
+    return response.data.data;
   },
 
-  rejectCertification: async (userId: number, reason: string): Promise<void> => {
-    await api.post(`/admin/users/${userId}/certification/reject`, { reason });
+  // Note: Backend doesn't accept rejection reason
+  rejectCertification: async (userId: number): Promise<User> => {
+    const response = await api.post<ApiResponse<User>>(`/admin/users/${userId}/certification/reject`);
+    return response.data.data;
   },
 };
 

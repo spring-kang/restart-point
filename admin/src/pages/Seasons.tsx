@@ -5,21 +5,30 @@ import type { Season, SeasonCreateRequest, SeasonStatus } from '../types';
 import { SEASON_STATUS_LABELS, SEASON_STATUS_COLORS } from '../types';
 
 const INITIAL_FORM_DATA: SeasonCreateRequest = {
-  name: '',
+  title: '',
   description: '',
-  recruitmentStartDate: '',
-  recruitmentEndDate: '',
-  teamBuildingStartDate: '',
-  teamBuildingEndDate: '',
-  projectStartDate: '',
-  projectEndDate: '',
-  submissionDeadline: '',
-  judgingStartDate: '',
-  judgingEndDate: '',
-  minTeamSize: 3,
-  maxTeamSize: 5,
-  expertJudgeWeight: 70,
-  peerJudgeWeight: 30,
+  recruitmentStartAt: '',
+  recruitmentEndAt: '',
+  teamBuildingStartAt: '',
+  teamBuildingEndAt: '',
+  projectStartAt: '',
+  projectEndAt: '',
+  reviewStartAt: '',
+  reviewEndAt: '',
+  expertReviewWeight: 70,
+  candidateReviewWeight: 30,
+};
+
+// LocalDateTime 형식으로 변환 (YYYY-MM-DDTHH:mm:ss)
+const toLocalDateTime = (dateStr: string): string => {
+  if (!dateStr) return '';
+  return `${dateStr}T00:00:00`;
+};
+
+// date input용 형식으로 변환 (YYYY-MM-DD)
+const toDateInput = (dateTimeStr: string): string => {
+  if (!dateTimeStr) return '';
+  return dateTimeStr.split('T')[0];
 };
 
 export default function SeasonsPage() {
@@ -37,8 +46,8 @@ export default function SeasonsPage() {
 
   const loadSeasons = async () => {
     try {
-      const data = await adminService.getSeasons();
-      setSeasons(data);
+      const pageData = await adminService.getSeasons();
+      setSeasons(pageData.content);
     } catch (error) {
       console.error('Failed to load seasons:', error);
     } finally {
@@ -55,21 +64,18 @@ export default function SeasonsPage() {
   const openEditModal = (season: Season) => {
     setEditingSeason(season);
     setFormData({
-      name: season.name,
+      title: season.title,
       description: season.description || '',
-      recruitmentStartDate: season.recruitmentStartDate.split('T')[0],
-      recruitmentEndDate: season.recruitmentEndDate.split('T')[0],
-      teamBuildingStartDate: season.teamBuildingStartDate.split('T')[0],
-      teamBuildingEndDate: season.teamBuildingEndDate.split('T')[0],
-      projectStartDate: season.projectStartDate.split('T')[0],
-      projectEndDate: season.projectEndDate.split('T')[0],
-      submissionDeadline: season.submissionDeadline.split('T')[0],
-      judgingStartDate: season.judgingStartDate.split('T')[0],
-      judgingEndDate: season.judgingEndDate.split('T')[0],
-      minTeamSize: season.minTeamSize,
-      maxTeamSize: season.maxTeamSize,
-      expertJudgeWeight: season.expertJudgeWeight,
-      peerJudgeWeight: season.peerJudgeWeight,
+      recruitmentStartAt: toDateInput(season.recruitmentStartAt),
+      recruitmentEndAt: toDateInput(season.recruitmentEndAt),
+      teamBuildingStartAt: toDateInput(season.teamBuildingStartAt),
+      teamBuildingEndAt: toDateInput(season.teamBuildingEndAt),
+      projectStartAt: toDateInput(season.projectStartAt),
+      projectEndAt: toDateInput(season.projectEndAt),
+      reviewStartAt: toDateInput(season.reviewStartAt),
+      reviewEndAt: toDateInput(season.reviewEndAt),
+      expertReviewWeight: season.expertReviewWeight,
+      candidateReviewWeight: season.candidateReviewWeight,
     });
     setShowModal(true);
   };
@@ -78,11 +84,24 @@ export default function SeasonsPage() {
     e.preventDefault();
     setIsSubmitting(true);
 
+    // Convert date inputs to LocalDateTime format
+    const requestData: SeasonCreateRequest = {
+      ...formData,
+      recruitmentStartAt: toLocalDateTime(formData.recruitmentStartAt),
+      recruitmentEndAt: toLocalDateTime(formData.recruitmentEndAt),
+      teamBuildingStartAt: toLocalDateTime(formData.teamBuildingStartAt),
+      teamBuildingEndAt: toLocalDateTime(formData.teamBuildingEndAt),
+      projectStartAt: toLocalDateTime(formData.projectStartAt),
+      projectEndAt: toLocalDateTime(formData.projectEndAt),
+      reviewStartAt: toLocalDateTime(formData.reviewStartAt),
+      reviewEndAt: toLocalDateTime(formData.reviewEndAt),
+    };
+
     try {
       if (editingSeason) {
-        await adminService.updateSeason(editingSeason.id, formData);
+        await adminService.updateSeason(editingSeason.id, requestData);
       } else {
-        await adminService.createSeason(formData);
+        await adminService.createSeason(requestData);
       }
       setShowModal(false);
       loadSeasons();
@@ -95,7 +114,7 @@ export default function SeasonsPage() {
   };
 
   const handleDelete = async (season: Season) => {
-    if (!confirm(`"${season.name}" 시즌을 삭제하시겠습니까?`)) return;
+    if (!confirm(`"${season.title}" 시즌을 삭제하시겠습니까?`)) return;
 
     try {
       await adminService.deleteSeason(season.id);
@@ -124,9 +143,8 @@ export default function SeasonsPage() {
       DRAFT: 'RECRUITING',
       RECRUITING: 'TEAM_BUILDING',
       TEAM_BUILDING: 'IN_PROGRESS',
-      IN_PROGRESS: 'SUBMISSION',
-      SUBMISSION: 'JUDGING',
-      JUDGING: 'COMPLETED',
+      IN_PROGRESS: 'REVIEWING',
+      REVIEWING: 'COMPLETED',
       COMPLETED: null,
     };
     return flow[status];
@@ -199,7 +217,7 @@ export default function SeasonsPage() {
                 <div className="flex items-start justify-between">
                   <div className="flex-1">
                     <div className="flex items-center gap-3 mb-2">
-                      <h3 className="text-lg font-semibold text-gray-900">{season.name}</h3>
+                      <h3 className="text-lg font-semibold text-gray-900">{season.title}</h3>
                       <span
                         className={`px-2 py-1 rounded text-xs font-medium ${
                           SEASON_STATUS_COLORS[season.status]
@@ -207,6 +225,9 @@ export default function SeasonsPage() {
                       >
                         {SEASON_STATUS_LABELS[season.status]}
                       </span>
+                      {season.currentPhase && (
+                        <span className="text-sm text-gray-500">({season.currentPhase})</span>
+                      )}
                     </div>
                     {season.description && (
                       <p className="text-gray-600 mb-3">{season.description}</p>
@@ -215,27 +236,28 @@ export default function SeasonsPage() {
                       <div>
                         <p className="text-gray-500">모집 기간</p>
                         <p className="text-gray-900">
-                          {new Date(season.recruitmentStartDate).toLocaleDateString('ko-KR')} ~{' '}
-                          {new Date(season.recruitmentEndDate).toLocaleDateString('ko-KR')}
+                          {new Date(season.recruitmentStartAt).toLocaleDateString('ko-KR')} ~{' '}
+                          {new Date(season.recruitmentEndAt).toLocaleDateString('ko-KR')}
                         </p>
                       </div>
                       <div>
                         <p className="text-gray-500">프로젝트 기간</p>
                         <p className="text-gray-900">
-                          {new Date(season.projectStartDate).toLocaleDateString('ko-KR')} ~{' '}
-                          {new Date(season.projectEndDate).toLocaleDateString('ko-KR')}
+                          {new Date(season.projectStartAt).toLocaleDateString('ko-KR')} ~{' '}
+                          {new Date(season.projectEndAt).toLocaleDateString('ko-KR')}
                         </p>
                       </div>
                       <div>
-                        <p className="text-gray-500">팀 규모</p>
+                        <p className="text-gray-500">심사 기간</p>
                         <p className="text-gray-900">
-                          {season.minTeamSize} ~ {season.maxTeamSize}명
+                          {new Date(season.reviewStartAt).toLocaleDateString('ko-KR')} ~{' '}
+                          {new Date(season.reviewEndAt).toLocaleDateString('ko-KR')}
                         </p>
                       </div>
                       <div>
                         <p className="text-gray-500">심사 비중</p>
                         <p className="text-gray-900">
-                          현직자 {season.expertJudgeWeight}% / 참여자 {season.peerJudgeWeight}%
+                          현직자 {season.expertReviewWeight}% / 참여자 {season.candidateReviewWeight}%
                         </p>
                       </div>
                     </div>
@@ -295,11 +317,11 @@ export default function SeasonsPage() {
               <div className="space-y-4">
                 <h3 className="font-medium text-gray-900">기본 정보</h3>
                 <div>
-                  <label className="label">시즌명 *</label>
+                  <label className="label">시즌 제목 *</label>
                   <input
                     type="text"
-                    value={formData.name}
-                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                    value={formData.title}
+                    onChange={(e) => setFormData({ ...formData, title: e.target.value })}
                     className="input"
                     placeholder="예: 2024 봄 시즌"
                     required
@@ -325,9 +347,9 @@ export default function SeasonsPage() {
                     <label className="label">모집 시작일 *</label>
                     <input
                       type="date"
-                      value={formData.recruitmentStartDate}
+                      value={formData.recruitmentStartAt}
                       onChange={(e) =>
-                        setFormData({ ...formData, recruitmentStartDate: e.target.value })
+                        setFormData({ ...formData, recruitmentStartAt: e.target.value })
                       }
                       className="input"
                       required
@@ -337,9 +359,9 @@ export default function SeasonsPage() {
                     <label className="label">모집 종료일 *</label>
                     <input
                       type="date"
-                      value={formData.recruitmentEndDate}
+                      value={formData.recruitmentEndAt}
                       onChange={(e) =>
-                        setFormData({ ...formData, recruitmentEndDate: e.target.value })
+                        setFormData({ ...formData, recruitmentEndAt: e.target.value })
                       }
                       className="input"
                       required
@@ -349,9 +371,9 @@ export default function SeasonsPage() {
                     <label className="label">팀빌딩 시작일 *</label>
                     <input
                       type="date"
-                      value={formData.teamBuildingStartDate}
+                      value={formData.teamBuildingStartAt}
                       onChange={(e) =>
-                        setFormData({ ...formData, teamBuildingStartDate: e.target.value })
+                        setFormData({ ...formData, teamBuildingStartAt: e.target.value })
                       }
                       className="input"
                       required
@@ -361,9 +383,9 @@ export default function SeasonsPage() {
                     <label className="label">팀빌딩 종료일 *</label>
                     <input
                       type="date"
-                      value={formData.teamBuildingEndDate}
+                      value={formData.teamBuildingEndAt}
                       onChange={(e) =>
-                        setFormData({ ...formData, teamBuildingEndDate: e.target.value })
+                        setFormData({ ...formData, teamBuildingEndAt: e.target.value })
                       }
                       className="input"
                       required
@@ -373,9 +395,9 @@ export default function SeasonsPage() {
                     <label className="label">프로젝트 시작일 *</label>
                     <input
                       type="date"
-                      value={formData.projectStartDate}
+                      value={formData.projectStartAt}
                       onChange={(e) =>
-                        setFormData({ ...formData, projectStartDate: e.target.value })
+                        setFormData({ ...formData, projectStartAt: e.target.value })
                       }
                       className="input"
                       required
@@ -385,21 +407,9 @@ export default function SeasonsPage() {
                     <label className="label">프로젝트 종료일 *</label>
                     <input
                       type="date"
-                      value={formData.projectEndDate}
+                      value={formData.projectEndAt}
                       onChange={(e) =>
-                        setFormData({ ...formData, projectEndDate: e.target.value })
-                      }
-                      className="input"
-                      required
-                    />
-                  </div>
-                  <div>
-                    <label className="label">제출 마감일 *</label>
-                    <input
-                      type="date"
-                      value={formData.submissionDeadline}
-                      onChange={(e) =>
-                        setFormData({ ...formData, submissionDeadline: e.target.value })
+                        setFormData({ ...formData, projectEndAt: e.target.value })
                       }
                       className="input"
                       required
@@ -409,9 +419,9 @@ export default function SeasonsPage() {
                     <label className="label">심사 시작일 *</label>
                     <input
                       type="date"
-                      value={formData.judgingStartDate}
+                      value={formData.reviewStartAt}
                       onChange={(e) =>
-                        setFormData({ ...formData, judgingStartDate: e.target.value })
+                        setFormData({ ...formData, reviewStartAt: e.target.value })
                       }
                       className="input"
                       required
@@ -421,9 +431,9 @@ export default function SeasonsPage() {
                     <label className="label">심사 종료일 *</label>
                     <input
                       type="date"
-                      value={formData.judgingEndDate}
+                      value={formData.reviewEndAt}
                       onChange={(e) =>
-                        setFormData({ ...formData, judgingEndDate: e.target.value })
+                        setFormData({ ...formData, reviewEndAt: e.target.value })
                       }
                       className="input"
                       required
@@ -432,40 +442,7 @@ export default function SeasonsPage() {
                 </div>
               </div>
 
-              {/* Team Settings */}
-              <div className="space-y-4">
-                <h3 className="font-medium text-gray-900">팀 설정</h3>
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="label">최소 팀원 수 *</label>
-                    <input
-                      type="number"
-                      value={formData.minTeamSize}
-                      onChange={(e) =>
-                        setFormData({ ...formData, minTeamSize: parseInt(e.target.value) })
-                      }
-                      className="input"
-                      min={1}
-                      required
-                    />
-                  </div>
-                  <div>
-                    <label className="label">최대 팀원 수 *</label>
-                    <input
-                      type="number"
-                      value={formData.maxTeamSize}
-                      onChange={(e) =>
-                        setFormData({ ...formData, maxTeamSize: parseInt(e.target.value) })
-                      }
-                      className="input"
-                      min={1}
-                      required
-                    />
-                  </div>
-                </div>
-              </div>
-
-              {/* Judge Weight */}
+              {/* Review Weight */}
               <div className="space-y-4">
                 <h3 className="font-medium text-gray-900">심사 비중</h3>
                 <div className="grid grid-cols-2 gap-4">
@@ -473,13 +450,13 @@ export default function SeasonsPage() {
                     <label className="label">현직자 심사 비중 (%) *</label>
                     <input
                       type="number"
-                      value={formData.expertJudgeWeight}
+                      value={formData.expertReviewWeight}
                       onChange={(e) => {
                         const expert = parseInt(e.target.value);
                         setFormData({
                           ...formData,
-                          expertJudgeWeight: expert,
-                          peerJudgeWeight: 100 - expert,
+                          expertReviewWeight: expert,
+                          candidateReviewWeight: 100 - expert,
                         });
                       }}
                       className="input"
@@ -489,16 +466,16 @@ export default function SeasonsPage() {
                     />
                   </div>
                   <div>
-                    <label className="label">참여자 심사 비중 (%) *</label>
+                    <label className="label">예비 참여자 심사 비중 (%) *</label>
                     <input
                       type="number"
-                      value={formData.peerJudgeWeight}
+                      value={formData.candidateReviewWeight}
                       onChange={(e) => {
-                        const peer = parseInt(e.target.value);
+                        const candidate = parseInt(e.target.value);
                         setFormData({
                           ...formData,
-                          peerJudgeWeight: peer,
-                          expertJudgeWeight: 100 - peer,
+                          candidateReviewWeight: candidate,
+                          expertReviewWeight: 100 - candidate,
                         });
                       }}
                       className="input"
