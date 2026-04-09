@@ -141,4 +141,13 @@ public class ProjectController {
         projectService.deleteCheckpoint(principal.getUserId(), checkpointId);
         return ResponseEntity.ok(ApiResponse.success(null, "체크포인트가 삭제되었습니다."));
     }
+
+    // AI 피드백 재생성
+    @PostMapping("/checkpoints/{checkpointId}/ai-feedback")
+    public ResponseEntity<ApiResponse<CheckpointResponse>> regenerateAiFeedback(
+            @CurrentUser CustomUserPrincipal principal,
+            @PathVariable Long checkpointId) {
+        CheckpointResponse checkpoint = projectService.regenerateAiFeedback(principal.getUserId(), checkpointId);
+        return ResponseEntity.ok(ApiResponse.success(checkpoint, "AI 피드백이 재생성되었습니다."));
+    }
 }
