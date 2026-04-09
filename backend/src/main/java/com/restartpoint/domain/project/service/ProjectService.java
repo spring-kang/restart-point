@@ -202,8 +202,8 @@ public class ProjectService {
             saveMemberProgresses(savedCheckpoint, request.getMemberProgresses(), project.getTeam());
         }
 
-        // AI 프로젝트 코칭 피드백 생성
-        generateAiFeedback(savedCheckpoint);
+        // AI 프로젝트 코칭 피드백 비동기 생성 (체크포인트 저장 후 별도로 처리)
+        aiProjectCoachService.generateAndSaveFeedbackAsync(savedCheckpoint.getId());
 
         return CheckpointResponse.from(savedCheckpoint);
     }
@@ -234,8 +234,8 @@ public class ProjectService {
             saveMemberProgresses(checkpoint, request.getMemberProgresses(), project.getTeam());
         }
 
-        // AI 프로젝트 코칭 피드백 재생성
-        generateAiFeedback(checkpoint);
+        // AI 프로젝트 코칭 피드백 비동기 재생성 (체크포인트 수정 후 별도로 처리)
+        aiProjectCoachService.generateAndSaveFeedbackAsync(checkpoint.getId());
 
         return CheckpointResponse.from(checkpoint);
     }
@@ -286,25 +286,8 @@ public class ProjectService {
     // 헬퍼 메서드들
 
     /**
-     * 체크포인트 생성/수정 시 AI 피드백 생성 (실패해도 체크포인트는 저장됨)
-     */
-    private void generateAiFeedback(Checkpoint checkpoint) {
-        try {
-            String feedback = aiProjectCoachService.generateFeedback(checkpoint);
-            if (feedback != null) {
-                checkpoint.setAiFeedback(feedback);
-                log.info("AI 피드백 생성 완료 - 체크포인트 ID: {}", checkpoint.getId());
-            } else {
-                checkpoint.setAiFeedback("AI 피드백 생성 중 오류가 발생했습니다. 나중에 다시 시도해주세요.");
-            }
-        } catch (Exception e) {
-            log.error("AI 피드백 생성 실패 - 체크포인트 ID: {}, 오류: {}", checkpoint.getId(), e.getMessage());
-            checkpoint.setAiFeedback("AI 피드백 생성 중 오류가 발생했습니다. 나중에 다시 시도해주세요.");
-        }
-    }
-
-    /**
      * AI 피드백 수동 재생성 (실패 시 기존 피드백 보존하고 예외 throw)
+     * 수동 재생성은 동기로 처리하여 사용자에게 결과를 바로 반환합니다.
      */
     private void regenerateAiFeedbackWithPreservation(Checkpoint checkpoint) {
         String existingFeedback = checkpoint.getAiFeedback();

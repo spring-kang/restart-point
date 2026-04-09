@@ -3,14 +3,15 @@ package com.restartpoint.infra.ai;
 import com.restartpoint.domain.project.entity.Checkpoint;
 import com.restartpoint.domain.project.entity.MemberProgress;
 import com.restartpoint.domain.project.entity.Project;
+import com.restartpoint.domain.project.repository.CheckpointRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -18,6 +19,7 @@ import java.util.stream.Collectors;
 public class AiProjectCoachService {
 
     private final GroqService groqService;
+    private final CheckpointRepository checkpointRepository;
 
     private static final String SYSTEM_PROMPT = """
         당신은 부트캠프 수료생들의 프로젝트 진행을 돕는 AI 프로젝트 코치입니다.
@@ -85,6 +87,40 @@ public class AiProjectCoachService {
     public CompletableFuture<String> generateFeedbackAsync(Checkpoint checkpoint) {
         String feedback = generateFeedback(checkpoint);
         return CompletableFuture.completedFuture(feedback);
+    }
+
+    /**
+     * 비동기로 AI 피드백을 생성하고 체크포인트에 저장합니다.
+     * 체크포인트 저장/수정 후 호출되어 별도 트랜잭션에서 처리됩니다.
+     */
+    @Async
+    @Transactional
+    public void generateAndSaveFeedbackAsync(Long checkpointId) {
+        log.info("비동기 AI 피드백 생성 시작 - 체크포인트 ID: {}", checkpointId);
+
+        try {
+            Checkpoint checkpoint = checkpointRepository.findByIdWithProject(checkpointId)
+                    .orElse(null);
+
+            if (checkpoint == null) {
+                log.warn("체크포인트를 찾을 수 없음 - ID: {}", checkpointId);
+                return;
+            }
+
+            String feedback = generateFeedback(checkpoint);
+
+            if (feedback != null && !feedback.contains("오류가 발생했습니다")) {
+                checkpoint.setAiFeedback(feedback);
+                checkpointRepository.save(checkpoint);
+                log.info("비동기 AI 피드백 저장 완료 - 체크포인트 ID: {}", checkpointId);
+            } else {
+                checkpoint.setAiFeedback("AI 피드백 생성 중 오류가 발생했습니다. 나중에 다시 시도해주세요.");
+                checkpointRepository.save(checkpoint);
+                log.warn("AI 피드백 생성 실패 - 체크포인트 ID: {}", checkpointId);
+            }
+        } catch (Exception e) {
+            log.error("비동기 AI 피드백 생성 실패 - 체크포인트 ID: {}, 오류: {}", checkpointId, e.getMessage(), e);
+        }
     }
 
     private String buildUserMessage(Project project, Checkpoint checkpoint) {
