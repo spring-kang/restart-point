@@ -89,4 +89,8 @@ public class User extends BaseTimeEntity {
     public boolean isEmailVerified() {
         return this.emailVerified;
     }
+
+    public void updateRole(Role newRole) {
+        this.role = newRole;
+    }
 }

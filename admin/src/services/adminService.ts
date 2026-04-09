@@ -1,7 +1,43 @@
 import api from './api';
-import type { ApiResponse, Page, Season, SeasonCreateRequest, User } from '../types';
+import type { ApiResponse, Page, Season, SeasonCreateRequest, User, UserRole, CertificationStatus } from '../types';
+
+export interface UserSearchParams {
+  keyword?: string;
+  role?: UserRole;
+  certificationStatus?: CertificationStatus;
+  page?: number;
+  size?: number;
+}
 
 export const adminService = {
+  // User Management APIs
+  getUsers: async (params: UserSearchParams = {}): Promise<Page<User>> => {
+    const response = await api.get<ApiResponse<Page<User>>>('/admin/users', {
+      params: {
+        keyword: params.keyword || undefined,
+        role: params.role || undefined,
+        certificationStatus: params.certificationStatus || undefined,
+        page: params.page || 0,
+        size: params.size || 20,
+      },
+    });
+    return response.data.data;
+  },
+
+  getUser: async (userId: number): Promise<User> => {
+    const response = await api.get<ApiResponse<User>>(`/admin/users/${userId}`);
+    return response.data.data;
+  },
+
+  updateUserRole: async (userId: number, role: UserRole): Promise<User> => {
+    const response = await api.patch<ApiResponse<User>>(`/admin/users/${userId}/role`, { role });
+    return response.data.data;
+  },
+
+  deleteUser: async (userId: number): Promise<void> => {
+    await api.delete(`/admin/users/${userId}`);
+  },
+
   // Season APIs
   getSeasons: async (page = 0, size = 20): Promise<Page<Season>> => {
     const response = await api.get<ApiResponse<Page<Season>>>('/admin/seasons', {

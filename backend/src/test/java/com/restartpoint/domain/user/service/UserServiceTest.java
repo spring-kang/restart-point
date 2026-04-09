@@ -8,6 +8,7 @@ import com.restartpoint.domain.user.repository.UserRepository;
 import com.restartpoint.global.exception.BusinessException;
 import com.restartpoint.global.exception.ErrorCode;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -21,6 +22,8 @@ import java.util.Optional;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.BDDMockito.given;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.never;
 
 @ExtendWith(MockitoExtension.class)
 class UserServiceTest {
@@ -151,12 +154,172 @@ class UserServiceTest {
         assertThat(responses.get(0).getCertificationStatus().name()).isEqualTo("PENDING");
     }
 
+    @Nested
+    @DisplayName("회원 역할 변경")
+    class UpdateUserRole {
+
+        @Test
+        @DisplayName("관리자가 다른 사용자의 역할을 USER에서 ADMIN으로 변경할 수 있다")
+        void updateUserRoleToAdmin() {
+            Long currentUserId = 1L;
+            Long targetUserId = 2L;
+            User targetUser = createUser(targetUserId, "user@example.com", "대상유저");
+            given(userRepository.findById(targetUserId)).willReturn(Optional.of(targetUser));
+
+            UserResponse response = userService.updateUserRole(currentUserId, targetUserId, Role.ADMIN);
+
+            assertThat(response.getRole()).isEqualTo(Role.ADMIN);
+        }
+
+        @Test
+        @DisplayName("관리자가 다른 관리자의 역할을 ADMIN에서 USER로 변경할 수 있다 (관리자가 2명 이상일 때)")
+        void updateUserRoleToUser() {
+            Long currentUserId = 1L;
+            Long targetUserId = 2L;
+            User targetUser = createAdminUser(targetUserId, "admin2@example.com", "관리자2");
+            given(userRepository.findById(targetUserId)).willReturn(Optional.of(targetUser));
+            given(userRepository.countByRole(Role.ADMIN)).willReturn(2L);
+
+            UserResponse response = userService.updateUserRole(currentUserId, targetUserId, Role.USER);
+
+            assertThat(response.getRole()).isEqualTo(Role.USER);
+        }
+
+        @Test
+        @DisplayName("자기 자신의 관리자 권한을 해제하려고 하면 실패한다")
+        void updateUserRoleFailsWhenSelfDemotion() {
+            Long currentUserId = 1L;
+            Long targetUserId = 1L; // 자기 자신
+
+            assertThatThrownBy(() -> userService.updateUserRole(currentUserId, targetUserId, Role.USER))
+                    .isInstanceOf(BusinessException.class)
+                    .satisfies(exception -> {
+                        BusinessException businessException = (BusinessException) exception;
+                        assertThat(businessException.getErrorCode()).isEqualTo(ErrorCode.INVALID_INPUT_VALUE);
+                        assertThat(businessException.getMessage()).isEqualTo("자기 자신의 관리자 권한을 해제할 수 없습니다.");
+                    });
+
+            verify(userRepository, never()).findById(targetUserId);
+        }
+
+        @Test
+        @DisplayName("마지막 관리자의 역할을 USER로 변경하려고 하면 실패한다")
+        void updateUserRoleFailsWhenLastAdmin() {
+            Long currentUserId = 1L;
+            Long targetUserId = 2L;
+            User targetUser = createAdminUser(targetUserId, "lastadmin@example.com", "마지막관리자");
+            given(userRepository.findById(targetUserId)).willReturn(Optional.of(targetUser));
+            given(userRepository.countByRole(Role.ADMIN)).willReturn(1L);
+
+            assertThatThrownBy(() -> userService.updateUserRole(currentUserId, targetUserId, Role.USER))
+                    .isInstanceOf(BusinessException.class)
+                    .satisfies(exception -> {
+                        BusinessException businessException = (BusinessException) exception;
+                        assertThat(businessException.getErrorCode()).isEqualTo(ErrorCode.INVALID_INPUT_VALUE);
+                        assertThat(businessException.getMessage()).isEqualTo("최소 1명의 관리자가 필요합니다. 마지막 관리자의 권한을 해제할 수 없습니다.");
+                    });
+        }
+
+        @Test
+        @DisplayName("자기 자신에게 관리자 권한을 부여하는 것은 허용된다 (이미 ADMIN이면 변경 없음)")
+        void updateUserRoleAllowsSelfPromotion() {
+            Long currentUserId = 1L;
+            Long targetUserId = 1L;
+            User currentUser = createUser(targetUserId, "user@example.com", "유저");
+            given(userRepository.findById(targetUserId)).willReturn(Optional.of(currentUser));
+
+            UserResponse response = userService.updateUserRole(currentUserId, targetUserId, Role.ADMIN);
+
+            assertThat(response.getRole()).isEqualTo(Role.ADMIN);
+        }
+    }
+
+    @Nested
+    @DisplayName("회원 삭제")
+    class DeleteUser {
+
+        @Test
+        @DisplayName("관리자가 일반 사용자를 삭제할 수 있다")
+        void deleteUserSuccess() {
+            Long currentUserId = 1L;
+            Long targetUserId = 2L;
+            User targetUser = createUser(targetUserId, "user@example.com", "삭제대상");
+            given(userRepository.findById(targetUserId)).willReturn(Optional.of(targetUser));
+
+            userService.deleteUser(currentUserId, targetUserId);
+
+            verify(userRepository).delete(targetUser);
+        }
+
+        @Test
+        @DisplayName("자기 자신을 삭제하려고 하면 실패한다")
+        void deleteUserFailsWhenSelfDelete() {
+            Long currentUserId = 1L;
+            Long targetUserId = 1L; // 자기 자신
+
+            assertThatThrownBy(() -> userService.deleteUser(currentUserId, targetUserId))
+                    .isInstanceOf(BusinessException.class)
+                    .satisfies(exception -> {
+                        BusinessException businessException = (BusinessException) exception;
+                        assertThat(businessException.getErrorCode()).isEqualTo(ErrorCode.INVALID_INPUT_VALUE);
+                        assertThat(businessException.getMessage()).isEqualTo("자기 자신을 삭제할 수 없습니다.");
+                    });
+
+            verify(userRepository, never()).findById(targetUserId);
+        }
+
+        @Test
+        @DisplayName("마지막 관리자를 삭제하려고 하면 실패한다")
+        void deleteUserFailsWhenLastAdmin() {
+            Long currentUserId = 1L;
+            Long targetUserId = 2L;
+            User targetUser = createAdminUser(targetUserId, "lastadmin@example.com", "마지막관리자");
+            given(userRepository.findById(targetUserId)).willReturn(Optional.of(targetUser));
+            given(userRepository.countByRole(Role.ADMIN)).willReturn(1L);
+
+            assertThatThrownBy(() -> userService.deleteUser(currentUserId, targetUserId))
+                    .isInstanceOf(BusinessException.class)
+                    .satisfies(exception -> {
+                        BusinessException businessException = (BusinessException) exception;
+                        assertThat(businessException.getErrorCode()).isEqualTo(ErrorCode.INVALID_INPUT_VALUE);
+                        assertThat(businessException.getMessage()).isEqualTo("최소 1명의 관리자가 필요합니다. 마지막 관리자를 삭제할 수 없습니다.");
+                    });
+
+            verify(userRepository, never()).delete(targetUser);
+        }
+
+        @Test
+        @DisplayName("관리자가 2명 이상일 때 다른 관리자를 삭제할 수 있다")
+        void deleteAdminWhenMultipleAdmins() {
+            Long currentUserId = 1L;
+            Long targetUserId = 2L;
+            User targetUser = createAdminUser(targetUserId, "admin2@example.com", "관리자2");
+            given(userRepository.findById(targetUserId)).willReturn(Optional.of(targetUser));
+            given(userRepository.countByRole(Role.ADMIN)).willReturn(2L);
+
+            userService.deleteUser(currentUserId, targetUserId);
+
+            verify(userRepository).delete(targetUser);
+        }
+    }
+
     private User createUser(Long id, String email, String name) {
         User user = User.builder()
                 .email(email)
                 .password("encoded-password")
                 .name(name)
                 .role(Role.USER)
+                .build();
+        setField(user, "id", id);
+        return user;
+    }
+
+    private User createAdminUser(Long id, String email, String name) {
+        User user = User.builder()
+                .email(email)
+                .password("encoded-password")
+                .name(name)
+                .role(Role.ADMIN)
                 .build();
         setField(user, "id", id);
         return user;
