@@ -33,17 +33,21 @@ public class ProjectController {
         return ResponseEntity.ok(ApiResponse.success(project, "프로젝트가 생성되었습니다."));
     }
 
-    // 프로젝트 상세 조회
+    // 프로젝트 상세 조회 (팀원만 가능)
     @GetMapping("/projects/{projectId}")
-    public ResponseEntity<ApiResponse<ProjectResponse>> getProject(@PathVariable Long projectId) {
-        ProjectResponse project = projectService.getProject(projectId);
+    public ResponseEntity<ApiResponse<ProjectResponse>> getProject(
+            @CurrentUser CustomUserPrincipal principal,
+            @PathVariable Long projectId) {
+        ProjectResponse project = projectService.getProject(principal.getUserId(), projectId);
         return ResponseEntity.ok(ApiResponse.success(project));
     }
 
-    // 팀의 프로젝트 조회
+    // 팀의 프로젝트 조회 (팀원만 가능)
     @GetMapping("/teams/{teamId}/project")
-    public ResponseEntity<ApiResponse<ProjectResponse>> getProjectByTeam(@PathVariable Long teamId) {
-        ProjectResponse project = projectService.getProjectByTeam(teamId);
+    public ResponseEntity<ApiResponse<ProjectResponse>> getProjectByTeam(
+            @CurrentUser CustomUserPrincipal principal,
+            @PathVariable Long teamId) {
+        ProjectResponse project = projectService.getProjectByTeam(principal.getUserId(), teamId);
         return ResponseEntity.ok(ApiResponse.success(project));
     }
 
@@ -101,17 +105,21 @@ public class ProjectController {
         return ResponseEntity.ok(ApiResponse.success(checkpoint, "체크포인트가 생성되었습니다."));
     }
 
-    // 체크포인트 목록 조회
+    // 체크포인트 목록 조회 (팀원만 가능)
     @GetMapping("/projects/{projectId}/checkpoints")
-    public ResponseEntity<ApiResponse<List<CheckpointResponse>>> getCheckpoints(@PathVariable Long projectId) {
-        List<CheckpointResponse> checkpoints = projectService.getCheckpointsByProject(projectId);
+    public ResponseEntity<ApiResponse<List<CheckpointResponse>>> getCheckpoints(
+            @CurrentUser CustomUserPrincipal principal,
+            @PathVariable Long projectId) {
+        List<CheckpointResponse> checkpoints = projectService.getCheckpointsByProject(principal.getUserId(), projectId);
         return ResponseEntity.ok(ApiResponse.success(checkpoints));
     }
 
-    // 체크포인트 상세 조회
+    // 체크포인트 상세 조회 (팀원만 가능)
     @GetMapping("/checkpoints/{checkpointId}")
-    public ResponseEntity<ApiResponse<CheckpointResponse>> getCheckpoint(@PathVariable Long checkpointId) {
-        CheckpointResponse checkpoint = projectService.getCheckpoint(checkpointId);
+    public ResponseEntity<ApiResponse<CheckpointResponse>> getCheckpoint(
+            @CurrentUser CustomUserPrincipal principal,
+            @PathVariable Long checkpointId) {
+        CheckpointResponse checkpoint = projectService.getCheckpoint(principal.getUserId(), checkpointId);
         return ResponseEntity.ok(ApiResponse.success(checkpoint));
     }
 

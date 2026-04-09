@@ -321,6 +321,7 @@ class ProjectServiceTest {
         @DisplayName("팀 리더가 필수 항목이 채워진 프로젝트를 제출할 수 있다")
         void submitProjectSuccess() {
             // given
+            project.startProject(); // 프로젝트 시작 (IN_PROGRESS 상태로 변경)
             project.update("프로젝트명", "문제 정의", "타깃 사용자", "솔루션",
                     null, null, null, null, null);
 
@@ -341,6 +342,8 @@ class ProjectServiceTest {
         @DisplayName("필수 항목이 비어있으면 제출할 수 없다")
         void submitProjectFailsWhenMissingRequired() {
             // given
+            project.startProject(); // 프로젝트 시작 (IN_PROGRESS 상태로 변경)
+
             ProjectSubmitRequest request = new ProjectSubmitRequest();
             setField(request, "teamRetrospective", "팀 회고");
 
@@ -352,6 +355,51 @@ class ProjectServiceTest {
                     .satisfies(exception -> {
                         BusinessException businessException = (BusinessException) exception;
                         assertThat(businessException.getErrorCode()).isEqualTo(ErrorCode.INVALID_INPUT_VALUE);
+                    });
+        }
+
+        @Test
+        @DisplayName("DRAFT 상태의 프로젝트는 제출할 수 없다")
+        void submitProjectFailsWhenDraft() {
+            // given (프로젝트는 DRAFT 상태)
+            project.update("프로젝트명", "문제 정의", "타깃 사용자", "솔루션",
+                    null, null, null, null, null);
+
+            ProjectSubmitRequest request = new ProjectSubmitRequest();
+            setField(request, "teamRetrospective", "팀 회고");
+
+            given(projectRepository.findByIdWithTeam(1L)).willReturn(Optional.of(project));
+
+            // when & then
+            assertThatThrownBy(() -> projectService.submitProject(1L, 1L, request))
+                    .isInstanceOf(BusinessException.class)
+                    .satisfies(exception -> {
+                        BusinessException businessException = (BusinessException) exception;
+                        assertThat(businessException.getErrorCode()).isEqualTo(ErrorCode.INVALID_PROJECT_STATUS);
+                    });
+        }
+    }
+
+    @Nested
+    @DisplayName("체크포인트 생성 워크플로우")
+    class CreateCheckpointWorkflow {
+
+        @Test
+        @DisplayName("DRAFT 상태의 프로젝트에서는 체크포인트를 생성할 수 없다")
+        void createCheckpointFailsWhenDraft() {
+            // given (프로젝트는 DRAFT 상태)
+            CheckpointCreateRequest request = new CheckpointCreateRequest();
+            setField(request, "weekNumber", 1);
+
+            given(projectRepository.findByIdWithTeam(1L)).willReturn(Optional.of(project));
+            given(userRepository.findById(1L)).willReturn(Optional.of(leader));
+
+            // when & then
+            assertThatThrownBy(() -> projectService.createCheckpoint(1L, 1L, request))
+                    .isInstanceOf(BusinessException.class)
+                    .satisfies(exception -> {
+                        BusinessException businessException = (BusinessException) exception;
+                        assertThat(businessException.getErrorCode()).isEqualTo(ErrorCode.INVALID_PROJECT_STATUS);
                     });
         }
     }

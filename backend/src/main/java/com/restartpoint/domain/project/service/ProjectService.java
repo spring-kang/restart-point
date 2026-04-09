@@ -69,16 +69,19 @@ public class ProjectService {
         return ProjectResponse.from(savedProject);
     }
 
-    // 프로젝트 상세 조회
-    public ProjectResponse getProject(Long projectId) {
-        Project project = findProjectById(projectId);
+    // 프로젝트 상세 조회 (팀원만 가능)
+    public ProjectResponse getProject(Long userId, Long projectId) {
+        Project project = findProjectByIdWithTeam(projectId);
+        validateTeamMember(project.getTeam(), userId);
         return ProjectResponse.from(project);
     }
 
-    // 팀의 프로젝트 조회
-    public ProjectResponse getProjectByTeam(Long teamId) {
+    // 팀의 프로젝트 조회 (팀원만 가능)
+    public ProjectResponse getProjectByTeam(Long userId, Long teamId) {
         Project project = projectRepository.findByTeamId(teamId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.PROJECT_NOT_FOUND));
+        Team team = findTeamById(teamId);
+        validateTeamMember(team, userId);
         return ProjectResponse.from(project);
     }
 
@@ -145,8 +148,12 @@ public class ProjectService {
             throw new BusinessException(ErrorCode.SUBMISSION_DEADLINE_PASSED);
         }
 
-        if (project.getStatus() == ProjectStatus.SUBMITTED || project.getStatus() == ProjectStatus.COMPLETED) {
-            throw new BusinessException(ErrorCode.PROJECT_ALREADY_SUBMITTED);
+        // 프로젝트가 진행 중 상태인지 확인 (DRAFT에서는 제출 불가)
+        if (project.getStatus() != ProjectStatus.IN_PROGRESS) {
+            if (project.getStatus() == ProjectStatus.SUBMITTED || project.getStatus() == ProjectStatus.COMPLETED) {
+                throw new BusinessException(ErrorCode.PROJECT_ALREADY_SUBMITTED);
+            }
+            throw new BusinessException(ErrorCode.INVALID_PROJECT_STATUS, "프로젝트를 먼저 시작해야 합니다.");
         }
 
         // 필수 항목 확인
@@ -163,9 +170,9 @@ public class ProjectService {
         User user = findUserById(userId);
         validateTeamMember(project.getTeam(), userId);
 
-        // 프로젝트가 진행 중인지 확인
-        if (project.getStatus() != ProjectStatus.IN_PROGRESS && project.getStatus() != ProjectStatus.DRAFT) {
-            throw new BusinessException(ErrorCode.INVALID_PROJECT_STATUS);
+        // 프로젝트가 진행 중인지 확인 (DRAFT에서는 체크포인트 생성 불가)
+        if (project.getStatus() != ProjectStatus.IN_PROGRESS) {
+            throw new BusinessException(ErrorCode.INVALID_PROJECT_STATUS, "프로젝트가 진행 중일 때만 체크포인트를 생성할 수 있습니다.");
         }
 
         // 같은 주차에 이미 체크포인트가 있는지 확인
@@ -188,7 +195,7 @@ public class ProjectService {
 
         // 역할별 진행 상황 저장
         if (request.getMemberProgresses() != null) {
-            saveMemberProgresses(savedCheckpoint, request.getMemberProgresses());
+            saveMemberProgresses(savedCheckpoint, request.getMemberProgresses(), project.getTeam());
         }
 
         return CheckpointResponse.from(savedCheckpoint);
@@ -217,20 +224,23 @@ public class ProjectService {
         if (request.getMemberProgresses() != null) {
             // 기존 진행 상황 삭제 후 새로 저장
             memberProgressRepository.deleteByCheckpointId(checkpointId);
-            saveMemberProgresses(checkpoint, request.getMemberProgresses());
+            saveMemberProgresses(checkpoint, request.getMemberProgresses(), project.getTeam());
         }
 
         return CheckpointResponse.from(checkpoint);
     }
 
-    // 체크포인트 조회
-    public CheckpointResponse getCheckpoint(Long checkpointId) {
-        Checkpoint checkpoint = findCheckpointById(checkpointId);
+    // 체크포인트 조회 (팀원만 가능)
+    public CheckpointResponse getCheckpoint(Long userId, Long checkpointId) {
+        Checkpoint checkpoint = findCheckpointByIdWithProject(checkpointId);
+        validateTeamMember(checkpoint.getProject().getTeam(), userId);
         return CheckpointResponse.from(checkpoint);
     }
 
-    // 프로젝트의 체크포인트 목록 조회
-    public List<CheckpointResponse> getCheckpointsByProject(Long projectId) {
+    // 프로젝트의 체크포인트 목록 조회 (팀원만 가능)
+    public List<CheckpointResponse> getCheckpointsByProject(Long userId, Long projectId) {
+        Project project = findProjectByIdWithTeam(projectId);
+        validateTeamMember(project.getTeam(), userId);
         return checkpointRepository.findByProjectIdOrderByWeekNumberAsc(projectId).stream()
                 .map(CheckpointResponse::from)
                 .toList();
@@ -252,9 +262,13 @@ public class ProjectService {
     }
 
     // 헬퍼 메서드들
-    private void saveMemberProgresses(Checkpoint checkpoint, List<MemberProgressRequest> requests) {
+    private void saveMemberProgresses(Checkpoint checkpoint, List<MemberProgressRequest> requests, Team team) {
         for (MemberProgressRequest progressRequest : requests) {
             User user = findUserById(progressRequest.getUserId());
+
+            // 해당 사용자가 팀원인지 검증
+            validateTeamMember(team, user.getId());
+
             MemberProgress progress = MemberProgress.builder()
                     .checkpoint(checkpoint)
                     .user(user)
