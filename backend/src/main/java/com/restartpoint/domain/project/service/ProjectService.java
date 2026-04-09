@@ -16,7 +16,9 @@ import com.restartpoint.domain.user.entity.User;
 import com.restartpoint.domain.user.repository.UserRepository;
 import com.restartpoint.global.exception.BusinessException;
 import com.restartpoint.global.exception.ErrorCode;
+import com.restartpoint.infra.ai.AiProjectCoachService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -27,6 +29,7 @@ import java.util.List;
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
+@Slf4j
 public class ProjectService {
 
     private final ProjectRepository projectRepository;
@@ -35,6 +38,7 @@ public class ProjectService {
     private final TeamRepository teamRepository;
     private final TeamMemberRepository teamMemberRepository;
     private final UserRepository userRepository;
+    private final AiProjectCoachService aiProjectCoachService;
 
     // 프로젝트 생성 (팀 리더만 가능)
     @Transactional
@@ -198,6 +202,9 @@ public class ProjectService {
             saveMemberProgresses(savedCheckpoint, request.getMemberProgresses(), project.getTeam());
         }
 
+        // AI 프로젝트 코칭 피드백 생성
+        generateAiFeedback(savedCheckpoint);
+
         return CheckpointResponse.from(savedCheckpoint);
     }
 
@@ -226,6 +233,20 @@ public class ProjectService {
             memberProgressRepository.deleteByCheckpointId(checkpointId);
             saveMemberProgresses(checkpoint, request.getMemberProgresses(), project.getTeam());
         }
+
+        // AI 프로젝트 코칭 피드백 재생성
+        generateAiFeedback(checkpoint);
+
+        return CheckpointResponse.from(checkpoint);
+    }
+
+    // AI 피드백 수동 재생성
+    @Transactional
+    public CheckpointResponse regenerateAiFeedback(Long userId, Long checkpointId) {
+        Checkpoint checkpoint = findCheckpointByIdWithProject(checkpointId);
+        validateTeamMember(checkpoint.getProject().getTeam(), userId);
+
+        generateAiFeedback(checkpoint);
 
         return CheckpointResponse.from(checkpoint);
     }
@@ -262,6 +283,17 @@ public class ProjectService {
     }
 
     // 헬퍼 메서드들
+    private void generateAiFeedback(Checkpoint checkpoint) {
+        try {
+            String feedback = aiProjectCoachService.generateFeedback(checkpoint);
+            checkpoint.setAiFeedback(feedback);
+            log.info("AI 피드백 생성 완료 - 체크포인트 ID: {}", checkpoint.getId());
+        } catch (Exception e) {
+            log.error("AI 피드백 생성 실패 - 체크포인트 ID: {}, 오류: {}", checkpoint.getId(), e.getMessage());
+            checkpoint.setAiFeedback("AI 피드백 생성 중 오류가 발생했습니다. 나중에 다시 시도해주세요.");
+        }
+    }
+
     private void saveMemberProgresses(Checkpoint checkpoint, List<MemberProgressRequest> requests, Team team) {
         for (MemberProgressRequest progressRequest : requests) {
             User user = findUserById(progressRequest.getUserId());
