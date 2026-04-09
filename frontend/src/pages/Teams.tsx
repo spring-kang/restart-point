@@ -12,6 +12,8 @@ export default function TeamsPage() {
   const navigate = useNavigate();
   const { isAuthenticated, user } = useAuthStore();
   const [season, setSeason] = useState<Season | null>(null);
+  const [seasons, setSeasons] = useState<Season[]>([]);
+  const [selectedSeasonId, setSelectedSeasonId] = useState<number | null>(seasonId ? Number(seasonId) : null);
   const [teams, setTeams] = useState<Team[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
@@ -20,11 +22,38 @@ export default function TeamsPage() {
   const [filter, setFilter] = useState<'all' | 'recruiting'>('all');
   const [roleFilter, setRoleFilter] = useState<JobRole | 'ALL'>('ALL');
 
+  // seasonId가 URL에 없을 때 활성 시즌 목록을 가져옴
   useEffect(() => {
-    if (seasonId) {
-      loadData(Number(seasonId));
+    if (!seasonId) {
+      loadActiveSeasons();
+    } else {
+      setSelectedSeasonId(Number(seasonId));
     }
-  }, [seasonId, filter]);
+  }, [seasonId]);
+
+  useEffect(() => {
+    if (selectedSeasonId) {
+      loadData(selectedSeasonId);
+    }
+  }, [selectedSeasonId, filter]);
+
+  const loadActiveSeasons = async () => {
+    setIsLoading(true);
+    try {
+      const activeSeasons = await seasonService.getActiveSeasons();
+      setSeasons(activeSeasons);
+      // 활성 시즌이 있으면 첫 번째 시즌을 선택
+      if (activeSeasons.length > 0) {
+        setSelectedSeasonId(activeSeasons[0].id);
+      } else {
+        setIsLoading(false);
+      }
+    } catch (err) {
+      console.error('Failed to load active seasons:', err);
+      setError('시즌 정보를 불러오는데 실패했습니다.');
+      setIsLoading(false);
+    }
+  };
 
   const loadData = async (id: number) => {
     setIsLoading(true);
@@ -78,6 +107,22 @@ export default function TeamsPage() {
     );
   }
 
+  // 활성 시즌이 없는 경우
+  if (!isLoading && !seasonId && seasons.length === 0 && !season) {
+    return (
+      <div className="max-w-3xl mx-auto px-4 py-12">
+        <div className="text-center">
+          <Users className="w-16 h-16 text-neutral-300 mx-auto mb-4" />
+          <h2 className="text-xl font-bold text-neutral-900 mb-2">현재 진행 중인 시즌이 없습니다</h2>
+          <p className="text-neutral-500 mb-6">새로운 시즌이 시작되면 팀을 찾을 수 있습니다.</p>
+          <Link to="/seasons" className="btn-secondary">
+            시즌 목록 보기
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
   if (error || !season) {
     return (
       <div className="max-w-3xl mx-auto px-4 py-12">
@@ -93,18 +138,46 @@ export default function TeamsPage() {
 
   return (
     <div className="max-w-6xl mx-auto px-4 py-12">
-      <Link
-        to={`/seasons/${seasonId}`}
-        className="inline-flex items-center gap-2 text-neutral-600 hover:text-neutral-900 mb-6"
-      >
-        <ChevronLeft className="w-5 h-5" />
-        {season.title}
-      </Link>
+      {seasonId ? (
+        <Link
+          to={`/seasons/${seasonId}`}
+          className="inline-flex items-center gap-2 text-neutral-600 hover:text-neutral-900 mb-6"
+        >
+          <ChevronLeft className="w-5 h-5" />
+          {season.title}
+        </Link>
+      ) : (
+        <Link
+          to="/seasons"
+          className="inline-flex items-center gap-2 text-neutral-600 hover:text-neutral-900 mb-6"
+        >
+          <ChevronLeft className="w-5 h-5" />
+          시즌 목록
+        </Link>
+      )}
 
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
         <div>
           <h1 className="text-2xl font-bold text-neutral-900">팀 찾기</h1>
           <p className="text-neutral-600 mt-1">함께 프로젝트를 진행할 팀을 찾아보세요</p>
+          {/* 시즌 선택 드롭다운 (URL에 seasonId가 없을 때만) */}
+          {!seasonId && seasons.length > 1 && (
+            <select
+              value={selectedSeasonId || ''}
+              onChange={(e) => setSelectedSeasonId(Number(e.target.value))}
+              className="mt-2 px-3 py-1.5 border border-neutral-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+            >
+              {seasons.map((s) => (
+                <option key={s.id} value={s.id}>
+                  {s.title}
+                </option>
+              ))}
+            </select>
+          )}
+          {/* 현재 선택된 시즌 표시 */}
+          {!seasonId && season && seasons.length <= 1 && (
+            <p className="text-sm text-primary-600 mt-1">{season.title}</p>
+          )}
         </div>
         <div className="flex gap-3">
           {isAuthenticated && user?.certificationStatus === 'APPROVED' && (
@@ -227,9 +300,9 @@ export default function TeamsPage() {
       )}
 
       {/* 팀 생성 모달 */}
-      {showCreateModal && (
+      {showCreateModal && selectedSeasonId && (
         <CreateTeamModal
-          seasonId={Number(seasonId)}
+          seasonId={selectedSeasonId}
           onClose={() => setShowCreateModal(false)}
           onCreated={(teamId) => {
             setShowCreateModal(false);
@@ -239,9 +312,9 @@ export default function TeamsPage() {
       )}
 
       {/* AI 추천 모달 */}
-      {showAIRecommendation && (
+      {showAIRecommendation && selectedSeasonId && (
         <AIRecommendationModal
-          seasonId={Number(seasonId)}
+          seasonId={selectedSeasonId}
           onClose={() => setShowAIRecommendation(false)}
           onSelectTeam={(teamId) => {
             setShowAIRecommendation(false);
