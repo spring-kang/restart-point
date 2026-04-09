@@ -61,6 +61,9 @@ class ProjectServiceTest {
     @Mock
     private UserRepository userRepository;
 
+    @Mock
+    private com.restartpoint.infra.ai.AiProjectCoachService aiProjectCoachService;
+
     @InjectMocks
     private ProjectService projectService;
 

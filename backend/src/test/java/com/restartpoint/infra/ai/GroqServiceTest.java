@@ -35,6 +35,7 @@ class GroqServiceTest {
         groqService = new GroqService(webClient);
         setField(groqService, "model", "llama-3.1-70b-versatile");
         setField(groqService, "maxTokens", 4096);
+        setField(groqService, "timeoutSeconds", 30);
     }
 
     @AfterEach

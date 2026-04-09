@@ -82,6 +82,12 @@ export const projectService = {
   async deleteCheckpoint(checkpointId: number): Promise<void> {
     await api.delete(`/checkpoints/${checkpointId}`);
   },
+
+  // AI 피드백 재생성
+  async regenerateAiFeedback(checkpointId: number): Promise<Checkpoint> {
+    const response = await api.post(`/checkpoints/${checkpointId}/ai-feedback`);
+    return response.data.data;
+  },
 };
 
 // 프로젝트 상태 라벨
