@@ -13,8 +13,10 @@ import com.restartpoint.domain.season.repository.SeasonRepository;
 import com.restartpoint.domain.team.dto.TeamResponse;
 import com.restartpoint.domain.team.entity.Team;
 import com.restartpoint.domain.team.entity.TeamMemberStatus;
+import com.restartpoint.domain.team.entity.TeamStatus;
 import com.restartpoint.domain.team.repository.TeamMemberRepository;
 import com.restartpoint.domain.team.repository.TeamRepository;
+import com.restartpoint.domain.user.entity.CertificationStatus;
 import com.restartpoint.domain.user.entity.User;
 import com.restartpoint.domain.user.repository.UserRepository;
 import com.restartpoint.global.exception.BusinessException;
@@ -93,6 +95,12 @@ public class TeamMatchingService {
      */
     public List<TeamRecommendationResponse> recommendTeamsForUser(Long userId, Long seasonId, int limit) {
         User user = findUserById(userId);
+
+        // 수료 인증 체크
+        if (user.getCertificationStatus() != CertificationStatus.APPROVED) {
+            throw new BusinessException(ErrorCode.CERTIFICATION_REQUIRED);
+        }
+
         Profile userProfile = findProfileByUser(user);
         Season season = findSeasonById(seasonId);
 
@@ -138,7 +146,12 @@ public class TeamMatchingService {
             throw new BusinessException(ErrorCode.NOT_TEAM_LEADER);
         }
 
-        // 팀이 모집 중인지 확인
+        // 팀 상태가 RECRUITING인지 확인
+        if (team.getStatus() != TeamStatus.RECRUITING) {
+            throw new BusinessException(ErrorCode.TEAM_NOT_RECRUITING);
+        }
+
+        // 팀이 가득 찼는지 확인
         if (team.isFull()) {
             throw new BusinessException(ErrorCode.TEAM_FULL);
         }

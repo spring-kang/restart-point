@@ -6,9 +6,11 @@ import com.restartpoint.domain.matching.service.TeamMatchingService;
 import com.restartpoint.global.common.ApiResponse;
 import com.restartpoint.global.security.CurrentUser;
 import com.restartpoint.global.security.CustomUserPrincipal;
+import jakarta.validation.constraints.Min;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -16,6 +18,7 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/v1/matching")
 @RequiredArgsConstructor
+@Validated
 public class TeamMatchingController {
 
     private final TeamMatchingService teamMatchingService;
@@ -28,7 +31,7 @@ public class TeamMatchingController {
     public ResponseEntity<ApiResponse<List<TeamRecommendationResponse>>> recommendTeams(
             @CurrentUser CustomUserPrincipal principal,
             @RequestParam Long seasonId,
-            @RequestParam(defaultValue = "5") int limit) {
+            @RequestParam(defaultValue = "5") @Min(1) int limit) {
         List<TeamRecommendationResponse> recommendations =
                 teamMatchingService.recommendTeamsForUser(principal.getUserId(), seasonId, limit);
         return ResponseEntity.ok(ApiResponse.success(recommendations));
@@ -42,7 +45,7 @@ public class TeamMatchingController {
     public ResponseEntity<ApiResponse<List<MemberRecommendationResponse>>> recommendMembers(
             @CurrentUser CustomUserPrincipal principal,
             @PathVariable Long teamId,
-            @RequestParam(defaultValue = "5") int limit) {
+            @RequestParam(defaultValue = "5") @Min(1) int limit) {
         List<MemberRecommendationResponse> recommendations =
                 teamMatchingService.recommendMembersForTeam(principal.getUserId(), teamId, limit);
         return ResponseEntity.ok(ApiResponse.success(recommendations));
