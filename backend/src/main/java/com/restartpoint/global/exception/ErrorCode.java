@@ -73,7 +73,15 @@ public enum ErrorCode {
     // AI 에러
     AI_SERVICE_ERROR(HttpStatus.SERVICE_UNAVAILABLE, "AI_001", "AI 서비스에 일시적인 문제가 발생했습니다."),
     NO_MATCHING_CANDIDATES(HttpStatus.NOT_FOUND, "AI_002", "추천 가능한 후보가 없습니다."),
-    AI_FEEDBACK_GENERATION_FAILED(HttpStatus.SERVICE_UNAVAILABLE, "AI_003", "AI 피드백 생성에 실패했습니다.");
+    AI_FEEDBACK_GENERATION_FAILED(HttpStatus.SERVICE_UNAVAILABLE, "AI_003", "AI 피드백 생성에 실패했습니다."),
+
+    // 심사 에러
+    REVIEW_NOT_FOUND(HttpStatus.NOT_FOUND, "REVIEW_001", "심사를 찾을 수 없습니다."),
+    REVIEW_ALREADY_EXISTS(HttpStatus.CONFLICT, "REVIEW_002", "이미 해당 프로젝트에 심사를 제출했습니다."),
+    SEASON_NOT_REVIEWING(HttpStatus.BAD_REQUEST, "REVIEW_003", "현재 심사 기간이 아닙니다."),
+    PROJECT_NOT_SUBMITTED(HttpStatus.BAD_REQUEST, "REVIEW_004", "제출되지 않은 프로젝트는 심사할 수 없습니다."),
+    CANNOT_REVIEW_OWN_PROJECT(HttpStatus.FORBIDDEN, "REVIEW_005", "자신의 프로젝트는 심사할 수 없습니다."),
+    INVALID_RUBRIC_SCORES(HttpStatus.BAD_REQUEST, "REVIEW_006", "모든 루브릭 항목에 점수를 입력해야 합니다.");
 
     private final HttpStatus httpStatus;
     private final String code;
