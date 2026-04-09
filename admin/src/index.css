@@ -1,6 +1,7 @@
 @import "tailwindcss";
 
 @theme {
+  /* Primary (Sky) */
   --color-primary-50: #f0f9ff;
   --color-primary-100: #e0f2fe;
   --color-primary-200: #bae6fd;
@@ -11,6 +12,46 @@
   --color-primary-700: #0369a1;
   --color-primary-800: #075985;
   --color-primary-900: #0c4a6e;
+
+  /* Gray */
+  --color-gray-50: #f9fafb;
+  --color-gray-100: #f3f4f6;
+  --color-gray-200: #e5e7eb;
+  --color-gray-300: #d1d5db;
+  --color-gray-400: #9ca3af;
+  --color-gray-500: #6b7280;
+  --color-gray-600: #4b5563;
+  --color-gray-700: #374151;
+  --color-gray-800: #1f2937;
+  --color-gray-900: #111827;
+
+  /* Red */
+  --color-red-50: #fef2f2;
+  --color-red-100: #fee2e2;
+  --color-red-600: #dc2626;
+  --color-red-700: #b91c1c;
+
+  /* Green */
+  --color-green-50: #f0fdf4;
+  --color-green-100: #dcfce7;
+  --color-green-600: #16a34a;
+  --color-green-700: #15803d;
+
+  /* Yellow */
+  --color-yellow-100: #fef9c3;
+  --color-yellow-700: #a16207;
+
+  /* Blue */
+  --color-blue-100: #dbeafe;
+  --color-blue-700: #1d4ed8;
+
+  /* Purple */
+  --color-purple-100: #f3e8ff;
+  --color-purple-700: #7e22ce;
+
+  /* Orange */
+  --color-orange-100: #ffedd5;
+  --color-orange-700: #c2410c;
 }
 
 /* Base */
