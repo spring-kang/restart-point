@@ -4,6 +4,25 @@ import { projectService, PROJECT_STATUS_LABELS, PROJECT_STATUS_COLORS } from '..
 import { teamService, JOB_ROLE_LABELS } from '../services/teamService';
 import type { Project, TeamMember, CheckpointCreateRequest, ProjectUpdateRequest } from '../types';
 
+const getErrorMessage = (error: unknown, fallback: string) => {
+  if (
+    typeof error === 'object' &&
+    error !== null &&
+    'response' in error &&
+    typeof error.response === 'object' &&
+    error.response !== null &&
+    'data' in error.response &&
+    typeof error.response.data === 'object' &&
+    error.response.data !== null &&
+    'message' in error.response.data &&
+    typeof error.response.data.message === 'string'
+  ) {
+    return error.response.data.message;
+  }
+
+  return fallback;
+};
+
 export default function ProjectWorkspace() {
   const { teamId } = useParams<{ teamId: string }>();
   const [project, setProject] = useState<Project | null>(null);
@@ -69,8 +88,8 @@ export default function ProjectWorkspace() {
         // 프로젝트가 없는 경우
         setProject(null);
       }
-    } catch (err: any) {
-      setError(err.response?.data?.message || '데이터를 불러오는데 실패했습니다.');
+    } catch (err: unknown) {
+      setError(getErrorMessage(err, '데이터를 불러오는데 실패했습니다.'));
     } finally {
       setLoading(false);
     }
@@ -97,8 +116,8 @@ export default function ProjectWorkspace() {
         notionUrl: '',
         demoUrl: '',
       });
-    } catch (err: any) {
-      setError(err.response?.data?.message || '프로젝트 생성에 실패했습니다.');
+    } catch (err: unknown) {
+      setError(getErrorMessage(err, '프로젝트 생성에 실패했습니다.'));
     }
   };
 
@@ -109,8 +128,8 @@ export default function ProjectWorkspace() {
       const updated = await projectService.updateProject(project.id, editForm);
       setProject(updated);
       setIsEditing(false);
-    } catch (err: any) {
-      setError(err.response?.data?.message || '프로젝트 수정에 실패했습니다.');
+    } catch (err: unknown) {
+      setError(getErrorMessage(err, '프로젝트 수정에 실패했습니다.'));
     }
   };
 
@@ -120,8 +139,8 @@ export default function ProjectWorkspace() {
     try {
       const updated = await projectService.startProject(project.id);
       setProject(updated);
-    } catch (err: any) {
-      setError(err.response?.data?.message || '프로젝트 시작에 실패했습니다.');
+    } catch (err: unknown) {
+      setError(getErrorMessage(err, '프로젝트 시작에 실패했습니다.'));
     }
   };
 
@@ -142,8 +161,8 @@ export default function ProjectWorkspace() {
         blockers: '',
         nextWeekPlan: '',
       });
-    } catch (err: any) {
-      setError(err.response?.data?.message || '체크포인트 생성에 실패했습니다.');
+    } catch (err: unknown) {
+      setError(getErrorMessage(err, '체크포인트 생성에 실패했습니다.'));
     }
   };
 
