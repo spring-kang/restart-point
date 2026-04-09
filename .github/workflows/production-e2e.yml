@@ -5,6 +5,9 @@ on:
     - cron: '0 * * * *'
   workflow_dispatch:
 
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
 jobs:
   production-smoke:
     name: User/Admin production smoke
@@ -20,7 +23,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '22'
           cache: 'npm'
           cache-dependency-path: frontend/package-lock.json
 
@@ -31,6 +34,7 @@ jobs:
         run: npx playwright install --with-deps chromium
 
       - name: Run production smoke tests
+        id: smoke
         env:
           E2E_TARGET: production
           USER_BASE_URL: https://restart-point.com
@@ -51,3 +55,62 @@ jobs:
             frontend/test-results
           if-no-files-found: ignore
           retention-days: 7
+
+      - name: Build workflow summary
+        if: always()
+        working-directory: .
+        env:
+          RUN_URL: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          ARTIFACT_URL: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}/artifacts
+        run: |
+          echo "## Production E2E Smoke" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Result: **${{ job.status }}**" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Trigger: \
+${{ github.event_name }}" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Run: $RUN_URL" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Artifacts: $ARTIFACT_URL" >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Notify Discord
+        if: always() && secrets.DISCORD_E2E_WEBHOOK_URL != ''
+        working-directory: .
+        env:
+          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_E2E_WEBHOOK_URL }}
+          RUN_URL: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          ARTIFACT_URL: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}/artifacts
+          JOB_STATUS: ${{ job.status }}
+          EVENT_NAME: ${{ github.event_name }}
+        run: |
+          if [ "$JOB_STATUS" = "success" ]; then
+            COLOR=5763719
+            STATUS_TEXT="✅ SUCCESS"
+          else
+            COLOR=15548997
+            STATUS_TEXT="❌ FAILURE"
+          fi
+
+          RUN_TIMESTAMP=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+
+          payload=$(cat <<EOF
+          {
+            "embeds": [
+              {
+                "title": "Production E2E Smoke - ${STATUS_TEXT}",
+                "color": ${COLOR},
+                "fields": [
+                  { "name": "Repository", "value": "${{ github.repository }}", "inline": true },
+                  { "name": "Trigger", "value": "${EVENT_NAME}", "inline": true },
+                  { "name": "Branch", "value": "${{ github.ref_name }}", "inline": true },
+                  { "name": "Run", "value": "[GitHub Actions Run](${RUN_URL})", "inline": false },
+                  { "name": "Artifacts", "value": "[Playwright Report](${ARTIFACT_URL})", "inline": false }
+                ],
+                "footer": {
+                  "text": "restart-point production monitoring"
+                },
+                "timestamp": "${RUN_TIMESTAMP}"
+              }
+            ]
+          }
+EOF
+          )
+
+          curl -sS -H "Content-Type: application/json" -X POST -d "$payload" "$DISCORD_WEBHOOK_URL"
