@@ -2,7 +2,8 @@ import { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { projectService, PROJECT_STATUS_LABELS, PROJECT_STATUS_COLORS } from '../services/projectService';
 import { teamService, JOB_ROLE_LABELS } from '../services/teamService';
-import type { Project, TeamMember, CheckpointCreateRequest, ProjectUpdateRequest, Checkpoint } from '../types';
+import { useAuthStore } from '../stores/authStore';
+import type { Project, TeamMember, Team, CheckpointCreateRequest, ProjectUpdateRequest, Checkpoint, ProjectSubmitRequest } from '../types';
 
 const getErrorMessage = (error: unknown, fallback: string) => {
   if (
@@ -25,13 +26,21 @@ const getErrorMessage = (error: unknown, fallback: string) => {
 
 export default function ProjectWorkspace() {
   const { teamId } = useParams<{ teamId: string }>();
+  const { user } = useAuthStore();
   const [project, setProject] = useState<Project | null>(null);
+  const [team, setTeam] = useState<Team | null>(null);
   const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isEditing, setIsEditing] = useState(false);
   const [showCheckpointModal, setShowCheckpointModal] = useState(false);
   const [regeneratingFeedback, setRegeneratingFeedback] = useState<number | null>(null);
+  const [showSubmitModal, setShowSubmitModal] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
+  const [submitForm, setSubmitForm] = useState<ProjectSubmitRequest>({
+    teamRetrospective: '',
+  });
 
   // 편집 폼 상태
   const [editForm, setEditForm] = useState<ProjectUpdateRequest>({
@@ -66,6 +75,10 @@ export default function ProjectWorkspace() {
     setError(null);
 
     try {
+      // 팀 정보 조회
+      const teamData = await teamService.getTeam(Number(teamId));
+      setTeam(teamData);
+
       // 팀 멤버 조회
       const members = await teamService.getTeamMembers(Number(teamId));
       setTeamMembers(members);
@@ -198,6 +211,33 @@ export default function ProjectWorkspace() {
     }
   };
 
+  const handleSubmitProject = async () => {
+    if (!project) return;
+
+    if (!submitForm.teamRetrospective.trim()) {
+      setSubmitError('팀 회고를 입력해주세요.');
+      return;
+    }
+
+    setSubmitting(true);
+    setSubmitError(null);
+    try {
+      const updated = await projectService.submitProject(project.id, submitForm);
+      setProject(updated);
+      setShowSubmitModal(false);
+      setSubmitForm({ teamRetrospective: '' });
+    } catch (err: unknown) {
+      setSubmitError(getErrorMessage(err, '프로젝트 제출에 실패했습니다.'));
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const isTeamLeader = user && team && user.id === team.leaderId;
+  const isProjectEditable = project?.status === 'DRAFT' || project?.status === 'IN_PROGRESS';
+  const isProjectSubmittable = project?.status === 'IN_PROGRESS' && isTeamLeader;
+  const isProjectSubmitted = project?.status === 'SUBMITTED' || project?.status === 'COMPLETED';
+
   if (loading) {
     return (
       <div className="flex justify-center items-center min-h-screen">
@@ -268,7 +308,15 @@ export default function ProjectWorkspace() {
                 프로젝트 시작
               </button>
             )}
-            {(project.status === 'DRAFT' || project.status === 'IN_PROGRESS') && (
+            {isProjectSubmittable && !isEditing && (
+              <button
+                onClick={() => setShowSubmitModal(true)}
+                className="px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition"
+              >
+                최종 제출
+              </button>
+            )}
+            {isProjectEditable && (
               isEditing ? (
                 <>
                   <button
@@ -295,6 +343,19 @@ export default function ProjectWorkspace() {
             )}
           </div>
         </div>
+
+        {/* 제출 완료 배너 */}
+        {isProjectSubmitted && (
+          <div className="mt-4 bg-green-50 border border-green-200 rounded-lg p-4 flex items-center gap-3">
+            <svg className="w-6 h-6 text-green-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            <div>
+              <p className="text-green-800 font-medium">프로젝트가 성공적으로 제출되었습니다</p>
+              <p className="text-green-600 text-sm">심사 결과를 기다려주세요. 제출된 프로젝트는 수정할 수 없습니다.</p>
+            </div>
+          </div>
+        )}
 
         {/* 외부 링크 */}
         <div className="flex flex-wrap gap-3 mt-4">
@@ -453,7 +514,7 @@ export default function ProjectWorkspace() {
       <div className="bg-white rounded-lg shadow p-6">
         <div className="flex justify-between items-center mb-4">
           <h3 className="text-lg font-semibold text-gray-900">주차별 체크포인트</h3>
-          {(project.status === 'DRAFT' || project.status === 'IN_PROGRESS') && (
+          {isProjectEditable && (
             <button
               onClick={openNewCheckpointModal}
               className="px-4 py-2 bg-sky-600 text-white rounded-lg hover:bg-sky-700 transition"
@@ -552,6 +613,21 @@ export default function ProjectWorkspace() {
         )}
       </div>
 
+      {/* 팀 회고 (제출 완료 후 표시) */}
+      {isProjectSubmitted && project.teamRetrospective && (
+        <div className="bg-white rounded-lg shadow p-6">
+          <div className="flex items-center gap-2 mb-4">
+            <svg className="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            <h3 className="text-lg font-semibold text-gray-900">팀 회고</h3>
+          </div>
+          <div className="bg-green-50 rounded-lg p-4 border border-green-100">
+            <p className="text-gray-700 whitespace-pre-wrap">{project.teamRetrospective}</p>
+          </div>
+        </div>
+      )}
+
       {/* 체크포인트 모달 */}
       {showCheckpointModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
@@ -625,6 +701,80 @@ export default function ProjectWorkspace() {
                 className="px-4 py-2 bg-sky-600 text-white rounded-lg hover:bg-sky-700 transition"
               >
                 저장
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 프로젝트 제출 모달 */}
+      {showSubmitModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg shadow-xl p-6 w-full max-w-lg mx-4">
+            <div className="flex items-center gap-2 mb-4">
+              <svg className="w-6 h-6 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              <h3 className="text-lg font-semibold text-gray-900">프로젝트 최종 제출</h3>
+            </div>
+
+            <div className="bg-orange-50 border border-orange-200 rounded-lg p-4 mb-4">
+              <p className="text-orange-800 text-sm">
+                <strong>주의:</strong> 프로젝트를 제출하면 더 이상 수정할 수 없습니다.
+                제출 전에 모든 내용을 다시 한번 확인해주세요.
+              </p>
+            </div>
+
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  팀 회고 <span className="text-red-500">*</span>
+                </label>
+                <textarea
+                  value={submitForm.teamRetrospective}
+                  onChange={(e) => setSubmitForm({ ...submitForm, teamRetrospective: e.target.value })}
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2 h-40 resize-none"
+                  placeholder="프로젝트를 진행하면서 배운 점, 아쉬운 점, 팀워크에 대한 회고를 작성해주세요."
+                />
+                <p className="text-xs text-gray-500 mt-1">
+                  프로젝트 진행 중 팀이 함께 경험한 것들을 자유롭게 작성해주세요.
+                </p>
+              </div>
+            </div>
+
+            {submitError && (
+              <div className="mt-4 p-3 bg-red-50 text-red-700 rounded-lg text-sm">
+                {submitError}
+              </div>
+            )}
+
+            <div className="flex justify-end gap-3 mt-6">
+              <button
+                onClick={() => {
+                  setShowSubmitModal(false);
+                  setSubmitError(null);
+                }}
+                className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition"
+                disabled={submitting}
+              >
+                취소
+              </button>
+              <button
+                onClick={handleSubmitProject}
+                className="px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition disabled:opacity-50 disabled:cursor-not-allowed"
+                disabled={submitting || !submitForm.teamRetrospective.trim()}
+              >
+                {submitting ? (
+                  <span className="flex items-center gap-2">
+                    <svg className="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    제출 중...
+                  </span>
+                ) : (
+                  '최종 제출'
+                )}
               </button>
             </div>
           </div>
