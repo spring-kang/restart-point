@@ -2,7 +2,8 @@ import { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { projectService, PROJECT_STATUS_LABELS, PROJECT_STATUS_COLORS } from '../services/projectService';
 import { teamService, JOB_ROLE_LABELS } from '../services/teamService';
-import type { Project, TeamMember, CheckpointCreateRequest, ProjectUpdateRequest, Checkpoint, ProjectSubmitRequest } from '../types';
+import { useAuthStore } from '../stores/authStore';
+import type { Project, TeamMember, Team, CheckpointCreateRequest, ProjectUpdateRequest, Checkpoint, ProjectSubmitRequest } from '../types';
 
 const getErrorMessage = (error: unknown, fallback: string) => {
   if (
@@ -25,7 +26,9 @@ const getErrorMessage = (error: unknown, fallback: string) => {
 
 export default function ProjectWorkspace() {
   const { teamId } = useParams<{ teamId: string }>();
+  const { user } = useAuthStore();
   const [project, setProject] = useState<Project | null>(null);
+  const [team, setTeam] = useState<Team | null>(null);
   const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -34,6 +37,7 @@ export default function ProjectWorkspace() {
   const [regeneratingFeedback, setRegeneratingFeedback] = useState<number | null>(null);
   const [showSubmitModal, setShowSubmitModal] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
   const [submitForm, setSubmitForm] = useState<ProjectSubmitRequest>({
     teamRetrospective: '',
   });
@@ -71,6 +75,10 @@ export default function ProjectWorkspace() {
     setError(null);
 
     try {
+      // 팀 정보 조회
+      const teamData = await teamService.getTeam(Number(teamId));
+      setTeam(teamData);
+
       // 팀 멤버 조회
       const members = await teamService.getTeamMembers(Number(teamId));
       setTeamMembers(members);
@@ -207,26 +215,27 @@ export default function ProjectWorkspace() {
     if (!project) return;
 
     if (!submitForm.teamRetrospective.trim()) {
-      setError('팀 회고를 입력해주세요.');
+      setSubmitError('팀 회고를 입력해주세요.');
       return;
     }
 
     setSubmitting(true);
-    setError(null);
+    setSubmitError(null);
     try {
       const updated = await projectService.submitProject(project.id, submitForm);
       setProject(updated);
       setShowSubmitModal(false);
       setSubmitForm({ teamRetrospective: '' });
     } catch (err: unknown) {
-      setError(getErrorMessage(err, '프로젝트 제출에 실패했습니다.'));
+      setSubmitError(getErrorMessage(err, '프로젝트 제출에 실패했습니다.'));
     } finally {
       setSubmitting(false);
     }
   };
 
+  const isTeamLeader = user && team && user.id === team.leaderId;
   const isProjectEditable = project?.status === 'DRAFT' || project?.status === 'IN_PROGRESS';
-  const isProjectSubmittable = project?.status === 'IN_PROGRESS';
+  const isProjectSubmittable = project?.status === 'IN_PROGRESS' && isTeamLeader;
   const isProjectSubmitted = project?.status === 'SUBMITTED' || project?.status === 'COMPLETED';
 
   if (loading) {
@@ -733,9 +742,9 @@ export default function ProjectWorkspace() {
               </div>
             </div>
 
-            {error && (
+            {submitError && (
               <div className="mt-4 p-3 bg-red-50 text-red-700 rounded-lg text-sm">
-                {error}
+                {submitError}
               </div>
             )}
 
@@ -743,7 +752,7 @@ export default function ProjectWorkspace() {
               <button
                 onClick={() => {
                   setShowSubmitModal(false);
-                  setError(null);
+                  setSubmitError(null);
                 }}
                 className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition"
                 disabled={submitting}
