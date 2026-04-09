@@ -3,11 +3,14 @@ package com.restartpoint.domain.user.service;
 import com.restartpoint.domain.user.dto.CertificationRequest;
 import com.restartpoint.domain.user.dto.UserResponse;
 import com.restartpoint.domain.user.entity.CertificationStatus;
+import com.restartpoint.domain.user.entity.Role;
 import com.restartpoint.domain.user.entity.User;
 import com.restartpoint.domain.user.repository.UserRepository;
 import com.restartpoint.global.exception.BusinessException;
 import com.restartpoint.global.exception.ErrorCode;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -87,5 +90,32 @@ public class UserService {
     private User findUserById(Long userId) {
         return userRepository.findById(userId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
+    }
+
+    // 관리자용: 회원 목록 조회 (검색, 필터링, 페이징)
+    public Page<UserResponse> getUsers(String keyword, Role role, CertificationStatus certificationStatus, Pageable pageable) {
+        return userRepository.findAllWithFilters(keyword, role, certificationStatus, pageable)
+                .map(UserResponse::from);
+    }
+
+    // 관리자용: 회원 상세 조회
+    public UserResponse getUser(Long userId) {
+        User user = findUserById(userId);
+        return UserResponse.from(user);
+    }
+
+    // 관리자용: 회원 역할 변경
+    @Transactional
+    public UserResponse updateUserRole(Long userId, Role newRole) {
+        User user = findUserById(userId);
+        user.updateRole(newRole);
+        return UserResponse.from(user);
+    }
+
+    // 관리자용: 회원 삭제
+    @Transactional
+    public void deleteUser(Long userId) {
+        User user = findUserById(userId);
+        userRepository.delete(user);
     }
 }

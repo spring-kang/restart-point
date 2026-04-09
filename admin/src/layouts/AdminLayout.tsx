@@ -1,10 +1,11 @@
 import { Link, Outlet, useLocation, useNavigate } from 'react-router-dom';
-import { LayoutDashboard, Calendar, UserCheck, LogOut, Menu, X } from 'lucide-react';
+import { LayoutDashboard, Calendar, UserCheck, Users, LogOut, Menu, X } from 'lucide-react';
 import { useState } from 'react';
 import { useAuthStore } from '../stores/authStore';
 
 const navigation = [
   { name: '대시보드', href: '/', icon: LayoutDashboard },
+  { name: '회원 관리', href: '/users', icon: Users },
   { name: '시즌 관리', href: '/seasons', icon: Calendar },
   { name: '인증 관리', href: '/certifications', icon: UserCheck },
 ];
