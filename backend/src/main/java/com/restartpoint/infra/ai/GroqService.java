@@ -7,8 +7,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
 
+import java.time.Duration;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.TimeoutException;
 
 @Service
 @RequiredArgsConstructor
@@ -22,6 +24,9 @@ public class GroqService {
 
     @Value("${groq.max-tokens}")
     private int maxTokens;
+
+    @Value("${groq.timeout-seconds:30}")
+    private int timeoutSeconds;
 
     /**
      * Groq API를 호출하여 메시지에 대한 응답을 받습니다.
@@ -44,6 +49,7 @@ public class GroqService {
                     .bodyValue(requestBody)
                     .retrieve()
                     .bodyToMono(Map.class)
+                    .timeout(Duration.ofSeconds(timeoutSeconds))
                     .block();
 
             if (response != null && response.containsKey("choices")) {
@@ -57,7 +63,11 @@ public class GroqService {
             log.error("Groq API 응답 형식 오류: {}", response);
             return null;
         } catch (Exception e) {
-            log.error("Groq API 호출 실패: {}", e.getMessage(), e);
+            if (e.getCause() instanceof TimeoutException) {
+                log.error("Groq API 호출 타임아웃 ({}초): {}", timeoutSeconds, e.getMessage());
+            } else {
+                log.error("Groq API 호출 실패: {}", e.getMessage(), e);
+            }
             return null;
         }
     }
@@ -81,6 +91,7 @@ public class GroqService {
                 .bodyValue(requestBody)
                 .retrieve()
                 .bodyToMono(Map.class)
+                .timeout(Duration.ofSeconds(timeoutSeconds))
                 .map(response -> {
                     if (response.containsKey("choices")) {
                         List<Map<String, Object>> choices = (List<Map<String, Object>>) response.get("choices");

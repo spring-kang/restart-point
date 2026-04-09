@@ -192,8 +192,7 @@ export default function ProjectWorkspace() {
         ),
       });
     } catch (err: unknown) {
-      const errorMessage = err instanceof Error ? err.message : 'AI 피드백 재생성에 실패했습니다.';
-      setError(errorMessage);
+      setError(getErrorMessage(err, 'AI 피드백 재생성에 실패했습니다.'));
     } finally {
       setRegeneratingFeedback(null);
     }

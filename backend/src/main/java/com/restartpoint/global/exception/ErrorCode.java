@@ -72,7 +72,8 @@ public enum ErrorCode {
 
     // AI 에러
     AI_SERVICE_ERROR(HttpStatus.SERVICE_UNAVAILABLE, "AI_001", "AI 서비스에 일시적인 문제가 발생했습니다."),
-    NO_MATCHING_CANDIDATES(HttpStatus.NOT_FOUND, "AI_002", "추천 가능한 후보가 없습니다.");
+    NO_MATCHING_CANDIDATES(HttpStatus.NOT_FOUND, "AI_002", "추천 가능한 후보가 없습니다."),
+    AI_FEEDBACK_GENERATION_FAILED(HttpStatus.SERVICE_UNAVAILABLE, "AI_003", "AI 피드백 생성에 실패했습니다.");
 
     private final HttpStatus httpStatus;
     private final String code;
