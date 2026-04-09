@@ -11,6 +11,7 @@ import SeasonDetail from './pages/SeasonDetail';
 import Teams from './pages/Teams';
 import TeamDetail from './pages/TeamDetail';
 import MyTeam from './pages/MyTeam';
+import ProjectWorkspace from './pages/ProjectWorkspace';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -37,6 +38,7 @@ function App() {
             <Route path="seasons/:seasonId/teams" element={<Teams />} />
             <Route path="teams" element={<Teams />} />
             <Route path="teams/:teamId" element={<TeamDetail />} />
+            <Route path="teams/:teamId/project" element={<ProjectWorkspace />} />
             <Route path="my-team" element={<MyTeam />} />
           </Route>
         </Routes>

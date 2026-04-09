@@ -173,3 +173,109 @@ export interface MemberRecommendation {
   scheduleRisk: ScheduleRisk;
   complementarySkills: string[];
 }
+
+// 프로젝트 관련 타입
+export type ProjectStatus = 'DRAFT' | 'IN_PROGRESS' | 'SUBMITTED' | 'COMPLETED';
+
+export interface Project {
+  id: number;
+  teamId: number;
+  teamName: string;
+  name: string;
+  problemDefinition?: string;
+  targetUsers?: string;
+  solution?: string;
+  aiUsage?: string;
+  figmaUrl?: string;
+  githubUrl?: string;
+  notionUrl?: string;
+  demoUrl?: string;
+  status: ProjectStatus;
+  teamRetrospective?: string;
+  checkpoints?: Checkpoint[];
+  createdAt: string;
+  updatedAt?: string;
+}
+
+export interface Checkpoint {
+  id: number;
+  projectId: number;
+  weekNumber: number;
+  weeklyGoal?: string;
+  progressSummary?: string;
+  blockers?: string;
+  nextWeekPlan?: string;
+  createdById?: number;
+  createdByName?: string;
+  aiFeedback?: string;
+  memberProgresses?: MemberProgress[];
+  createdAt: string;
+  updatedAt?: string;
+}
+
+export interface MemberProgress {
+  id: number;
+  userId: number;
+  userName: string;
+  jobRole: JobRole;
+  completedTasks?: string;
+  inProgressTasks?: string;
+  personalBlockers?: string;
+  contributionPercentage?: number;
+}
+
+// 프로젝트 요청 타입
+export interface ProjectCreateRequest {
+  teamId: number;
+  name: string;
+  problemDefinition?: string;
+  targetUsers?: string;
+  solution?: string;
+  aiUsage?: string;
+  figmaUrl?: string;
+  githubUrl?: string;
+  notionUrl?: string;
+  demoUrl?: string;
+}
+
+export interface ProjectUpdateRequest {
+  name: string;
+  problemDefinition?: string;
+  targetUsers?: string;
+  solution?: string;
+  aiUsage?: string;
+  figmaUrl?: string;
+  githubUrl?: string;
+  notionUrl?: string;
+  demoUrl?: string;
+}
+
+export interface ProjectSubmitRequest {
+  teamRetrospective: string;
+}
+
+export interface CheckpointCreateRequest {
+  weekNumber: number;
+  weeklyGoal?: string;
+  progressSummary?: string;
+  blockers?: string;
+  nextWeekPlan?: string;
+  memberProgresses?: MemberProgressRequest[];
+}
+
+export interface CheckpointUpdateRequest {
+  weeklyGoal?: string;
+  progressSummary?: string;
+  blockers?: string;
+  nextWeekPlan?: string;
+  memberProgresses?: MemberProgressRequest[];
+}
+
+export interface MemberProgressRequest {
+  userId: number;
+  jobRole: JobRole;
+  completedTasks?: string;
+  inProgressTasks?: string;
+  personalBlockers?: string;
+  contributionPercentage?: number;
+}
