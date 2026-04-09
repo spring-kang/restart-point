@@ -1,5 +1,10 @@
 {
   "rewrites": [
     { "source": "/(.*)", "destination": "/" }
-  ]
+  ],
+  "build": {
+    "env": {
+      "VITE_API_URL": "https://restart-point-backend-production.up.railway.app/api/v1"
+    }
+  }
 }
