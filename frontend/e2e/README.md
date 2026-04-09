@@ -42,6 +42,11 @@ npm run test:e2e -- production.smoke.spec.ts
 - `ADMIN_TEST_EMAIL`
 - `ADMIN_TEST_PASSWORD`
 
+선택 GitHub Secret:
+- `DISCORD_E2E_WEBHOOK_URL`
+  - 설정하면 매시간 실행 결과를 Discord로 전송한다.
+  - 성공/실패 여부, 실행 링크, artifact 링크를 함께 보낸다.
+
 ## 다음 추천 작업
 1. 테스트 시즌(`테스트 시즌`) 전용 write 시나리오 설계
 2. 회원가입/팀 생성/팀 지원/관리자 승인 테스트 분리
