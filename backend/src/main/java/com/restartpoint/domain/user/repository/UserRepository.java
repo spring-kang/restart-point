@@ -36,4 +36,7 @@ public interface UserRepository extends JpaRepository<User, Long> {
     @Modifying
     @Query("UPDATE User u SET u.emailVerified = true WHERE u.emailVerified = false")
     int markAllUsersAsEmailVerified();
+
+    // 관리자 수 조회
+    long countByRole(Role role);
 }

@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { adminService, type UserSearchParams } from '../services/adminService';
+import { useAuthStore } from '../stores/authStore';
 import type { User, UserRole, CertificationStatus, Page } from '../types';
 import {
   USER_ROLE_LABELS,
@@ -7,8 +8,10 @@ import {
   CERTIFICATION_STATUS_LABELS,
   CERTIFICATION_STATUS_COLORS,
 } from '../types';
+import axios from 'axios';
 
 export default function UsersPage() {
+  const { user: currentUser } = useAuthStore();
   const [users, setUsers] = useState<User[]>([]);
   const [page, setPage] = useState<Page<User> | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -69,7 +72,11 @@ export default function UsersPage() {
       fetchUsers();
     } catch (err) {
       console.error(err);
-      alert('역할 변경에 실패했습니다.');
+      if (axios.isAxiosError(err) && err.response?.data?.message) {
+        alert(err.response.data.message);
+      } else {
+        alert('역할 변경에 실패했습니다.');
+      }
     } finally {
       setIsProcessing(false);
     }
@@ -85,11 +92,18 @@ export default function UsersPage() {
       fetchUsers();
     } catch (err) {
       console.error(err);
-      alert('회원 삭제에 실패했습니다.');
+      if (axios.isAxiosError(err) && err.response?.data?.message) {
+        alert(err.response.data.message);
+      } else {
+        alert('회원 삭제에 실패했습니다.');
+      }
     } finally {
       setIsProcessing(false);
     }
   };
+
+  // 자기 자신인지 확인
+  const isSelf = (user: User) => currentUser?.id === user.id;
 
   const openRoleModal = (user: User) => {
     setSelectedUser(user);
@@ -216,18 +230,24 @@ export default function UsersPage() {
                     </td>
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-2">
-                        <button
-                          onClick={() => openRoleModal(user)}
-                          className="btn-secondary text-xs py-1 px-2"
-                        >
-                          역할 변경
-                        </button>
-                        <button
-                          onClick={() => openDeleteModal(user)}
-                          className="btn-danger text-xs py-1 px-2"
-                        >
-                          삭제
-                        </button>
+                        {isSelf(user) ? (
+                          <span className="text-xs text-gray-400">(본인)</span>
+                        ) : (
+                          <>
+                            <button
+                              onClick={() => openRoleModal(user)}
+                              className="btn-secondary text-xs py-1 px-2"
+                            >
+                              역할 변경
+                            </button>
+                            <button
+                              onClick={() => openDeleteModal(user)}
+                              className="btn-danger text-xs py-1 px-2"
+                            >
+                              삭제
+                            </button>
+                          </>
+                        )}
                       </div>
                     </td>
                   </tr>

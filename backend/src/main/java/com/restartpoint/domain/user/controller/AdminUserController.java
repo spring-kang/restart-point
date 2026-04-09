@@ -6,6 +6,9 @@ import com.restartpoint.domain.user.entity.CertificationStatus;
 import com.restartpoint.domain.user.entity.Role;
 import com.restartpoint.domain.user.service.UserService;
 import com.restartpoint.global.common.ApiResponse;
+import com.restartpoint.global.security.CurrentUser;
+import com.restartpoint.global.security.CustomUserPrincipal;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -45,17 +48,21 @@ public class AdminUserController {
     // 회원 역할 변경
     @PatchMapping("/{userId}/role")
     public ResponseEntity<ApiResponse<UserResponse>> updateUserRole(
+            @CurrentUser CustomUserPrincipal principal,
             @PathVariable Long userId,
-            @RequestBody UpdateRoleRequest request
+            @Valid @RequestBody UpdateRoleRequest request
     ) {
-        UserResponse response = userService.updateUserRole(userId, request.getRole());
+        UserResponse response = userService.updateUserRole(principal.getUserId(), userId, request.getRole());
         return ResponseEntity.ok(ApiResponse.success(response, "회원 역할이 변경되었습니다."));
     }
 
     // 회원 삭제
     @DeleteMapping("/{userId}")
-    public ResponseEntity<ApiResponse<Void>> deleteUser(@PathVariable Long userId) {
-        userService.deleteUser(userId);
+    public ResponseEntity<ApiResponse<Void>> deleteUser(
+            @CurrentUser CustomUserPrincipal principal,
+            @PathVariable Long userId
+    ) {
+        userService.deleteUser(principal.getUserId(), userId);
         return ResponseEntity.ok(ApiResponse.success(null, "회원이 삭제되었습니다."));
     }
 

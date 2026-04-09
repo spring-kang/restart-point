@@ -106,16 +106,50 @@ public class UserService {
 
     // 관리자용: 회원 역할 변경
     @Transactional
-    public UserResponse updateUserRole(Long userId, Role newRole) {
-        User user = findUserById(userId);
-        user.updateRole(newRole);
-        return UserResponse.from(user);
+    public UserResponse updateUserRole(Long currentUserId, Long targetUserId, Role newRole) {
+        // 자기 자신 강등 방지
+        if (currentUserId.equals(targetUserId) && newRole == Role.USER) {
+            throw new BusinessException(ErrorCode.INVALID_INPUT_VALUE, "자기 자신의 관리자 권한을 해제할 수 없습니다.");
+        }
+
+        User targetUser = findUserById(targetUserId);
+
+        // 마지막 관리자 강등 방지
+        if (targetUser.getRole() == Role.ADMIN && newRole == Role.USER) {
+            long adminCount = userRepository.countByRole(Role.ADMIN);
+            if (adminCount <= 1) {
+                throw new BusinessException(ErrorCode.INVALID_INPUT_VALUE, "최소 1명의 관리자가 필요합니다. 마지막 관리자의 권한을 해제할 수 없습니다.");
+            }
+        }
+
+        targetUser.updateRole(newRole);
+        return UserResponse.from(targetUser);
     }
 
     // 관리자용: 회원 삭제
     @Transactional
-    public void deleteUser(Long userId) {
-        User user = findUserById(userId);
-        userRepository.delete(user);
+    public void deleteUser(Long currentUserId, Long targetUserId) {
+        // 자기 자신 삭제 방지
+        if (currentUserId.equals(targetUserId)) {
+            throw new BusinessException(ErrorCode.INVALID_INPUT_VALUE, "자기 자신을 삭제할 수 없습니다.");
+        }
+
+        User targetUser = findUserById(targetUserId);
+
+        // 마지막 관리자 삭제 방지
+        if (targetUser.getRole() == Role.ADMIN) {
+            long adminCount = userRepository.countByRole(Role.ADMIN);
+            if (adminCount <= 1) {
+                throw new BusinessException(ErrorCode.INVALID_INPUT_VALUE, "최소 1명의 관리자가 필요합니다. 마지막 관리자를 삭제할 수 없습니다.");
+            }
+        }
+
+        try {
+            userRepository.delete(targetUser);
+            userRepository.flush(); // 즉시 삭제 실행하여 FK 오류 감지
+        } catch (Exception e) {
+            throw new BusinessException(ErrorCode.INVALID_INPUT_VALUE,
+                "회원을 삭제할 수 없습니다. 프로필이나 팀 정보 등 연관된 데이터가 있습니다.");
+        }
     }
 }
