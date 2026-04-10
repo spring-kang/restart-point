@@ -279,3 +279,69 @@ export interface MemberProgressRequest {
   personalBlockers?: string;
   contributionPercentage?: number;
 }
+
+// 심사 관련 타입
+export type ReviewType = 'EXPERT' | 'CANDIDATE';
+
+export type RubricItem =
+  | 'PROBLEM_DEFINITION'
+  | 'USER_VALUE'
+  | 'AI_USAGE'
+  | 'UX_COMPLETENESS'
+  | 'TECHNICAL_FEASIBILITY'
+  | 'COLLABORATION';
+
+export interface RubricItemInfo {
+  item: RubricItem;
+  label: string;
+  description: string;
+}
+
+export interface ReviewScore {
+  id?: number;
+  rubricItem: RubricItem;
+  rubricLabel?: string;
+  rubricDescription?: string;
+  score: number;
+  comment?: string;
+}
+
+export interface Review {
+  id: number;
+  projectId: number;
+  projectName: string;
+  reviewerId: number;
+  reviewerName: string;
+  reviewType: ReviewType;
+  overallComment?: string;
+  averageScore: number;
+  totalScore: number;
+  scores?: ReviewScore[];
+  submittedAt: string;
+}
+
+export interface ReviewSummary {
+  projectId: number;
+  projectName: string;
+  totalReviewCount: number;
+  expertReviewCount: number;
+  candidateReviewCount: number;
+  weightedAverageScore: number;
+  expertAverageScore: number;
+  candidateAverageScore: number;
+  rubricAverages: Record<RubricItem, number>;
+  expertRubricAverages: Record<RubricItem, number>;
+  candidateRubricAverages: Record<RubricItem, number>;
+}
+
+// 심사 요청 타입
+export interface ReviewScoreRequest {
+  rubricItem: RubricItem;
+  score: number;
+  comment?: string;
+}
+
+export interface ReviewCreateRequest {
+  scores: ReviewScoreRequest[];
+  overallComment?: string;
+}
