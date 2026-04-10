@@ -139,7 +139,7 @@ export default function Certification() {
         setIsUploading(true);
         try {
           certificateUrl = await fileService.uploadFile(selectedFile, 'certificates');
-        } catch (uploadErr) {
+        } catch {
           setError('파일 업로드에 실패했습니다. 다시 시도해주세요.');
           setIsLoading(false);
           setIsUploading(false);
