@@ -10,6 +10,7 @@ import com.restartpoint.domain.review.entity.ReviewScore;
 import com.restartpoint.domain.review.entity.ReviewType;
 import com.restartpoint.domain.review.entity.RubricItem;
 import com.restartpoint.domain.review.repository.ReviewRepository;
+import com.restartpoint.domain.season.repository.SeasonRepository;
 import com.restartpoint.global.exception.BusinessException;
 import com.restartpoint.global.exception.ErrorCode;
 import com.restartpoint.infra.ai.AiReviewAssistantService;
@@ -19,7 +20,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.*;
-import java.util.stream.Collectors;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 /**
  * 심사 분석 서비스
@@ -33,10 +36,14 @@ public class ReviewAssistantService {
 
     private final ReviewRepository reviewRepository;
     private final ProjectRepository projectRepository;
+    private final SeasonRepository seasonRepository;
     private final AiReviewAssistantService aiReviewAssistantService;
 
     // 이상치 판단 기준: 평균에서 이 값 이상 벗어나면 이상치
     private static final double OUTLIER_THRESHOLD = 1.5;
+
+    // AI 호출을 위한 스레드 풀 (병렬 처리)
+    private final ExecutorService aiExecutor = Executors.newFixedThreadPool(5);
 
     /**
      * 프로젝트 심사 분석 조회
@@ -68,22 +75,45 @@ public class ReviewAssistantService {
         Map<RubricItem, Double> expertRubricAvg = calculateRubricAverages(expertReviews);
         Map<RubricItem, Double> candidateRubricAvg = calculateRubricAverages(candidateReviews);
 
-        // 이상치 감지
-        List<OutlierScore> outliers = detectOutliers(allReviews, rubricAvg, project);
+        // AI 분석을 병렬로 실행
+        CompletableFuture<String> commentSummaryFuture = CompletableFuture.supplyAsync(
+                () -> aiReviewAssistantService.summarizeComments(allReviews, project.getName()),
+                aiExecutor);
 
-        // AI 분석
-        String commentSummary = aiReviewAssistantService.summarizeComments(
-                allReviews, project.getName());
+        CompletableFuture<Map<String, List<String>>> strengthsWeaknessesFuture = CompletableFuture.supplyAsync(
+                () -> aiReviewAssistantService.analyzeStrengthsAndWeaknesses(allReviews, project.getName(), rubricAvg),
+                aiExecutor);
 
-        Map<String, List<String>> strengthsWeaknesses = aiReviewAssistantService
-                .analyzeStrengthsAndWeaknesses(allReviews, project.getName(), rubricAvg);
+        CompletableFuture<String> expertVsCandidateFuture = CompletableFuture.supplyAsync(
+                () -> aiReviewAssistantService.analyzeExpertVsCandidateDifference(
+                        expertAvg, candidateAvg, expertRubricAvg, candidateRubricAvg),
+                aiExecutor);
 
-        String expertVsCandidateAnalysis = aiReviewAssistantService
-                .analyzeExpertVsCandidateDifference(expertAvg, candidateAvg, expertRubricAvg, candidateRubricAvg);
+        // 루브릭별 분석 (병렬 처리)
+        CompletableFuture<List<RubricAnalysis>> rubricAnalysesFuture = CompletableFuture.supplyAsync(
+                () -> buildRubricAnalyses(allReviews, rubricAvg, expertRubricAvg, candidateRubricAvg),
+                aiExecutor);
 
-        // 루브릭별 분석
-        List<RubricAnalysis> rubricAnalyses = buildRubricAnalyses(
-                allReviews, rubricAvg, expertRubricAvg, candidateRubricAvg);
+        // 이상치 감지 (병렬 처리)
+        CompletableFuture<List<OutlierScore>> outliersFuture = CompletableFuture.supplyAsync(
+                () -> detectOutliers(allReviews, rubricAvg, project),
+                aiExecutor);
+
+        // 모든 AI 분석 완료 대기
+        CompletableFuture.allOf(
+                commentSummaryFuture,
+                strengthsWeaknessesFuture,
+                expertVsCandidateFuture,
+                rubricAnalysesFuture,
+                outliersFuture
+        ).join();
+
+        // 결과 추출
+        String commentSummary = commentSummaryFuture.join();
+        Map<String, List<String>> strengthsWeaknesses = strengthsWeaknessesFuture.join();
+        String expertVsCandidateAnalysis = expertVsCandidateFuture.join();
+        List<RubricAnalysis> rubricAnalyses = rubricAnalysesFuture.join();
+        List<OutlierScore> outliers = outliersFuture.join();
 
         return ReviewAnalysisResponse.builder()
                 .projectId(projectId)
@@ -109,10 +139,27 @@ public class ReviewAssistantService {
      * 시즌 전체 심사 분석 요약
      */
     public List<ReviewAnalysisResponse> analyzeSeasonReviews(Long seasonId) {
+        // 시즌 존재 여부 검증
+        if (!seasonRepository.existsById(seasonId)) {
+            throw new BusinessException(ErrorCode.SEASON_NOT_FOUND);
+        }
+
         List<Project> projects = projectRepository.findAllBySeasonId(seasonId);
 
-        return projects.stream()
-                .map(project -> analyzeProjectReviews(project.getId()))
+        if (projects.isEmpty()) {
+            return List.of();
+        }
+
+        // 프로젝트별 분석을 병렬로 실행
+        List<CompletableFuture<ReviewAnalysisResponse>> futures = projects.stream()
+                .map(project -> CompletableFuture.supplyAsync(
+                        () -> analyzeProjectReviews(project.getId()),
+                        aiExecutor))
+                .toList();
+
+        // 모든 분석 완료 대기 후 결과 수집
+        return futures.stream()
+                .map(CompletableFuture::join)
                 .filter(analysis -> analysis.getTotalReviewCount() > 0)
                 .toList();
     }
@@ -167,7 +214,8 @@ public class ReviewAssistantService {
     private List<OutlierScore> detectOutliers(List<Review> reviews,
             Map<RubricItem, Double> rubricAverages, Project project) {
 
-        List<OutlierScore> outliers = new ArrayList<>();
+        // 먼저 이상치 기본 정보 수집
+        List<OutlierScore> baseOutliers = new ArrayList<>();
 
         for (Review review : reviews) {
             for (ReviewScore score : review.getScores()) {
@@ -175,7 +223,7 @@ public class ReviewAssistantService {
                 double deviation = score.getScore() - avg;
 
                 if (Math.abs(deviation) >= OUTLIER_THRESHOLD) {
-                    OutlierScore outlier = OutlierScore.builder()
+                    baseOutliers.add(OutlierScore.builder()
                             .reviewId(review.getId())
                             .reviewerName(review.getReviewer().getName())
                             .reviewType(review.getReviewType().name())
@@ -183,13 +231,29 @@ public class ReviewAssistantService {
                             .score(score.getScore())
                             .averageScore(round(avg))
                             .deviation(round(deviation))
-                            .build();
+                            .build());
+                }
+            }
+        }
 
-                    // AI로 원인 분석 (비동기로 하면 더 좋지만 일단 동기로)
-                    String projectContext = String.format("%s - %s",
-                            project.getName(), project.getProblemDefinition());
+        // 편차 절대값 기준 내림차순 정렬하여 상위 10개만 선택
+        List<OutlierScore> topOutliers = baseOutliers.stream()
+                .sorted((a, b) -> Double.compare(Math.abs(b.getDeviation()), Math.abs(a.getDeviation())))
+                .limit(10)
+                .toList();
+
+        if (topOutliers.isEmpty()) {
+            return List.of();
+        }
+
+        // AI로 원인 분석 (병렬 처리)
+        String projectContext = String.format("%s - %s",
+                project.getName(), project.getProblemDefinition());
+
+        List<CompletableFuture<OutlierScore>> futures = topOutliers.stream()
+                .map(outlier -> CompletableFuture.supplyAsync(() -> {
                     String reason = aiReviewAssistantService.analyzeOutlierReason(outlier, projectContext);
-                    outlier = OutlierScore.builder()
+                    return OutlierScore.builder()
                             .reviewId(outlier.getReviewId())
                             .reviewerName(outlier.getReviewerName())
                             .reviewType(outlier.getReviewType())
@@ -199,17 +263,12 @@ public class ReviewAssistantService {
                             .deviation(outlier.getDeviation())
                             .possibleReason(reason)
                             .build();
+                }, aiExecutor))
+                .toList();
 
-                    outliers.add(outlier);
-                }
-            }
-        }
-
-        // 편차 절대값 기준 내림차순 정렬 (가장 큰 이상치 먼저)
-        outliers.sort((a, b) -> Double.compare(Math.abs(b.getDeviation()), Math.abs(a.getDeviation())));
-
-        // 상위 10개만 반환
-        return outliers.stream().limit(10).toList();
+        return futures.stream()
+                .map(CompletableFuture::join)
+                .toList();
     }
 
     private List<RubricAnalysis> buildRubricAnalyses(
@@ -218,36 +277,39 @@ public class ReviewAssistantService {
             Map<RubricItem, Double> expertRubricAvg,
             Map<RubricItem, Double> candidateRubricAvg) {
 
-        List<RubricAnalysis> analyses = new ArrayList<>();
+        // 각 루브릭 항목에 대해 병렬로 AI 분석 실행
+        List<CompletableFuture<RubricAnalysis>> futures = Arrays.stream(RubricItem.values())
+                .map(item -> CompletableFuture.supplyAsync(() -> {
+                    double avg = rubricAvg.getOrDefault(item, 0.0);
+                    double expertAvg = expertRubricAvg.getOrDefault(item, 0.0);
+                    double candidateAvg = candidateRubricAvg.getOrDefault(item, 0.0);
 
-        for (RubricItem item : RubricItem.values()) {
-            double avg = rubricAvg.getOrDefault(item, 0.0);
-            double expertAvg = expertRubricAvg.getOrDefault(item, 0.0);
-            double candidateAvg = candidateRubricAvg.getOrDefault(item, 0.0);
+                    // 해당 항목 관련 코멘트 수집
+                    List<String> relatedComments = reviews.stream()
+                            .flatMap(r -> r.getScores().stream())
+                            .filter(s -> s.getRubricItem() == item && s.getComment() != null)
+                            .map(ReviewScore::getComment)
+                            .filter(c -> !c.isBlank())
+                            .toList();
 
-            // 해당 항목 관련 코멘트 수집
-            List<String> relatedComments = reviews.stream()
-                    .flatMap(r -> r.getScores().stream())
-                    .filter(s -> s.getRubricItem() == item && s.getComment() != null)
-                    .map(ReviewScore::getComment)
-                    .filter(c -> !c.isBlank())
-                    .toList();
+                    String aiInsight = aiReviewAssistantService.generateRubricInsight(
+                            item, avg, expertAvg, candidateAvg, relatedComments);
 
-            String aiInsight = aiReviewAssistantService.generateRubricInsight(
-                    item, avg, expertAvg, candidateAvg, relatedComments);
+                    return RubricAnalysis.builder()
+                            .rubricItem(item)
+                            .label(item.getLabel())
+                            .averageScore(round(avg))
+                            .expertAverageScore(round(expertAvg))
+                            .candidateAverageScore(round(candidateAvg))
+                            .scoreDifference(round(expertAvg - candidateAvg))
+                            .aiInsight(aiInsight)
+                            .build();
+                }, aiExecutor))
+                .toList();
 
-            analyses.add(RubricAnalysis.builder()
-                    .rubricItem(item)
-                    .label(item.getLabel())
-                    .averageScore(round(avg))
-                    .expertAverageScore(round(expertAvg))
-                    .candidateAverageScore(round(candidateAvg))
-                    .scoreDifference(round(expertAvg - candidateAvg))
-                    .aiInsight(aiInsight)
-                    .build());
-        }
-
-        return analyses;
+        return futures.stream()
+                .map(CompletableFuture::join)
+                .toList();
     }
 
     private double round(double value) {

@@ -7,6 +7,7 @@ import DashboardPage from './pages/Dashboard';
 import SeasonsPage from './pages/Seasons';
 import CertificationsPage from './pages/Certifications';
 import UsersPage from './pages/Users';
+import ReviewAnalysisPage from './pages/ReviewAnalysis';
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { isAuthenticated, isLoading } = useAuthStore();
@@ -48,6 +49,7 @@ function App() {
           <Route index element={<DashboardPage />} />
           <Route path="users" element={<UsersPage />} />
           <Route path="seasons" element={<SeasonsPage />} />
+          <Route path="seasons/:seasonId/review-analysis" element={<ReviewAnalysisPage />} />
           <Route path="certifications" element={<CertificationsPage />} />
         </Route>
         <Route path="*" element={<Navigate to="/" replace />} />
