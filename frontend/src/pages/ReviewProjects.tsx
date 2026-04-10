@@ -62,7 +62,7 @@ export default function ReviewProjects() {
       ]);
       setProjects(projectsData);
       setMyReviews(reviewsData);
-    } catch (err) {
+    } catch {
       setError('데이터를 불러오는데 실패했습니다.');
     } finally {
       setLoading(false);
