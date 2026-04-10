@@ -82,7 +82,11 @@ public enum ErrorCode {
     PROJECT_NOT_SUBMITTED(HttpStatus.BAD_REQUEST, "REVIEW_004", "제출되지 않은 프로젝트는 심사할 수 없습니다."),
     CANNOT_REVIEW_OWN_PROJECT(HttpStatus.FORBIDDEN, "REVIEW_005", "자신의 프로젝트는 심사할 수 없습니다."),
     INVALID_RUBRIC_SCORES(HttpStatus.BAD_REQUEST, "REVIEW_006", "모든 루브릭 항목에 점수를 입력해야 합니다."),
-    NOT_CERTIFIED_REVIEWER(HttpStatus.FORBIDDEN, "REVIEW_007", "수료 인증이 완료된 사용자만 심사할 수 있습니다.");
+    NOT_CERTIFIED_REVIEWER(HttpStatus.FORBIDDEN, "REVIEW_007", "수료 인증이 완료된 사용자만 심사할 수 있습니다."),
+
+    // 성장 리포트 에러
+    REPORT_NOT_FOUND(HttpStatus.NOT_FOUND, "REPORT_001", "성장 리포트를 찾을 수 없습니다."),
+    REPORT_GENERATION_FAILED(HttpStatus.SERVICE_UNAVAILABLE, "REPORT_002", "리포트 생성에 실패했습니다.");
 
     private final HttpStatus httpStatus;
     private final String code;

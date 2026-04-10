@@ -146,6 +146,51 @@ public class ReviewService {
     }
 
     /**
+     * 프로젝트 심사 요약 (내부 호출용 - 권한 검증 없음)
+     * GrowthReportService 등 내부 서비스에서 사용
+     */
+    public ReviewSummaryResponse getReviewSummaryInternal(Long projectId) {
+        Project project = findProjectById(projectId);
+        Season season = project.getTeam().getSeason();
+
+        List<Review> allReviews = reviewRepository.findByProjectIdWithReviewer(projectId);
+        if (allReviews.isEmpty()) {
+            return null;
+        }
+
+        List<Review> expertReviews = allReviews.stream()
+                .filter(r -> r.getReviewType() == ReviewType.EXPERT)
+                .toList();
+        List<Review> candidateReviews = allReviews.stream()
+                .filter(r -> r.getReviewType() == ReviewType.CANDIDATE)
+                .toList();
+
+        double expertAvg = calculateAverageScore(expertReviews);
+        double candidateAvg = calculateAverageScore(candidateReviews);
+        int expertWeight = season.getExpertReviewWeight();
+        int candidateWeight = season.getCandidateReviewWeight();
+        double weightedAvg = calculateWeightedAverage(expertAvg, candidateAvg, expertWeight, candidateWeight);
+
+        Map<RubricItem, Double> rubricAverages = calculateRubricAverages(allReviews);
+        Map<RubricItem, Double> expertRubricAverages = calculateRubricAverages(expertReviews);
+        Map<RubricItem, Double> candidateRubricAverages = calculateRubricAverages(candidateReviews);
+
+        return ReviewSummaryResponse.builder()
+                .projectId(projectId)
+                .projectName(project.getName())
+                .totalReviewCount(allReviews.size())
+                .expertReviewCount(expertReviews.size())
+                .candidateReviewCount(candidateReviews.size())
+                .weightedAverageScore(Math.round(weightedAvg * 100.0) / 100.0)
+                .expertAverageScore(Math.round(expertAvg * 100.0) / 100.0)
+                .candidateAverageScore(Math.round(candidateAvg * 100.0) / 100.0)
+                .rubricAverages(rubricAverages)
+                .expertRubricAverages(expertRubricAverages)
+                .candidateRubricAverages(candidateRubricAverages)
+                .build();
+    }
+
+    /**
      * 심사 가능한 프로젝트 목록 조회
      */
     public List<Project> getReviewableProjects(Long userId, Long seasonId) {
