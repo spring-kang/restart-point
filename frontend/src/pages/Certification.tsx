@@ -1,12 +1,14 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Award, Building2, Calendar, Link as LinkIcon, CheckCircle, Clock, XCircle, RefreshCw } from 'lucide-react';
+import { Award, Building2, Calendar, Upload, CheckCircle, Clock, XCircle, RefreshCw, X, FileImage } from 'lucide-react';
 import { useAuthStore } from '../stores/authStore';
 import { authService } from '../services/authService';
+import { fileService } from '../services/fileService';
 
 export default function Certification() {
   const navigate = useNavigate();
   const { user, updateUser, isAuthenticated } = useAuthStore();
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [formData, setFormData] = useState({
     bootcampName: '',
@@ -14,8 +16,11 @@ export default function Certification() {
     graduationDate: '',
     certificateUrl: '',
   });
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
 
   // 비로그인 사용자 리다이렉트
@@ -57,13 +62,103 @@ export default function Certification() {
     setError('');
   };
 
+  // 파일 선택 핸들러
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // 파일 크기 검사 (10MB)
+    if (file.size > 10 * 1024 * 1024) {
+      setError('파일 크기는 10MB를 초과할 수 없습니다.');
+      return;
+    }
+
+    // 허용된 파일 형식 검사
+    const allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'application/pdf'];
+    if (!allowedTypes.includes(file.type)) {
+      setError('허용되지 않는 파일 형식입니다. (허용: jpg, png, gif, webp, pdf)');
+      return;
+    }
+
+    setSelectedFile(file);
+    setError('');
+
+    // 이미지 미리보기 생성
+    if (file.type.startsWith('image/')) {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        setPreviewUrl(e.target?.result as string);
+      };
+      reader.readAsDataURL(file);
+    } else {
+      setPreviewUrl(null);
+    }
+  };
+
+  // 파일 선택 취소
+  const handleFileRemove = () => {
+    setSelectedFile(null);
+    setPreviewUrl(null);
+    setFormData({ ...formData, certificateUrl: '' });
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  };
+
+  // 드래그 앤 드롭 핸들러
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    const file = e.dataTransfer.files?.[0];
+    if (file) {
+      const input = fileInputRef.current;
+      if (input) {
+        const dataTransfer = new DataTransfer();
+        dataTransfer.items.add(file);
+        input.files = dataTransfer.files;
+        handleFileSelect({ target: { files: dataTransfer.files } } as React.ChangeEvent<HTMLInputElement>);
+      }
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
     setError('');
 
     try {
-      const updatedUser = await authService.requestCertification(formData);
+      let certificateUrl = formData.certificateUrl;
+
+      // 파일이 선택되었으면 먼저 업로드
+      if (selectedFile && !certificateUrl) {
+        setIsUploading(true);
+        try {
+          certificateUrl = await fileService.uploadFile(selectedFile, 'certificates');
+        } catch (uploadErr) {
+          setError('파일 업로드에 실패했습니다. 다시 시도해주세요.');
+          setIsLoading(false);
+          setIsUploading(false);
+          return;
+        }
+        setIsUploading(false);
+      }
+
+      if (!certificateUrl) {
+        setError('수료증 파일을 업로드해주세요.');
+        setIsLoading(false);
+        return;
+      }
+
+      // 인증 요청
+      const updatedUser = await authService.requestCertification({
+        ...formData,
+        certificateUrl,
+      });
       updateUser(updatedUser);
       navigate('/');
     } catch (err: unknown) {
@@ -229,31 +324,70 @@ export default function Certification() {
           </div>
 
           <div>
-            <label htmlFor="certificateUrl" className="label">수료증 URL</label>
-            <div className="relative">
-              <LinkIcon className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-neutral-400" />
-              <input
-                type="url"
-                id="certificateUrl"
-                name="certificateUrl"
-                value={formData.certificateUrl}
-                onChange={handleChange}
-                className="input-field pl-12"
-                placeholder="수료증 이미지 또는 문서 URL"
-                required
-              />
-            </div>
-            <p className="mt-1.5 text-xs text-neutral-500">
-              Google Drive, Dropbox 등에 업로드한 수료증 링크를 입력해주세요.
-            </p>
+            <label className="label">수료증 업로드</label>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/jpeg,image/png,image/gif,image/webp,application/pdf"
+              onChange={handleFileSelect}
+              className="hidden"
+            />
+
+            {!selectedFile ? (
+              <div
+                onClick={() => fileInputRef.current?.click()}
+                onDragOver={handleDragOver}
+                onDrop={handleDrop}
+                className="border-2 border-dashed border-neutral-300 rounded-xl p-8 text-center cursor-pointer hover:border-primary-400 hover:bg-primary-50/50 transition-colors"
+              >
+                <Upload className="w-10 h-10 text-neutral-400 mx-auto mb-3" />
+                <p className="text-neutral-600 mb-1">
+                  클릭하거나 파일을 드래그하여 업로드
+                </p>
+                <p className="text-xs text-neutral-400">
+                  JPG, PNG, GIF, WEBP, PDF (최대 10MB)
+                </p>
+              </div>
+            ) : (
+              <div className="border border-neutral-200 rounded-xl p-4">
+                <div className="flex items-start gap-4">
+                  {previewUrl ? (
+                    <img
+                      src={previewUrl}
+                      alt="수료증 미리보기"
+                      className="w-20 h-20 object-cover rounded-lg"
+                    />
+                  ) : (
+                    <div className="w-20 h-20 bg-neutral-100 rounded-lg flex items-center justify-center">
+                      <FileImage className="w-8 h-8 text-neutral-400" />
+                    </div>
+                  )}
+                  <div className="flex-1 min-w-0">
+                    <p className="font-medium text-neutral-900 truncate">
+                      {selectedFile.name}
+                    </p>
+                    <p className="text-sm text-neutral-500">
+                      {(selectedFile.size / 1024 / 1024).toFixed(2)} MB
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={handleFileRemove}
+                    className="p-2 text-neutral-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+                  >
+                    <X className="w-5 h-5" />
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
 
           <button
             type="submit"
-            disabled={isLoading}
+            disabled={isLoading || !selectedFile}
             className="btn-primary w-full disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            {isLoading ? '요청 중...' : '수료 인증 요청'}
+            {isUploading ? '파일 업로드 중...' : isLoading ? '요청 중...' : '수료 인증 요청'}
           </button>
         </form>
       </div>

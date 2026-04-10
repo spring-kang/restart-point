@@ -32,6 +32,9 @@ dependencies {
     // Resend (이메일 발송)
     implementation 'com.resend:resend-java:3.0.2'
 
+    // AWS S3
+    implementation 'software.amazon.awssdk:s3:2.25.16'
+
     // JWT
     implementation 'io.jsonwebtoken:jjwt-api:0.12.5'
     runtimeOnly 'io.jsonwebtoken:jjwt-impl:0.12.5'
