@@ -57,4 +57,11 @@ public interface NotificationRepository extends JpaRepository<Notification, Long
     @Modifying
     @Query("DELETE FROM Notification n WHERE n.user.id = :userId AND n.createdAt < CURRENT_TIMESTAMP - 30 DAY")
     void deleteOldNotifications(@Param("userId") Long userId);
+
+    /**
+     * 사용자의 모든 알림 삭제 (회원 삭제 시)
+     */
+    @Modifying
+    @Query("DELETE FROM Notification n WHERE n.user.id = :userId")
+    void deleteAllByUserId(@Param("userId") Long userId);
 }

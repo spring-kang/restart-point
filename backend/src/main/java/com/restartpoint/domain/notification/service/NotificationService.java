@@ -129,6 +129,15 @@ public class NotificationService {
         log.info("알림 삭제: notificationId={}", notificationId);
     }
 
+    /**
+     * 사용자의 모든 알림 삭제 (회원 삭제 시 사용)
+     */
+    @Transactional
+    public void deleteAllByUserId(Long userId) {
+        notificationRepository.deleteAllByUserId(userId);
+        log.info("사용자 알림 전체 삭제: userId={}", userId);
+    }
+
     // ========== 알림 생성 헬퍼 메서드 ==========
 
     /**

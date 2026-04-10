@@ -1,6 +1,6 @@
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../../stores/authStore';
-import { Menu, X, User, LogOut, ChevronDown } from 'lucide-react';
+import { Menu, X, User, LogOut, ChevronDown, Bell } from 'lucide-react';
 import { useState } from 'react';
 import NotificationDropdown from '../notification/NotificationDropdown';
 
@@ -155,6 +155,14 @@ export default function Header() {
                     onClick={() => setIsMobileMenuOpen(false)}
                   >
                     내 팀
+                  </Link>
+                  <Link
+                    to="/notifications"
+                    className="flex items-center gap-2 px-4 py-2 text-neutral-600 hover:bg-neutral-50 rounded-lg"
+                    onClick={() => setIsMobileMenuOpen(false)}
+                  >
+                    <Bell className="w-4 h-4" />
+                    알림
                   </Link>
                   <Link
                     to="/profile"

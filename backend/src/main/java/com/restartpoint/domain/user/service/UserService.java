@@ -155,6 +155,9 @@ public class UserService {
         }
 
         try {
+            // 사용자의 알림 먼저 삭제 (FK 제약조건 해결)
+            notificationService.deleteAllByUserId(targetUserId);
+
             userRepository.delete(targetUser);
             userRepository.flush(); // 즉시 삭제 실행하여 FK 오류 감지
         } catch (Exception e) {

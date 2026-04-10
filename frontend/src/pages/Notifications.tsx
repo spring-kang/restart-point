@@ -12,6 +12,7 @@ export default function NotificationsPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [page, setPage] = useState(0);
   const [hasMore, setHasMore] = useState(true);
+  const [unreadCount, setUnreadCount] = useState(0);
 
   useEffect(() => {
     if (!isAuthenticated) {
@@ -19,7 +20,17 @@ export default function NotificationsPage() {
       return;
     }
     loadNotifications();
+    loadUnreadCount();
   }, [isAuthenticated]);
+
+  const loadUnreadCount = async () => {
+    try {
+      const count = await notificationService.getUnreadCount();
+      setUnreadCount(count);
+    } catch (err) {
+      console.error('Failed to load unread count:', err);
+    }
+  };
 
   const loadNotifications = async (pageNum = 0) => {
     setIsLoading(true);
@@ -46,6 +57,7 @@ export default function NotificationsPage() {
       setNotifications((prev) =>
         prev.map((n) => (n.id === notification.id ? { ...n, read: true } : n))
       );
+      setUnreadCount((prev) => Math.max(0, prev - 1));
     } catch (err) {
       console.error('Failed to mark as read:', err);
     }
@@ -55,6 +67,7 @@ export default function NotificationsPage() {
     try {
       await notificationService.markAllAsRead();
       setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
+      setUnreadCount(0);
     } catch (err) {
       console.error('Failed to mark all as read:', err);
     }
@@ -62,8 +75,12 @@ export default function NotificationsPage() {
 
   const handleDelete = async (notificationId: number) => {
     try {
+      const deleted = notifications.find((n) => n.id === notificationId);
       await notificationService.deleteNotification(notificationId);
       setNotifications((prev) => prev.filter((n) => n.id !== notificationId));
+      if (deleted && !deleted.read) {
+        setUnreadCount((prev) => Math.max(0, prev - 1));
+      }
     } catch (err) {
       console.error('Failed to delete notification:', err);
     }
@@ -100,8 +117,6 @@ export default function NotificationsPage() {
       minute: '2-digit',
     });
   };
-
-  const unreadCount = notifications.filter((n) => !n.read).length;
 
   if (!isAuthenticated) {
     return null;
