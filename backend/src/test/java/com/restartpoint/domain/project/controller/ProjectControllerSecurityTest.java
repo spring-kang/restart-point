@@ -20,7 +20,9 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.test.web.servlet.MockMvc;
+import software.amazon.awssdk.services.s3.S3Client;
 
 import java.time.LocalDateTime;
 
@@ -52,6 +54,9 @@ class ProjectControllerSecurityTest {
 
     @Autowired
     private CheckpointRepository checkpointRepository;
+
+    @MockBean
+    private S3Client s3Client;
 
     private User teamLeader;
     private User nonMember;
