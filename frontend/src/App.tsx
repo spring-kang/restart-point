@@ -14,6 +14,8 @@ import MyTeam from './pages/MyTeam';
 import ProjectWorkspace from './pages/ProjectWorkspace';
 import ReviewProjects from './pages/ReviewProjects';
 import GrowthReport from './pages/GrowthReport';
+import ReviewGuide from './pages/ReviewGuide';
+import ReviewPattern from './pages/ReviewPattern';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -44,6 +46,8 @@ function App() {
             <Route path="my-team" element={<MyTeam />} />
             <Route path="seasons/:seasonId/review" element={<ReviewProjects />} />
             <Route path="projects/:projectId/growth-report" element={<GrowthReport />} />
+            <Route path="review-guide" element={<ReviewGuide />} />
+            <Route path="my-reviews/pattern" element={<ReviewPattern />} />
           </Route>
         </Routes>
       </BrowserRouter>

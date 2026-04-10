@@ -4,6 +4,7 @@ import com.restartpoint.domain.project.dto.ProjectResponse;
 import com.restartpoint.domain.project.entity.Project;
 import com.restartpoint.domain.review.dto.*;
 import com.restartpoint.domain.review.entity.RubricItem;
+import com.restartpoint.domain.review.service.ReviewPatternService;
 import com.restartpoint.domain.review.service.ReviewService;
 import com.restartpoint.global.common.ApiResponse;
 import com.restartpoint.global.security.CurrentUser;
@@ -22,6 +23,7 @@ import java.util.List;
 public class ReviewController {
 
     private final ReviewService reviewService;
+    private final ReviewPatternService reviewPatternService;
 
     /**
      * 심사 제출
@@ -91,6 +93,16 @@ public class ReviewController {
                 .map(item -> new RubricItemResponse(item, item.getLabel(), item.getDescription()))
                 .toList();
         return ResponseEntity.ok(ApiResponse.success(items));
+    }
+
+    /**
+     * 내 심사 패턴 분석 조회
+     */
+    @GetMapping("/users/me/review-pattern")
+    public ResponseEntity<ApiResponse<ReviewPatternAnalysisResponse>> getMyReviewPattern(
+            @CurrentUser CustomUserPrincipal principal) {
+        ReviewPatternAnalysisResponse analysis = reviewPatternService.analyzeMyPattern(principal.getUserId());
+        return ResponseEntity.ok(ApiResponse.success(analysis));
     }
 
     /**

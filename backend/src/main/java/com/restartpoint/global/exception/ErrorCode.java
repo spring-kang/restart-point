@@ -83,6 +83,8 @@ public enum ErrorCode {
     CANNOT_REVIEW_OWN_PROJECT(HttpStatus.FORBIDDEN, "REVIEW_005", "자신의 프로젝트는 심사할 수 없습니다."),
     INVALID_RUBRIC_SCORES(HttpStatus.BAD_REQUEST, "REVIEW_006", "모든 루브릭 항목에 점수를 입력해야 합니다."),
     NOT_CERTIFIED_REVIEWER(HttpStatus.FORBIDDEN, "REVIEW_007", "수료 인증이 완료된 사용자만 심사할 수 있습니다."),
+    GUIDE_NOT_COMPLETED(HttpStatus.FORBIDDEN, "REVIEW_008", "심사 가이드 학습을 먼저 완료해야 합니다."),
+    PREVIOUS_STEP_NOT_COMPLETED(HttpStatus.BAD_REQUEST, "REVIEW_009", "이전 단계를 먼저 완료해야 합니다."),
 
     // 성장 리포트 에러
     REPORT_NOT_FOUND(HttpStatus.NOT_FOUND, "REPORT_001", "성장 리포트를 찾을 수 없습니다."),
