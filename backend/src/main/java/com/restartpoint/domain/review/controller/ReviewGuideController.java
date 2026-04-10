@@ -69,14 +69,4 @@ public class ReviewGuideController {
         ReviewGuideStatus status = reviewGuideService.completePracticeEvaluation(principal.getUserId());
         return ResponseEntity.ok(ApiResponse.success(status, "연습 평가를 완료했습니다."));
     }
-
-    /**
-     * 가이드 전체 완료 처리 (스킵 또는 전체 완료)
-     */
-    @PostMapping("/complete")
-    public ResponseEntity<ApiResponse<ReviewGuideStatus>> completeAll(
-            @CurrentUser CustomUserPrincipal principal) {
-        ReviewGuideStatus status = reviewGuideService.completeAll(principal.getUserId());
-        return ResponseEntity.ok(ApiResponse.success(status, "가이드 학습을 완료했습니다."));
-    }
 }

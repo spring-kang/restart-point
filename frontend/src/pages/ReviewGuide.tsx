@@ -57,21 +57,6 @@ export default function ReviewGuidePage() {
     }
   };
 
-  const handleSkipAll = async () => {
-    setCompleting(true);
-    try {
-      const status = await reviewService.completeGuide();
-      if (guide) {
-        setGuide({ ...guide, completionStatus: status });
-      }
-      setActiveStep(3);
-    } catch {
-      setError('완료 처리에 실패했습니다.');
-    } finally {
-      setCompleting(false);
-    }
-  };
-
   if (loading) {
     return (
       <div className="flex justify-center items-center min-h-screen">
@@ -94,22 +79,11 @@ export default function ReviewGuidePage() {
     <div className="max-w-4xl mx-auto p-6 space-y-6">
       {/* 헤더 */}
       <div className="bg-white rounded-lg shadow p-6">
-        <div className="flex items-center justify-between mb-4">
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900">심사 가이드 학습</h1>
-            <p className="text-gray-600 mt-1">
-              심사 전에 루브릭과 평가 기준을 학습합니다.
-            </p>
-          </div>
-          {!guide.completionStatus.fullyCompleted && (
-            <button
-              onClick={handleSkipAll}
-              disabled={completing}
-              className="text-sm text-gray-500 hover:text-gray-700"
-            >
-              건너뛰기
-            </button>
-          )}
+        <div className="mb-4">
+          <h1 className="text-2xl font-bold text-gray-900">심사 가이드 학습</h1>
+          <p className="text-gray-600 mt-1">
+            심사 전에 루브릭과 평가 기준을 학습합니다.
+          </p>
         </div>
 
         {/* 진행 단계 */}

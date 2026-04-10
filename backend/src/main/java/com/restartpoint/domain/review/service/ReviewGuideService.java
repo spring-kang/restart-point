@@ -104,18 +104,6 @@ public class ReviewGuideService {
         return getCompletionStatus(userId);
     }
 
-    /**
-     * 가이드 전체 완료 처리 (스킵)
-     */
-    @Transactional
-    public ReviewGuideStatus completeAll(Long userId) {
-        ReviewGuideCompletion completion = getOrCreateCompletion(userId);
-        completion.completeAll();
-        guideCompletionRepository.save(completion);
-        log.info("가이드 전체 완료 - 사용자: {}", userId);
-        return getCompletionStatus(userId);
-    }
-
     // === Private 헬퍼 메서드 ===
 
     private ReviewGuideCompletion getOrCreateCompletion(Long userId) {

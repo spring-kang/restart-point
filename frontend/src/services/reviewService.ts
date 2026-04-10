@@ -78,12 +78,6 @@ export const reviewService = {
     return response.data.data;
   },
 
-  // 가이드 전체 완료 (스킵)
-  async completeGuide(): Promise<ReviewGuideStatus> {
-    const response = await api.post('/review-guide/complete');
-    return response.data.data;
-  },
-
   // 심사 패턴 분석 조회
   async getMyReviewPattern(): Promise<ReviewPatternAnalysis> {
     const response = await api.get('/users/me/review-pattern');
