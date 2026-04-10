@@ -87,15 +87,23 @@ public class GrowthReportService {
     }
 
     /**
-     * 프로젝트의 모든 리포트 조회 (팀원용)
+     * 프로젝트의 리포트 조회 (팀 리포트 + 본인 개인 리포트만)
      */
     public List<GrowthReportResponse> getProjectReports(Long userId, Long projectId) {
         Project project = findProjectById(projectId);
         validateAccess(userId, project);
 
-        return growthReportRepository.findAllByProjectId(projectId).stream()
-                .map(GrowthReportResponse::from)
-                .toList();
+        List<GrowthReportResponse> result = new ArrayList<>();
+
+        // 팀 리포트 추가
+        growthReportRepository.findTeamReportByProjectId(projectId)
+                .ifPresent(report -> result.add(GrowthReportResponse.from(report)));
+
+        // 본인 개인 리포트만 추가 (타인 리포트는 제외)
+        growthReportRepository.findIndividualReport(projectId, userId)
+                .ifPresent(report -> result.add(GrowthReportResponse.from(report)));
+
+        return result;
     }
 
     /**
@@ -161,7 +169,7 @@ public class GrowthReportService {
     @Transactional
     public GrowthReportResponse regenerateReport(Long userId, Long reportId) {
         GrowthReport report = findReportById(reportId);
-        validateAccess(userId, report.getProject());
+        validateReportAccess(userId, report);
 
         Project project = report.getProject();
         ReviewSummaryResponse reviewSummary = getReviewSummaryForReport(project);
@@ -331,6 +339,30 @@ public class GrowthReportService {
         // 팀원인지 확인
         if (!isTeamMember(userId, project)) {
             throw new BusinessException(ErrorCode.ACCESS_DENIED);
+        }
+    }
+
+    /**
+     * 리포트 접근 권한 검증 (개인 리포트는 본인만 접근 가능)
+     */
+    private void validateReportAccess(Long userId, GrowthReport report) {
+        User user = findUserById(userId);
+
+        // 관리자는 항상 접근 가능
+        if (user.getRole() == com.restartpoint.domain.user.entity.Role.ADMIN) {
+            return;
+        }
+
+        // 팀원인지 먼저 확인
+        if (!isTeamMember(userId, report.getProject())) {
+            throw new BusinessException(ErrorCode.ACCESS_DENIED);
+        }
+
+        // 개인 리포트는 본인만 접근 가능
+        if (report.getReportType() == ReportType.INDIVIDUAL) {
+            if (report.getUser() == null || !report.getUser().getId().equals(userId)) {
+                throw new BusinessException(ErrorCode.ACCESS_DENIED, "개인 리포트는 본인만 재생성할 수 있습니다.");
+            }
         }
     }
 
