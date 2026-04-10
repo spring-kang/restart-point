@@ -434,3 +434,44 @@ export interface ReviewPatternAnalysis {
   recommendations: string;
   scoreDistribution: ScoreDistribution;
 }
+
+// AI 심사 분석 관련 타입 (운영자용)
+export interface RubricAnalysis {
+  rubricItem: RubricItem;
+  label: string;
+  averageScore: number;
+  expertAverageScore: number;
+  candidateAverageScore: number;
+  scoreDifference: number;
+  aiInsight: string;
+}
+
+export interface OutlierScore {
+  reviewId: number;
+  reviewerName: string;
+  reviewType: 'EXPERT' | 'CANDIDATE';
+  rubricItem: RubricItem;
+  score: number;
+  averageScore: number;
+  deviation: number;
+  possibleReason: string;
+}
+
+export interface ReviewAnalysis {
+  projectId: number;
+  projectName: string;
+  teamName: string;
+  totalReviewCount: number;
+  expertReviewCount: number;
+  candidateReviewCount: number;
+  overallAverageScore: number;
+  expertAverageScore: number;
+  candidateAverageScore: number;
+  scoreDifference: number;
+  rubricAnalyses: RubricAnalysis[];
+  commentSummary: string;
+  strengths: string[];
+  weaknesses: string[];
+  outliers: OutlierScore[];
+  expertVsCandidateAnalysis: string;
+}

@@ -4,8 +4,10 @@ import com.restartpoint.domain.project.dto.ProjectResponse;
 import com.restartpoint.domain.project.entity.Project;
 import com.restartpoint.domain.review.dto.*;
 import com.restartpoint.domain.review.entity.RubricItem;
+import com.restartpoint.domain.review.service.ReviewAssistantService;
 import com.restartpoint.domain.review.service.ReviewPatternService;
 import com.restartpoint.domain.review.service.ReviewService;
+import org.springframework.security.access.prepost.PreAuthorize;
 import com.restartpoint.global.common.ApiResponse;
 import com.restartpoint.global.security.CurrentUser;
 import com.restartpoint.global.security.CustomUserPrincipal;
@@ -24,6 +26,7 @@ public class ReviewController {
 
     private final ReviewService reviewService;
     private final ReviewPatternService reviewPatternService;
+    private final ReviewAssistantService reviewAssistantService;
 
     /**
      * 심사 제출
@@ -109,4 +112,29 @@ public class ReviewController {
      * 루브릭 항목 응답 DTO
      */
     public record RubricItemResponse(RubricItem item, String label, String description) {}
+
+    // === 운영자 전용 AI 심사 분석 API ===
+
+    /**
+     * 프로젝트 심사 AI 분석 (운영자 전용)
+     * 심사 코멘트 요약, 강점/약점, 이상치 감지, 현직자/예비참여자 비교 분석
+     */
+    @PreAuthorize("hasRole('ADMIN')")
+    @GetMapping("/admin/projects/{projectId}/review-analysis")
+    public ResponseEntity<ApiResponse<ReviewAnalysisResponse>> getProjectReviewAnalysis(
+            @PathVariable Long projectId) {
+        ReviewAnalysisResponse analysis = reviewAssistantService.analyzeProjectReviews(projectId);
+        return ResponseEntity.ok(ApiResponse.success(analysis));
+    }
+
+    /**
+     * 시즌 전체 심사 AI 분석 (운영자 전용)
+     */
+    @PreAuthorize("hasRole('ADMIN')")
+    @GetMapping("/admin/seasons/{seasonId}/review-analysis")
+    public ResponseEntity<ApiResponse<List<ReviewAnalysisResponse>>> getSeasonReviewAnalysis(
+            @PathVariable Long seasonId) {
+        List<ReviewAnalysisResponse> analyses = reviewAssistantService.analyzeSeasonReviews(seasonId);
+        return ResponseEntity.ok(ApiResponse.success(analyses));
+    }
 }

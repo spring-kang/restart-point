@@ -9,6 +9,7 @@ import type {
   ReviewGuide,
   ReviewGuideStatus,
   ReviewPatternAnalysis,
+  ReviewAnalysis,
 } from '../types';
 
 export const reviewService = {
@@ -81,6 +82,20 @@ export const reviewService = {
   // 심사 패턴 분석 조회
   async getMyReviewPattern(): Promise<ReviewPatternAnalysis> {
     const response = await api.get('/users/me/review-pattern');
+    return response.data.data;
+  },
+
+  // === 운영자 전용 AI 심사 분석 API ===
+
+  // 프로젝트 심사 AI 분석 조회 (운영자 전용)
+  async getProjectReviewAnalysis(projectId: number): Promise<ReviewAnalysis> {
+    const response = await api.get(`/admin/projects/${projectId}/review-analysis`);
+    return response.data.data;
+  },
+
+  // 시즌 전체 심사 AI 분석 조회 (운영자 전용)
+  async getSeasonReviewAnalysis(seasonId: number): Promise<ReviewAnalysis[]> {
+    const response = await api.get(`/admin/seasons/${seasonId}/review-analysis`);
     return response.data.data;
   },
 };

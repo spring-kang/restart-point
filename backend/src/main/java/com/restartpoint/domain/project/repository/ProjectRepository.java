@@ -19,6 +19,9 @@ public interface ProjectRepository extends JpaRepository<Project, Long> {
     @Query("SELECT p FROM Project p JOIN p.team t WHERE t.season.id = :seasonId")
     Page<Project> findBySeasonId(@Param("seasonId") Long seasonId, Pageable pageable);
 
+    @Query("SELECT p FROM Project p JOIN FETCH p.team t WHERE t.season.id = :seasonId")
+    java.util.List<Project> findAllBySeasonId(@Param("seasonId") Long seasonId);
+
     @Query("SELECT p FROM Project p JOIN p.team t WHERE t.season.id = :seasonId AND p.status = :status")
     Page<Project> findBySeasonIdAndStatus(@Param("seasonId") Long seasonId,
                                            @Param("status") ProjectStatus status,
