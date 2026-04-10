@@ -39,4 +39,7 @@ public interface UserRepository extends JpaRepository<User, Long> {
 
     // 관리자 수 조회
     long countByRole(Role role);
+
+    // 인증 상태별 사용자 수 조회
+    long countByCertificationStatus(CertificationStatus status);
 }
