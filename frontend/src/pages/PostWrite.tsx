@@ -112,9 +112,10 @@ export default function PostWritePage() {
         });
         navigate(`/community/posts/${post.id}`);
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Failed to save post:', err);
-      setError(err.response?.data?.message || '저장에 실패했습니다.');
+      const axiosError = err as { response?: { data?: { message?: string } } };
+      setError(axiosError.response?.data?.message || '저장에 실패했습니다.');
     } finally {
       setIsLoading(false);
     }
