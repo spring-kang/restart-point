@@ -3,6 +3,8 @@ import { useNavigate, useSearchParams, Link } from 'react-router-dom';
 import { ChevronLeft, Save, AlertCircle } from 'lucide-react';
 import { communityService, POST_TYPE_LABELS } from '../services/communityService';
 import { seasonService } from '../services/seasonService';
+import { teamService } from '../services/teamService';
+import { projectService } from '../services/projectService';
 import { useAuthStore } from '../stores/authStore';
 import type { PostType, Season, Project } from '../types';
 
@@ -52,12 +54,29 @@ export default function PostWritePage() {
 
   const loadMyProjects = async () => {
     try {
-      // 프로젝트 워크스페이스에서 내 팀의 프로젝트 목록 가져오기
-      // 간단하게 처리: 사용자의 팀 프로젝트를 가져올 수 있는 API가 있다면 사용
-      // 없다면 빈 배열로 처리 (쇼케이스는 프로젝트 연결이 필수)
-      setProjects([]);
+      // 내가 리더인 팀 + 내가 멤버인 팀의 프로젝트 조회
+      const [myTeams, memberTeams] = await Promise.all([
+        teamService.getMyTeams(),
+        teamService.getTeamsAsMember(),
+      ]);
+
+      const allTeams = [...myTeams, ...memberTeams];
+      const projectPromises = allTeams.map((team) =>
+        projectService.getProjectByTeam(team.id).catch(() => null)
+      );
+
+      const projectResults = await Promise.all(projectPromises);
+
+      // 제출 완료(SUBMITTED) 또는 심사 완료(COMPLETED) 프로젝트만 필터링
+      const submittedProjects = projectResults.filter(
+        (p): p is Project =>
+          p !== null && (p.status === 'SUBMITTED' || p.status === 'COMPLETED')
+      );
+
+      setProjects(submittedProjects);
     } catch (err) {
       console.error('Failed to load projects:', err);
+      setProjects([]);
     }
   };
 

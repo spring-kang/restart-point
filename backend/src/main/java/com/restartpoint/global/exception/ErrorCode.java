@@ -96,7 +96,8 @@ public enum ErrorCode {
     NOT_POST_AUTHOR(HttpStatus.FORBIDDEN, "COMMUNITY_003", "게시글 작성자만 수행할 수 있는 작업입니다."),
     NOT_COMMENT_AUTHOR(HttpStatus.FORBIDDEN, "COMMUNITY_004", "댓글 작성자만 수행할 수 있는 작업입니다."),
     ANNOUNCEMENT_ADMIN_ONLY(HttpStatus.FORBIDDEN, "COMMUNITY_005", "공지는 관리자만 작성할 수 있습니다."),
-    SHOWCASE_REQUIRES_PROJECT(HttpStatus.BAD_REQUEST, "COMMUNITY_006", "쇼케이스는 프로젝트 연결이 필요합니다.");
+    SHOWCASE_REQUIRES_PROJECT(HttpStatus.BAD_REQUEST, "COMMUNITY_006", "쇼케이스는 프로젝트 연결이 필요합니다."),
+    COMMENT_NOT_BELONG_TO_POST(HttpStatus.BAD_REQUEST, "COMMUNITY_007", "해당 댓글은 이 게시글에 속하지 않습니다.");
 
     private final HttpStatus httpStatus;
     private final String code;

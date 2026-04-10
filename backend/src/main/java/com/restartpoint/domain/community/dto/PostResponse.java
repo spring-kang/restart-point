@@ -31,13 +31,11 @@ public class PostResponse {
     public static class AuthorInfo {
         private Long id;
         private String name;
-        private String email;
 
         public static AuthorInfo from(com.restartpoint.domain.user.entity.User user) {
             return AuthorInfo.builder()
                     .id(user.getId())
                     .name(user.getName())
-                    .email(user.getEmail())
                     .build();
         }
     }

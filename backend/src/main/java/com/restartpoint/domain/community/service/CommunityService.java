@@ -251,6 +251,11 @@ public class CommunityService {
         if (request.getParentId() != null) {
             parent = commentRepository.findById(request.getParentId())
                     .orElseThrow(() -> new BusinessException(ErrorCode.COMMENT_NOT_FOUND));
+
+            // 부모 댓글이 현재 게시글에 속하는지 검증
+            if (!parent.getPost().getId().equals(postId)) {
+                throw new BusinessException(ErrorCode.COMMENT_NOT_BELONG_TO_POST);
+            }
         }
 
         Comment comment = Comment.builder()

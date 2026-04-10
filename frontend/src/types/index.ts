@@ -482,7 +482,6 @@ export type PostType = 'RECRUITMENT' | 'ANNOUNCEMENT' | 'SHOWCASE' | 'QNA';
 export interface PostAuthor {
   id: number;
   name: string;
-  email: string;
 }
 
 export interface PostSeason {
