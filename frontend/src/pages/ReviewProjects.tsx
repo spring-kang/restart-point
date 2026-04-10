@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { reviewService, RUBRIC_ITEM_LABELS, RUBRIC_ITEM_DESCRIPTIONS, SCORE_LABELS } from '../services/reviewService';
-import { projectService, PROJECT_STATUS_LABELS } from '../services/projectService';
+import { PROJECT_STATUS_LABELS } from '../services/projectService';
 import type { Project, RubricItem, ReviewCreateRequest, ReviewScoreRequest, Review } from '../types';
 
 const RUBRIC_ITEMS: RubricItem[] = [
@@ -69,16 +69,11 @@ export default function ReviewProjects() {
     }
   };
 
-  const openReviewModal = async (project: Project) => {
-    // 프로젝트 상세 정보 로드
-    try {
-      const fullProject = await projectService.getProject(project.id);
-      setSelectedProject(fullProject);
-      setShowReviewModal(true);
-      resetForm();
-    } catch {
-      setError('프로젝트 정보를 불러오는데 실패했습니다.');
-    }
+  const openReviewModal = (project: Project) => {
+    // 목록에서 이미 전체 프로젝트 정보를 가져오므로 바로 사용
+    setSelectedProject(project);
+    setShowReviewModal(true);
+    resetForm();
   };
 
   const resetForm = () => {

@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { Calendar, Users, Clock, Award, ChevronLeft, UserPlus } from 'lucide-react';
+import { Calendar, Users, Clock, Award, ChevronLeft, UserPlus, ClipboardCheck } from 'lucide-react';
 import { seasonService, type Season, SEASON_STATUS_LABELS, SEASON_STATUS_COLORS } from '../services/seasonService';
 import { useAuthStore } from '../stores/authStore';
 
@@ -78,12 +78,21 @@ export default function SeasonDetailPage() {
           <p className="text-neutral-600 mb-6 whitespace-pre-wrap">{season.description}</p>
         )}
 
-        {canParticipate() && (
-          <Link to={`/seasons/${season.id}/teams`} className="btn-primary inline-flex items-center gap-2">
-            <UserPlus className="w-5 h-5" />
-            팀 찾기 / 팀 만들기
-          </Link>
-        )}
+        <div className="flex flex-wrap gap-3">
+          {canParticipate() && (
+            <Link to={`/seasons/${season.id}/teams`} className="btn-primary inline-flex items-center gap-2">
+              <UserPlus className="w-5 h-5" />
+              팀 찾기 / 팀 만들기
+            </Link>
+          )}
+
+          {isAuthenticated && season.status === 'REVIEWING' && (
+            <Link to={`/seasons/${season.id}/review`} className="btn-secondary inline-flex items-center gap-2">
+              <ClipboardCheck className="w-5 h-5" />
+              프로젝트 심사하기
+            </Link>
+          )}
+        </div>
 
         {!isAuthenticated && season.canJoin && (
           <div className="bg-primary-50 border border-primary-200 rounded-xl p-4">

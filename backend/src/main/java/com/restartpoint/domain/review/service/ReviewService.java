@@ -9,6 +9,7 @@ import com.restartpoint.domain.review.repository.ReviewRepository;
 import com.restartpoint.domain.review.repository.ReviewScoreRepository;
 import com.restartpoint.domain.season.entity.Season;
 import com.restartpoint.domain.season.entity.SeasonStatus;
+import com.restartpoint.domain.season.repository.SeasonRepository;
 import com.restartpoint.domain.team.entity.TeamMember;
 import com.restartpoint.domain.team.entity.TeamMemberStatus;
 import com.restartpoint.domain.team.repository.TeamMemberRepository;
@@ -35,6 +36,7 @@ public class ReviewService {
     private final ProjectRepository projectRepository;
     private final UserRepository userRepository;
     private final TeamMemberRepository teamMemberRepository;
+    private final SeasonRepository seasonRepository;
 
     /**
      * 심사 제출
@@ -147,6 +149,12 @@ public class ReviewService {
      */
     public List<Project> getReviewableProjects(Long userId, Long seasonId) {
         User user = findUserById(userId);
+        Season season = findSeasonById(seasonId);
+
+        // 시즌이 심사 기간인지 확인
+        if (season.getStatus() != SeasonStatus.REVIEWING) {
+            return List.of(); // 심사 기간이 아니면 빈 목록 반환
+        }
 
         // 시즌의 제출된 프로젝트 목록 조회
         List<Project> submittedProjects = projectRepository.findBySeasonIdAndStatus(seasonId, ProjectStatus.SUBMITTED, null)
@@ -286,5 +294,10 @@ public class ReviewService {
     private Project findProjectById(Long projectId) {
         return projectRepository.findByIdWithTeam(projectId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.PROJECT_NOT_FOUND));
+    }
+
+    private Season findSeasonById(Long seasonId) {
+        return seasonRepository.findById(seasonId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.SEASON_NOT_FOUND));
     }
 }
