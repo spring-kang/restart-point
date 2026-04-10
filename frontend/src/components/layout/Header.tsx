@@ -2,6 +2,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../../stores/authStore';
 import { Menu, X, User, LogOut, ChevronDown } from 'lucide-react';
 import { useState } from 'react';
+import NotificationDropdown from '../notification/NotificationDropdown';
 
 export default function Header() {
   const { user, isAuthenticated, logout } = useAuthStore();
@@ -57,7 +58,9 @@ export default function Header() {
           {/* 데스크톱 우측 메뉴 */}
           <div className="hidden md:flex items-center gap-4">
             {isAuthenticated ? (
-              <div className="relative">
+              <>
+                <NotificationDropdown />
+                <div className="relative">
                 <button
                   onClick={() => setIsProfileMenuOpen(!isProfileMenuOpen)}
                   className="flex items-center gap-2 px-3 py-2 rounded-xl hover:bg-neutral-50 transition-colors"
@@ -100,6 +103,7 @@ export default function Header() {
                   </div>
                 )}
               </div>
+              </>
             ) : (
               <>
                 <Link to="/login" className="btn-secondary text-sm">

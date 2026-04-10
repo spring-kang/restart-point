@@ -1,5 +1,6 @@
 package com.restartpoint.domain.team.service;
 
+import com.restartpoint.domain.notification.service.NotificationService;
 import com.restartpoint.domain.profile.entity.JobRole;
 import com.restartpoint.domain.season.entity.Season;
 import com.restartpoint.domain.season.entity.SeasonStatus;
@@ -33,6 +34,7 @@ public class TeamService {
     private final TeamMemberRepository teamMemberRepository;
     private final SeasonRepository seasonRepository;
     private final UserRepository userRepository;
+    private final NotificationService notificationService;
 
     // 팀 생성
     @Transactional
@@ -190,6 +192,14 @@ public class TeamService {
         TeamMember savedMember = teamMemberRepository.save(teamMember);
         team.addMember(savedMember);
 
+        // 팀 리더에게 지원 알림 발송
+        notificationService.notifyTeamApplication(
+                team.getLeader().getId(),
+                user.getName(),
+                team.getName(),
+                team.getId()
+        );
+
         return TeamMemberResponse.from(savedMember);
     }
 
@@ -234,6 +244,14 @@ public class TeamService {
         }
 
         member.accept();
+
+        // 지원자에게 가입 승인 알림 발송
+        notificationService.notifyTeamInvitation(
+                member.getUser().getId(),
+                team.getName(),
+                team.getId()
+        );
+
         return TeamMemberResponse.from(member);
     }
 
@@ -251,6 +269,13 @@ public class TeamService {
         }
 
         member.reject();
+
+        // 지원자에게 거절 알림 발송
+        notificationService.notifyTeamApplicationRejected(
+                member.getUser().getId(),
+                team.getName()
+        );
+
         return TeamMemberResponse.from(member);
     }
 

@@ -19,6 +19,7 @@ import ReviewPattern from './pages/ReviewPattern';
 import Community from './pages/Community';
 import PostDetail from './pages/PostDetail';
 import PostWrite from './pages/PostWrite';
+import Notifications from './pages/Notifications';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -54,6 +55,7 @@ function App() {
             <Route path="community" element={<Community />} />
             <Route path="community/posts/:postId" element={<PostDetail />} />
             <Route path="community/write" element={<PostWrite />} />
+            <Route path="notifications" element={<Notifications />} />
           </Route>
         </Routes>
       </BrowserRouter>

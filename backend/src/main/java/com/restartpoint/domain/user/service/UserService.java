@@ -1,5 +1,6 @@
 package com.restartpoint.domain.user.service;
 
+import com.restartpoint.domain.notification.service.NotificationService;
 import com.restartpoint.domain.user.dto.CertificationRequest;
 import com.restartpoint.domain.user.dto.UserResponse;
 import com.restartpoint.domain.user.entity.CertificationStatus;
@@ -23,6 +24,7 @@ import java.util.stream.Collectors;
 public class UserService {
 
     private final UserRepository userRepository;
+    private final NotificationService notificationService;
 
     public UserResponse getMe(Long userId) {
         User user = findUserById(userId);
@@ -71,6 +73,10 @@ public class UserService {
         }
 
         user.approveCertification();
+
+        // 알림 발송
+        notificationService.notifyCertificationApproved(userId);
+
         return UserResponse.from(user);
     }
 
@@ -84,6 +90,10 @@ public class UserService {
         }
 
         user.rejectCertification();
+
+        // 알림 발송
+        notificationService.notifyCertificationRejected(userId, null);
+
         return UserResponse.from(user);
     }
 
