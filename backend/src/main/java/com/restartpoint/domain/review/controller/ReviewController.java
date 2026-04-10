@@ -59,7 +59,7 @@ public class ReviewController {
 
     /**
      * 심사 가능한 프로젝트 목록 조회
-     * 심사 대상 프로젝트의 상세 정보를 반환 (팀원이 아니어도 심사를 위해 조회 가능)
+     * 심사 대상 프로젝트의 심사용 정보를 반환 (민감 정보 제외)
      */
     @GetMapping("/seasons/{seasonId}/reviewable-projects")
     public ResponseEntity<ApiResponse<List<ProjectResponse>>> getReviewableProjects(
@@ -67,7 +67,7 @@ public class ReviewController {
             @PathVariable Long seasonId) {
         List<Project> projects = reviewService.getReviewableProjects(principal.getUserId(), seasonId);
         List<ProjectResponse> responses = projects.stream()
-                .map(ProjectResponse::from)
+                .map(ProjectResponse::forReview)
                 .toList();
         return ResponseEntity.ok(ApiResponse.success(responses));
     }

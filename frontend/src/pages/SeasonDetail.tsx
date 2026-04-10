@@ -86,7 +86,8 @@ export default function SeasonDetailPage() {
             </Link>
           )}
 
-          {isAuthenticated && season.status === 'REVIEWING' && (
+          {isAuthenticated && season.status === 'REVIEWING' &&
+           (user?.role === 'REVIEWER' || user?.role === 'ADMIN' || user?.certificationStatus === 'APPROVED') && (
             <Link to={`/seasons/${season.id}/review`} className="btn-secondary inline-flex items-center gap-2">
               <ClipboardCheck className="w-5 h-5" />
               프로젝트 심사하기

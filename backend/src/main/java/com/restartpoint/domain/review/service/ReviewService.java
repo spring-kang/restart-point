@@ -13,6 +13,7 @@ import com.restartpoint.domain.season.repository.SeasonRepository;
 import com.restartpoint.domain.team.entity.TeamMember;
 import com.restartpoint.domain.team.entity.TeamMemberStatus;
 import com.restartpoint.domain.team.repository.TeamMemberRepository;
+import com.restartpoint.domain.user.entity.CertificationStatus;
 import com.restartpoint.domain.user.entity.Role;
 import com.restartpoint.domain.user.entity.User;
 import com.restartpoint.domain.user.repository.UserRepository;
@@ -151,6 +152,11 @@ public class ReviewService {
         User user = findUserById(userId);
         Season season = findSeasonById(seasonId);
 
+        // 심사자 자격 확인 (REVIEWER 역할이거나 수료 인증 완료)
+        if (!canReview(user)) {
+            return List.of(); // 심사 자격이 없으면 빈 목록 반환
+        }
+
         // 시즌이 심사 기간인지 확인
         if (season.getStatus() != SeasonStatus.REVIEWING) {
             return List.of(); // 심사 기간이 아니면 빈 목록 반환
@@ -180,6 +186,11 @@ public class ReviewService {
     // === 헬퍼 메서드 ===
 
     private void validateReviewCreation(User reviewer, Project project, ReviewCreateRequest request) {
+        // 심사자 자격 확인 (REVIEWER 역할이거나 수료 인증 완료)
+        if (!canReview(reviewer)) {
+            throw new BusinessException(ErrorCode.NOT_CERTIFIED_REVIEWER);
+        }
+
         // 시즌이 심사 기간인지 확인
         Season season = project.getTeam().getSeason();
         if (season.getStatus() != SeasonStatus.REVIEWING) {
@@ -209,6 +220,18 @@ public class ReviewService {
         if (providedItems.size() != RubricItem.values().length) {
             throw new BusinessException(ErrorCode.INVALID_RUBRIC_SCORES);
         }
+    }
+
+    /**
+     * 심사 가능 여부 확인
+     * - REVIEWER 역할: 전문가 심사자 (항상 심사 가능)
+     * - 일반 사용자: 수료 인증 완료(APPROVED)된 경우만 심사 가능
+     */
+    private boolean canReview(User user) {
+        if (user.getRole() == Role.REVIEWER || user.getRole() == Role.ADMIN) {
+            return true;
+        }
+        return user.getCertificationStatus() == CertificationStatus.APPROVED;
     }
 
     private ReviewType determineReviewType(User user) {

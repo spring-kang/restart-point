@@ -81,7 +81,8 @@ public enum ErrorCode {
     SEASON_NOT_REVIEWING(HttpStatus.BAD_REQUEST, "REVIEW_003", "현재 심사 기간이 아닙니다."),
     PROJECT_NOT_SUBMITTED(HttpStatus.BAD_REQUEST, "REVIEW_004", "제출되지 않은 프로젝트는 심사할 수 없습니다."),
     CANNOT_REVIEW_OWN_PROJECT(HttpStatus.FORBIDDEN, "REVIEW_005", "자신의 프로젝트는 심사할 수 없습니다."),
-    INVALID_RUBRIC_SCORES(HttpStatus.BAD_REQUEST, "REVIEW_006", "모든 루브릭 항목에 점수를 입력해야 합니다.");
+    INVALID_RUBRIC_SCORES(HttpStatus.BAD_REQUEST, "REVIEW_006", "모든 루브릭 항목에 점수를 입력해야 합니다."),
+    NOT_CERTIFIED_REVIEWER(HttpStatus.FORBIDDEN, "REVIEW_007", "수료 인증이 완료된 사용자만 심사할 수 있습니다.");
 
     private final HttpStatus httpStatus;
     private final String code;
