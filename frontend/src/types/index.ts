@@ -345,3 +345,27 @@ export interface ReviewCreateRequest {
   scores: ReviewScoreRequest[];
   overallComment?: string;
 }
+
+// 성장 리포트 관련 타입
+export type ReportType = 'TEAM' | 'INDIVIDUAL';
+
+export interface GrowthReport {
+  id: number;
+  projectId: number;
+  projectName: string;
+  teamName: string;
+  userId?: number;
+  userName?: string;
+  userRole?: string;
+  reportType: ReportType;
+  teamStrengths?: string;
+  teamImprovements?: string;
+  roleSpecificFeedback?: string;
+  nextProjectActions?: string;
+  portfolioImprovements?: string;
+  recommendedAreas?: string;
+  averageScore?: number;
+  rubricScoreSummary?: string;
+  generated: boolean;
+  createdAt: string;
+}
