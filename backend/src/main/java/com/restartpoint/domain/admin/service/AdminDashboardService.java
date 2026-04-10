@@ -3,6 +3,8 @@ package com.restartpoint.domain.admin.service;
 import com.restartpoint.domain.admin.dto.SeasonDashboardResponse;
 import com.restartpoint.domain.admin.dto.SeasonDashboardResponse.*;
 import com.restartpoint.domain.profile.entity.JobRole;
+import com.restartpoint.domain.profile.entity.Profile;
+import com.restartpoint.domain.profile.repository.ProfileRepository;
 import com.restartpoint.domain.project.entity.Project;
 import com.restartpoint.domain.project.entity.ProjectStatus;
 import com.restartpoint.domain.project.repository.ProjectRepository;
@@ -11,6 +13,7 @@ import com.restartpoint.domain.report.repository.GrowthReportRepository;
 import com.restartpoint.domain.review.entity.Review;
 import com.restartpoint.domain.review.repository.ReviewRepository;
 import com.restartpoint.domain.season.entity.Season;
+import com.restartpoint.domain.season.entity.SeasonStatus;
 import com.restartpoint.domain.season.repository.SeasonRepository;
 import com.restartpoint.domain.team.entity.Team;
 import com.restartpoint.domain.team.entity.TeamMember;
@@ -47,6 +50,7 @@ public class AdminDashboardService {
     private final ReviewRepository reviewRepository;
     private final GrowthReportRepository growthReportRepository;
     private final UserRepository userRepository;
+    private final ProfileRepository profileRepository;
 
     private static final int REQUIRED_TEAM_SIZE = 4;
 
@@ -70,19 +74,23 @@ public class AdminDashboardService {
                 .teamStats(buildTeamStats(teams))
                 .projectStats(buildProjectStats(projects))
                 .reviewStats(buildReviewStats(reviews, projects.size()))
-                .reportStats(buildReportStats(reports, teams.size()))
+                .reportStats(buildReportStats(reports, teams, projects))
                 .riskTeams(buildRiskTeams(teams, projects))
                 .build();
     }
 
     /**
      * 전체 대시보드 조회 (모든 활성 시즌)
+     * DRAFT와 COMPLETED를 제외한 시즌만 활성 시즌으로 집계
      */
     public Map<String, Object> getOverallDashboard() {
         long pendingCertifications = userRepository.countByCertificationStatus(CertificationStatus.PENDING);
 
-        List<Season> activeSeasons = seasonRepository.findByStatusNot(
-                com.restartpoint.domain.season.entity.SeasonStatus.COMPLETED);
+        // DRAFT와 COMPLETED를 제외한 활성 시즌만 조회
+        List<Season> allSeasons = seasonRepository.findAll();
+        List<Season> activeSeasons = allSeasons.stream()
+                .filter(s -> s.getStatus() != SeasonStatus.DRAFT && s.getStatus() != SeasonStatus.COMPLETED)
+                .toList();
 
         Map<String, Object> result = new HashMap<>();
         result.put("pendingCertifications", pendingCertifications);
@@ -110,8 +118,13 @@ public class AdminDashboardService {
         }
 
         for (Team team : teams) {
-            // 리더 추가
-            participantIds.add(team.getLeader().getId());
+            // 리더 추가 및 역할 분포에 반영
+            Long leaderId = team.getLeader().getId();
+            participantIds.add(leaderId);
+
+            // 리더의 역할은 프로필에서 조회
+            JobRole leaderRole = getLeaderJobRole(leaderId);
+            roleDistribution.merge(leaderRole, 1, Integer::sum);
 
             // 팀원 추가
             List<TeamMember> members = teamMemberRepository.findByTeamId(team.getId());
@@ -154,11 +167,15 @@ public class AdminDashboardService {
             } else {
                 incompleteTeams++;
 
-                // 부족한 역할 계산
+                // 부족한 역할 계산 (리더 역할 포함)
                 Set<JobRole> filledRoles = members.stream()
                         .filter(m -> m.getStatus() == TeamMemberStatus.ACCEPTED)
                         .map(TeamMember::getRole)
                         .collect(Collectors.toSet());
+
+                // 리더의 역할도 채워진 역할에 추가
+                JobRole leaderRole = getLeaderJobRole(team.getLeader().getId());
+                filledRoles.add(leaderRole);
 
                 List<JobRole> missingRoles = Arrays.stream(JobRole.values())
                         .filter(role -> !filledRoles.contains(role))
@@ -257,15 +274,40 @@ public class AdminDashboardService {
                 .build();
     }
 
-    private ReportStats buildReportStats(List<GrowthReport> reports, int teamCount) {
-        int generated = (int) reports.stream().filter(GrowthReport::isGenerated).count();
-        int pending = reports.size() - generated;
+    /**
+     * 리포트 통계 계산
+     * - 기대 생성 대상: 제출 완료된 프로젝트 수 * (1 팀 리포트 + 팀원 수 개인 리포트)
+     * - 실제 생성 완료: DB에 저장된 리포트 중 generated=true인 것
+     */
+    private ReportStats buildReportStats(List<GrowthReport> reports, List<Team> teams, List<Project> projects) {
+        // 제출 완료된 프로젝트만 리포트 생성 대상
+        List<Project> submittedProjects = projects.stream()
+                .filter(p -> p.getStatus() == ProjectStatus.SUBMITTED || p.getStatus() == ProjectStatus.COMPLETED)
+                .toList();
 
-        double generationRate = reports.isEmpty() ? 0 :
-                (generated * 100.0) / reports.size();
+        // 기대 생성 대상 수 계산: 각 프로젝트당 (1 팀 리포트 + 팀원 수 개인 리포트)
+        int expectedReports = 0;
+        for (Project project : submittedProjects) {
+            Team team = project.getTeam();
+            List<TeamMember> members = teamMemberRepository.findByTeamId(team.getId());
+            int teamSize = (int) members.stream()
+                    .filter(m -> m.getStatus() == TeamMemberStatus.ACCEPTED)
+                    .count() + 1; // +1 for leader
+
+            // 팀 리포트 1개 + 개인 리포트 (팀원 수)개
+            expectedReports += 1 + teamSize;
+        }
+
+        // 실제 생성 완료된 리포트 수
+        int generated = (int) reports.stream().filter(GrowthReport::isGenerated).count();
+        int pending = expectedReports - generated;
+        if (pending < 0) pending = 0; // 생성된 것이 기대보다 많을 수는 없지만 방어 코드
+
+        double generationRate = expectedReports == 0 ? 0 :
+                (generated * 100.0) / expectedReports;
 
         return ReportStats.builder()
-                .totalReports(reports.size())
+                .totalReports(expectedReports)
                 .generatedReports(generated)
                 .pendingReports(pending)
                 .generationRate(Math.round(generationRate * 10) / 10.0)
@@ -329,5 +371,14 @@ public class AdminDashboardService {
         riskTeams.sort((a, b) -> Integer.compare(b.getRiskLevel(), a.getRiskLevel()));
 
         return riskTeams;
+    }
+
+    /**
+     * 리더의 역할을 프로필에서 조회
+     */
+    private JobRole getLeaderJobRole(Long userId) {
+        return profileRepository.findByUserId(userId)
+                .map(Profile::getJobRole)
+                .orElse(JobRole.PLANNER); // 프로필이 없으면 기본값 PLANNER
     }
 }
