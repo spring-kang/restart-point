@@ -190,3 +190,110 @@ export const RUBRIC_ITEM_LABELS: Record<RubricItem, string> = {
   TECHNICAL_FEASIBILITY: '기술 구현 가능성',
   COLLABORATION: '협업 완성도',
 };
+
+// Dashboard Types
+export type JobRole = 'PLANNER' | 'UXUI' | 'FRONTEND' | 'BACKEND';
+
+export const JOB_ROLE_LABELS: Record<JobRole, string> = {
+  PLANNER: '기획자',
+  UXUI: 'UX/UI',
+  FRONTEND: '프론트엔드',
+  BACKEND: '백엔드',
+};
+
+export interface ParticipantStats {
+  totalParticipants: number;
+  certifiedParticipants: number;
+  pendingCertifications: number;
+  roleDistribution: Record<JobRole, number>;
+}
+
+export interface IncompleteTeam {
+  teamId: number;
+  teamName: string;
+  currentMembers: number;
+  requiredMembers: number;
+  missingRoles: JobRole[];
+}
+
+export interface TeamStats {
+  totalTeams: number;
+  completeTeams: number;
+  incompleteTeams: number;
+  recruitingTeams: number;
+  incompleteTeamList: IncompleteTeam[];
+}
+
+export interface ProjectStats {
+  totalProjects: number;
+  submittedProjects: number;
+  inProgressProjects: number;
+  submissionRate: number;
+  checkpointMissingCount: number;
+}
+
+export interface ScoreDistribution {
+  excellent: number;
+  good: number;
+  average: number;
+  belowAverage: number;
+}
+
+export interface ReviewStats {
+  totalReviews: number;
+  completedReviews: number;
+  pendingReviews: number;
+  reviewCompletionRate: number;
+  averageScore: number;
+  scoreDistribution: ScoreDistribution;
+}
+
+export interface ReportStats {
+  totalReports: number;
+  generatedReports: number;
+  pendingReports: number;
+  generationRate: number;
+}
+
+export interface RiskTeam {
+  teamId: number;
+  teamName: string;
+  projectName: string;
+  riskType: 'INCOMPLETE_TEAM' | 'CHECKPOINT_MISSING' | 'SUBMISSION_DELAYED';
+  riskDescription: string;
+  riskLevel: number;
+}
+
+export interface SeasonDashboard {
+  seasonId: number;
+  seasonTitle: string;
+  seasonStatus: string;
+  participantStats: ParticipantStats;
+  teamStats: TeamStats;
+  projectStats: ProjectStats;
+  reviewStats: ReviewStats;
+  reportStats: ReportStats;
+  riskTeams: RiskTeam[];
+}
+
+export interface OverallDashboard {
+  pendingCertifications: number;
+  activeSeasonCount: number;
+  activeSeasons: Array<{
+    id: number;
+    title: string;
+    status: string;
+  }>;
+}
+
+export const RISK_TYPE_LABELS: Record<string, string> = {
+  INCOMPLETE_TEAM: '팀 미완성',
+  CHECKPOINT_MISSING: '체크포인트 미제출',
+  SUBMISSION_DELAYED: '프로젝트 미제출',
+};
+
+export const RISK_LEVEL_COLORS: Record<number, string> = {
+  1: 'bg-yellow-100 text-yellow-700',
+  2: 'bg-orange-100 text-orange-700',
+  3: 'bg-red-100 text-red-700',
+};

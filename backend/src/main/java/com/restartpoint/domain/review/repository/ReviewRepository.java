@@ -54,4 +54,13 @@ public interface ReviewRepository extends JpaRepository<Review, Long> {
      */
     @Query("SELECT r FROM Review r JOIN FETCH r.scores WHERE r.reviewType = :reviewType")
     List<Review> findByReviewType(@Param("reviewType") ReviewType reviewType);
+
+    /**
+     * 시즌별 모든 심사 조회
+     */
+    @Query("SELECT r FROM Review r " +
+           "JOIN FETCH r.project p " +
+           "JOIN p.team t " +
+           "WHERE t.season.id = :seasonId")
+    List<Review> findAllBySeasonId(@Param("seasonId") Long seasonId);
 }

@@ -1,5 +1,5 @@
 import api from './api';
-import type { ApiResponse, Page, Season, SeasonCreateRequest, User, UserRole, CertificationStatus, ReviewAnalysis } from '../types';
+import type { ApiResponse, Page, Season, SeasonCreateRequest, User, UserRole, CertificationStatus, ReviewAnalysis, SeasonDashboard, OverallDashboard } from '../types';
 
 export interface UserSearchParams {
   keyword?: string;
@@ -95,6 +95,17 @@ export const adminService = {
 
   getSeasonReviewAnalysis: async (seasonId: number): Promise<ReviewAnalysis[]> => {
     const response = await api.get<ApiResponse<ReviewAnalysis[]>>(`/admin/seasons/${seasonId}/review-analysis`);
+    return response.data.data;
+  },
+
+  // Dashboard APIs
+  getOverallDashboard: async (): Promise<OverallDashboard> => {
+    const response = await api.get<ApiResponse<OverallDashboard>>('/admin/dashboard');
+    return response.data.data;
+  },
+
+  getSeasonDashboard: async (seasonId: number): Promise<SeasonDashboard> => {
+    const response = await api.get<ApiResponse<SeasonDashboard>>(`/admin/dashboard/seasons/${seasonId}`);
     return response.data.data;
   },
 };
