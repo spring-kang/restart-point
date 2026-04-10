@@ -3,6 +3,7 @@ package com.restartpoint.domain.community.service;
 import com.restartpoint.domain.community.dto.*;
 import com.restartpoint.domain.community.entity.*;
 import com.restartpoint.domain.community.repository.*;
+import com.restartpoint.domain.notification.service.NotificationService;
 import com.restartpoint.domain.project.entity.Project;
 import com.restartpoint.domain.project.repository.ProjectRepository;
 import com.restartpoint.domain.season.entity.Season;
@@ -37,6 +38,7 @@ public class CommunityService {
     private final UserRepository userRepository;
     private final SeasonRepository seasonRepository;
     private final ProjectRepository projectRepository;
+    private final NotificationService notificationService;
 
     // ========== 게시글 관련 ==========
 
@@ -269,6 +271,28 @@ public class CommunityService {
         post.incrementCommentCount();
 
         log.info("댓글 생성: commentId={}, postId={}, author={}", saved.getId(), postId, author.getName());
+
+        // 알림 발송 (자기 자신에게는 알림 X)
+        if (parent != null) {
+            // 대댓글인 경우 - 부모 댓글 작성자에게 알림
+            if (!parent.getAuthor().getId().equals(userId)) {
+                notificationService.notifyReplyOnComment(
+                        parent.getAuthor().getId(),
+                        author.getName(),
+                        postId
+                );
+            }
+        } else {
+            // 일반 댓글인 경우 - 게시글 작성자에게 알림
+            if (!post.getAuthor().getId().equals(userId)) {
+                notificationService.notifyCommentOnPost(
+                        post.getAuthor().getId(),
+                        author.getName(),
+                        post.getTitle(),
+                        postId
+                );
+            }
+        }
 
         return CommentResponse.simple(saved);
     }

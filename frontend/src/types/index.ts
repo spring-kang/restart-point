@@ -572,3 +572,29 @@ export interface Page<T> {
   last: boolean;
   empty: boolean;
 }
+
+// 알림 관련 타입
+export type NotificationType =
+  | 'CERTIFICATION_APPROVED'
+  | 'CERTIFICATION_REJECTED'
+  | 'TEAM_INVITATION'
+  | 'TEAM_APPLICATION'
+  | 'TEAM_APPLICATION_REJECTED'
+  | 'CHECKPOINT_REMINDER'
+  | 'SUBMISSION_REMINDER'
+  | 'REVIEW_START'
+  | 'REVIEW_END'
+  | 'REPORT_PUBLISHED'
+  | 'COMMENT_ON_POST'
+  | 'REPLY_ON_COMMENT';
+
+export interface Notification {
+  id: number;
+  notificationType: NotificationType;
+  title: string;
+  message: string;
+  resourceType?: string;
+  resourceId?: number;
+  read: boolean;
+  createdAt: string;
+}
