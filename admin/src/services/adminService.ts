@@ -1,5 +1,5 @@
 import api from './api';
-import type { ApiResponse, Page, Season, SeasonCreateRequest, User, UserRole, CertificationStatus } from '../types';
+import type { ApiResponse, Page, Season, SeasonCreateRequest, User, UserRole, CertificationStatus, ReviewAnalysis } from '../types';
 
 export interface UserSearchParams {
   keyword?: string;
@@ -84,6 +84,17 @@ export const adminService = {
   // Note: Backend doesn't accept rejection reason
   rejectCertification: async (userId: number): Promise<User> => {
     const response = await api.post<ApiResponse<User>>(`/admin/users/${userId}/certification/reject`);
+    return response.data.data;
+  },
+
+  // Review Analysis APIs
+  getProjectReviewAnalysis: async (projectId: number): Promise<ReviewAnalysis> => {
+    const response = await api.get<ApiResponse<ReviewAnalysis>>(`/admin/projects/${projectId}/review-analysis`);
+    return response.data.data;
+  },
+
+  getSeasonReviewAnalysis: async (seasonId: number): Promise<ReviewAnalysis[]> => {
+    const response = await api.get<ApiResponse<ReviewAnalysis[]>>(`/admin/seasons/${seasonId}/review-analysis`);
     return response.data.data;
   },
 };

@@ -132,3 +132,61 @@ export const USER_ROLE_COLORS: Record<UserRole, string> = {
   USER: 'bg-gray-100 text-gray-700',
   ADMIN: 'bg-purple-100 text-purple-700',
 };
+
+// Review Analysis Types
+export type RubricItem =
+  | 'PROBLEM_DEFINITION'
+  | 'USER_VALUE'
+  | 'AI_USAGE'
+  | 'UX_COMPLETENESS'
+  | 'TECHNICAL_FEASIBILITY'
+  | 'COLLABORATION';
+
+export interface RubricAnalysis {
+  rubricItem: RubricItem;
+  label: string;
+  averageScore: number;
+  expertAverageScore: number;
+  candidateAverageScore: number;
+  scoreDifference: number;
+  aiInsight: string;
+}
+
+export interface OutlierScore {
+  reviewId: number;
+  reviewerName: string;
+  reviewType: 'EXPERT' | 'CANDIDATE';
+  rubricItem: RubricItem;
+  score: number;
+  averageScore: number;
+  deviation: number;
+  possibleReason: string;
+}
+
+export interface ReviewAnalysis {
+  projectId: number;
+  projectName: string;
+  teamName: string;
+  totalReviewCount: number;
+  expertReviewCount: number;
+  candidateReviewCount: number;
+  overallAverageScore: number;
+  expertAverageScore: number;
+  candidateAverageScore: number;
+  scoreDifference: number;
+  rubricAnalyses: RubricAnalysis[];
+  commentSummary: string;
+  strengths: string[];
+  weaknesses: string[];
+  outliers: OutlierScore[];
+  expertVsCandidateAnalysis: string;
+}
+
+export const RUBRIC_ITEM_LABELS: Record<RubricItem, string> = {
+  PROBLEM_DEFINITION: '문제 정의의 명확성',
+  USER_VALUE: '사용자 가치',
+  AI_USAGE: 'AI 활용 적절성',
+  UX_COMPLETENESS: 'UX 완성도',
+  TECHNICAL_FEASIBILITY: '기술 구현 가능성',
+  COLLABORATION: '협업 완성도',
+};

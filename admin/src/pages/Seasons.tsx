@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
-import { Plus, Edit, Trash2, Play, CheckCircle } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { Plus, Edit, Trash2, Play, CheckCircle, BarChart3 } from 'lucide-react';
 import adminService from '../services/adminService';
 import type { Season, SeasonCreateRequest, SeasonStatus } from '../types';
 import { SEASON_STATUS_LABELS, SEASON_STATUS_COLORS } from '../types';
@@ -264,6 +265,16 @@ export default function SeasonsPage() {
                   </div>
 
                   <div className="flex items-center gap-2 ml-4">
+                    {(season.status === 'REVIEWING' || season.status === 'COMPLETED') && (
+                      <Link
+                        to={`/seasons/${season.id}/review-analysis`}
+                        className="btn-primary flex items-center gap-1 text-sm"
+                        title="AI 심사 분석"
+                      >
+                        <BarChart3 className="w-4 h-4" />
+                        분석
+                      </Link>
+                    )}
                     {nextStatus && (
                       <button
                         onClick={() => handleStatusChange(season, nextStatus)}
