@@ -82,10 +82,17 @@ public class ReviewGuideService {
 
     /**
      * 사례 비교 학습 완료 처리
+     * - 선행 조건: 루브릭 학습 완료
      */
     @Transactional
     public ReviewGuideStatus completeExampleComparison(Long userId) {
         ReviewGuideCompletion completion = getOrCreateCompletion(userId);
+
+        // 루브릭 학습 완료 여부 검증
+        if (!completion.isRubricLearningCompleted()) {
+            throw new BusinessException(ErrorCode.PREVIOUS_STEP_NOT_COMPLETED);
+        }
+
         completion.completeExampleComparison();
         guideCompletionRepository.save(completion);
         log.info("사례 비교 학습 완료 - 사용자: {}", userId);
@@ -94,10 +101,17 @@ public class ReviewGuideService {
 
     /**
      * 연습 평가 완료 처리
+     * - 선행 조건: 사례 비교 학습 완료
      */
     @Transactional
     public ReviewGuideStatus completePracticeEvaluation(Long userId) {
         ReviewGuideCompletion completion = getOrCreateCompletion(userId);
+
+        // 사례 비교 학습 완료 여부 검증
+        if (!completion.isExampleComparisonCompleted()) {
+            throw new BusinessException(ErrorCode.PREVIOUS_STEP_NOT_COMPLETED);
+        }
+
         completion.completePracticeEvaluation();
         guideCompletionRepository.save(completion);
         log.info("연습 평가 완료 - 사용자: {}", userId);

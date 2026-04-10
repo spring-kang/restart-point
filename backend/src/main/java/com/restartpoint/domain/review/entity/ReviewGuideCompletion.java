@@ -59,11 +59,4 @@ public class ReviewGuideCompletion extends BaseTimeEntity {
     private void checkFullCompletion() {
         this.fullyCompleted = rubricLearningCompleted && exampleComparisonCompleted && practiceEvaluationCompleted;
     }
-
-    public void completeAll() {
-        this.rubricLearningCompleted = true;
-        this.exampleComparisonCompleted = true;
-        this.practiceEvaluationCompleted = true;
-        this.fullyCompleted = true;
-    }
 }
