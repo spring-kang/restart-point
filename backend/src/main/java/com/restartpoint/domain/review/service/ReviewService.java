@@ -5,6 +5,7 @@ import com.restartpoint.domain.project.entity.ProjectStatus;
 import com.restartpoint.domain.project.repository.ProjectRepository;
 import com.restartpoint.domain.review.dto.*;
 import com.restartpoint.domain.review.entity.*;
+import com.restartpoint.domain.review.repository.ReviewGuideCompletionRepository;
 import com.restartpoint.domain.review.repository.ReviewRepository;
 import com.restartpoint.domain.review.repository.ReviewScoreRepository;
 import com.restartpoint.domain.season.entity.Season;
@@ -38,6 +39,7 @@ public class ReviewService {
     private final UserRepository userRepository;
     private final TeamMemberRepository teamMemberRepository;
     private final SeasonRepository seasonRepository;
+    private final ReviewGuideCompletionRepository guideCompletionRepository;
 
     /**
      * 심사 제출
@@ -234,6 +236,14 @@ public class ReviewService {
         // 심사자 자격 확인 (REVIEWER 역할이거나 수료 인증 완료)
         if (!canReview(reviewer)) {
             throw new BusinessException(ErrorCode.NOT_CERTIFIED_REVIEWER);
+        }
+
+        // CANDIDATE (일반 수료생) 심사자는 가이드 학습 완료 필수
+        ReviewType reviewType = determineReviewType(reviewer);
+        if (reviewType == ReviewType.CANDIDATE) {
+            if (!guideCompletionRepository.existsByUserIdAndFullyCompletedTrue(reviewer.getId())) {
+                throw new BusinessException(ErrorCode.GUIDE_NOT_COMPLETED);
+            }
         }
 
         // 시즌이 심사 기간인지 확인

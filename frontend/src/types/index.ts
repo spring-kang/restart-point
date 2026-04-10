@@ -369,3 +369,68 @@ export interface GrowthReport {
   generated: boolean;
   createdAt: string;
 }
+
+// 심사 가이드 관련 타입
+export interface ReviewGuideStatus {
+  rubricLearningCompleted: boolean;
+  exampleComparisonCompleted: boolean;
+  practiceEvaluationCompleted: boolean;
+  fullyCompleted: boolean;
+}
+
+export interface ScoreExample {
+  score: number;
+  description: string;
+  example: string;
+}
+
+export interface RubricGuide {
+  rubricItem: RubricItem;
+  label: string;
+  description: string;
+  evaluationTips: string;
+  scoreExamples: ScoreExample[];
+}
+
+export interface ExampleProject {
+  name: string;
+  problemDefinition: string;
+  solution: string;
+  aiUsage: string;
+  expectedScore: number;
+  reasonForScore: string;
+}
+
+export interface ExampleComparison {
+  category: string;
+  excellentExample: ExampleProject;
+  averageExample: ExampleProject;
+  comparisonNotes: string;
+}
+
+export interface ReviewGuide {
+  rubricGuides: RubricGuide[];
+  exampleComparisons: ExampleComparison[];
+  completionStatus: ReviewGuideStatus;
+}
+
+// 심사 패턴 분석 관련 타입
+export interface ScoreDistribution {
+  score1Count: number;
+  score2Count: number;
+  score3Count: number;
+  score4Count: number;
+  score5Count: number;
+}
+
+export interface ReviewPatternAnalysis {
+  totalReviewCount: number;
+  averageScore: number;
+  rubricAverages: Record<RubricItem, number>;
+  overallTendency: string;
+  strengths: string;
+  areasForImprovement: string;
+  comparisonWithExperts: string;
+  recommendations: string;
+  scoreDistribution: ScoreDistribution;
+}

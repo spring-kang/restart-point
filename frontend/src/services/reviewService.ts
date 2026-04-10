@@ -6,6 +6,9 @@ import type {
   RubricItemInfo,
   RubricItem,
   Project,
+  ReviewGuide,
+  ReviewGuideStatus,
+  ReviewPatternAnalysis,
 } from '../types';
 
 export const reviewService = {
@@ -42,6 +45,48 @@ export const reviewService = {
   // 루브릭 항목 목록 조회
   async getRubricItems(): Promise<RubricItemInfo[]> {
     const response = await api.get('/rubric-items');
+    return response.data.data;
+  },
+
+  // 심사 가이드 조회
+  async getReviewGuide(): Promise<ReviewGuide> {
+    const response = await api.get('/review-guide');
+    return response.data.data;
+  },
+
+  // 가이드 완료 상태 조회
+  async getGuideStatus(): Promise<ReviewGuideStatus> {
+    const response = await api.get('/review-guide/status');
+    return response.data.data;
+  },
+
+  // 루브릭 학습 완료
+  async completeRubricLearning(): Promise<ReviewGuideStatus> {
+    const response = await api.post('/review-guide/complete/rubric');
+    return response.data.data;
+  },
+
+  // 사례 비교 완료
+  async completeExampleComparison(): Promise<ReviewGuideStatus> {
+    const response = await api.post('/review-guide/complete/examples');
+    return response.data.data;
+  },
+
+  // 연습 평가 완료
+  async completePracticeEvaluation(): Promise<ReviewGuideStatus> {
+    const response = await api.post('/review-guide/complete/practice');
+    return response.data.data;
+  },
+
+  // 가이드 전체 완료 (스킵)
+  async completeGuide(): Promise<ReviewGuideStatus> {
+    const response = await api.post('/review-guide/complete');
+    return response.data.data;
+  },
+
+  // 심사 패턴 분석 조회
+  async getMyReviewPattern(): Promise<ReviewPatternAnalysis> {
+    const response = await api.get('/users/me/review-pattern');
     return response.data.data;
   },
 };

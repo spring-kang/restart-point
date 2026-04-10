@@ -48,4 +48,10 @@ public interface ReviewRepository extends JpaRepository<Review, Long> {
      * 프로젝트별, 심사자 유형별 심사 개수 조회
      */
     long countByProjectIdAndReviewType(Long projectId, ReviewType reviewType);
+
+    /**
+     * 심사자 유형별 심사 목록 조회
+     */
+    @Query("SELECT r FROM Review r JOIN FETCH r.scores WHERE r.reviewType = :reviewType")
+    List<Review> findByReviewType(@Param("reviewType") ReviewType reviewType);
 }
