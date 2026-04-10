@@ -56,6 +56,7 @@ npm run test:e2e -- production.smoke.spec.ts
 
 실행용 PostgreSQL SQL:
 - `scripts/e2e-review-seed.sql`
+- cleanup: `scripts/e2e-review-cleanup.sql`
 
 기본 계정
 - `test1@restart-point.com / 1234` → 리뷰어 계정
