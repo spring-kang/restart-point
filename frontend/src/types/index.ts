@@ -492,6 +492,7 @@ export interface PostSeason {
 export interface PostProject {
   id: number;
   name: string;
+  teamId: number;
 }
 
 export interface Post {

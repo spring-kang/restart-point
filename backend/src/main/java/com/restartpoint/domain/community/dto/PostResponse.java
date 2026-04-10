@@ -60,12 +60,14 @@ public class PostResponse {
     public static class ProjectInfo {
         private Long id;
         private String name;
+        private Long teamId;
 
         public static ProjectInfo from(com.restartpoint.domain.project.entity.Project project) {
             if (project == null) return null;
             return ProjectInfo.builder()
                     .id(project.getId())
                     .name(project.getName())
+                    .teamId(project.getTeam().getId())
                     .build();
         }
     }

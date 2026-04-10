@@ -372,7 +372,7 @@ export default function PostDetailPage() {
             <div className="mt-6 p-4 bg-neutral-50 rounded-lg">
               <p className="text-sm text-neutral-500 mb-1">연결된 프로젝트</p>
               <Link
-                to={`/projects/${post.project.id}`}
+                to={`/teams/${post.project.teamId}/project`}
                 className="text-primary-600 hover:underline font-medium"
               >
                 {post.project.name}
