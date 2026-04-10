@@ -42,8 +42,11 @@ public class ReviewAssistantService {
     // 이상치 판단 기준: 평균에서 이 값 이상 벗어나면 이상치
     private static final double OUTLIER_THRESHOLD = 1.5;
 
-    // AI 호출을 위한 스레드 풀 (병렬 처리)
-    private final ExecutorService aiExecutor = Executors.newFixedThreadPool(5);
+    // 스레드 풀 분리: 교착 상태 방지
+    // - seasonExecutor: 시즌 분석 시 프로젝트별 병렬 처리용
+    // - aiExecutor: 프로젝트 분석 내 AI 호출 병렬 처리용
+    private final ExecutorService seasonExecutor = Executors.newFixedThreadPool(3);
+    private final ExecutorService aiExecutor = Executors.newFixedThreadPool(10);
 
     /**
      * 프로젝트 심사 분석 조회
@@ -150,11 +153,11 @@ public class ReviewAssistantService {
             return List.of();
         }
 
-        // 프로젝트별 분석을 병렬로 실행
+        // 프로젝트별 분석을 병렬로 실행 (seasonExecutor 사용 - 교착 방지)
         List<CompletableFuture<ReviewAnalysisResponse>> futures = projects.stream()
                 .map(project -> CompletableFuture.supplyAsync(
                         () -> analyzeProjectReviews(project.getId()),
-                        aiExecutor))
+                        seasonExecutor))
                 .toList();
 
         // 모든 분석 완료 대기 후 결과 수집
