@@ -75,7 +75,7 @@ public class AdminDashboardService {
                 .projectStats(buildProjectStats(projects))
                 .reviewStats(buildReviewStats(reviews, projects.size()))
                 .reportStats(buildReportStats(reports, teams, projects))
-                .riskTeams(buildRiskTeams(teams, projects))
+                .riskTeams(buildRiskTeams(teams, projects, season))
                 .build();
     }
 
@@ -314,10 +314,15 @@ public class AdminDashboardService {
                 .build();
     }
 
-    private List<RiskTeam> buildRiskTeams(List<Team> teams, List<Project> projects) {
+    private List<RiskTeam> buildRiskTeams(List<Team> teams, List<Project> projects, Season season) {
         List<RiskTeam> riskTeams = new ArrayList<>();
         Map<Long, Project> teamProjectMap = projects.stream()
                 .collect(Collectors.toMap(p -> p.getTeam().getId(), p -> p, (a, b) -> a));
+
+        java.time.LocalDateTime now = java.time.LocalDateTime.now();
+        java.time.LocalDateTime projectEndAt = season.getProjectEndAt();
+        // 마감 3일 전부터 위험으로 판정
+        java.time.LocalDateTime warningThreshold = projectEndAt.minusDays(3);
 
         for (Team team : teams) {
             Project project = teamProjectMap.get(team.getId());
@@ -352,17 +357,31 @@ public class AdminDashboardService {
                             .build());
                 }
 
-                // 3. 제출 지연 위험 (IN_PROGRESS 상태이면서 마감이 임박한 경우)
-                // 실제로는 시즌 마감일과 비교해야 함
+                // 3. 제출 지연 위험 (IN_PROGRESS 상태이면서 마감 기한 초과 또는 임박)
                 if (project.getStatus() == ProjectStatus.IN_PROGRESS) {
-                    riskTeams.add(RiskTeam.builder()
-                            .teamId(team.getId())
-                            .teamName(team.getName())
-                            .projectName(project.getName())
-                            .riskType("SUBMISSION_DELAYED")
-                            .riskDescription("프로젝트 미제출")
-                            .riskLevel(2)
-                            .build());
+                    if (now.isAfter(projectEndAt)) {
+                        // 마감 기한 초과 - 높은 위험
+                        riskTeams.add(RiskTeam.builder()
+                                .teamId(team.getId())
+                                .teamName(team.getName())
+                                .projectName(project.getName())
+                                .riskType("SUBMISSION_DELAYED")
+                                .riskDescription("마감 기한 초과")
+                                .riskLevel(3)
+                                .build());
+                    } else if (now.isAfter(warningThreshold)) {
+                        // 마감 3일 이내 임박 - 중간 위험
+                        long daysLeft = java.time.Duration.between(now, projectEndAt).toDays();
+                        riskTeams.add(RiskTeam.builder()
+                                .teamId(team.getId())
+                                .teamName(team.getName())
+                                .projectName(project.getName())
+                                .riskType("SUBMISSION_DELAYED")
+                                .riskDescription(String.format("마감 %d일 전 미제출", daysLeft))
+                                .riskLevel(2)
+                                .build());
+                    }
+                    // 마감까지 여유가 있으면 위험 팀으로 추가하지 않음
                 }
             }
         }
