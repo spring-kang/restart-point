@@ -475,3 +475,100 @@ export interface ReviewAnalysis {
   outliers: OutlierScore[];
   expertVsCandidateAnalysis: string;
 }
+
+// 커뮤니티 관련 타입
+export type PostType = 'RECRUITMENT' | 'ANNOUNCEMENT' | 'SHOWCASE' | 'QNA';
+
+export interface PostAuthor {
+  id: number;
+  name: string;
+}
+
+export interface PostSeason {
+  id: number;
+  title: string;
+}
+
+export interface PostProject {
+  id: number;
+  name: string;
+  teamId: number;
+}
+
+export interface Post {
+  id: number;
+  postType: PostType;
+  title: string;
+  content: string;
+  author: PostAuthor;
+  season?: PostSeason;
+  project?: PostProject;
+  viewCount: number;
+  likeCount: number;
+  commentCount: number;
+  pinned: boolean;
+  liked: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface PostListItem {
+  id: number;
+  postType: PostType;
+  title: string;
+  author: PostAuthor;
+  viewCount: number;
+  likeCount: number;
+  commentCount: number;
+  pinned: boolean;
+  createdAt: string;
+}
+
+export interface PostCreateRequest {
+  postType: PostType;
+  title: string;
+  content: string;
+  seasonId?: number;
+  projectId?: number;
+}
+
+export interface PostUpdateRequest {
+  title: string;
+  content: string;
+}
+
+export interface CommentAuthor {
+  id: number;
+  name: string;
+}
+
+export interface Comment {
+  id: number;
+  content: string;
+  author: CommentAuthor;
+  parentId?: number;
+  replies?: Comment[];
+  deleted: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CommentCreateRequest {
+  content: string;
+  parentId?: number;
+}
+
+export interface CommentUpdateRequest {
+  content: string;
+}
+
+export interface Page<T> {
+  content: T[];
+  totalPages: number;
+  totalElements: number;
+  size: number;
+  number: number;
+  first: boolean;
+  last: boolean;
+  empty: boolean;
+}
