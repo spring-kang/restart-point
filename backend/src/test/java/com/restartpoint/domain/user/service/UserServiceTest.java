@@ -1,5 +1,6 @@
 package com.restartpoint.domain.user.service;
 
+import com.restartpoint.domain.notification.service.NotificationService;
 import com.restartpoint.domain.user.dto.CertificationRequest;
 import com.restartpoint.domain.user.dto.UserResponse;
 import com.restartpoint.domain.user.entity.Role;
@@ -30,6 +31,9 @@ class UserServiceTest {
 
     @Mock
     private UserRepository userRepository;
+
+    @Mock
+    private NotificationService notificationService;
 
     @InjectMocks
     private UserService userService;
