@@ -48,6 +48,9 @@ export default function Header() {
             <Link to="/teams" className="text-neutral-600 hover:text-primary-600 transition-colors">
               팀 탐색
             </Link>
+            <Link to="/community" className="text-neutral-600 hover:text-primary-600 transition-colors">
+              커뮤니티
+            </Link>
             {isAuthenticated && (
               <Link to="/my-team" className="text-neutral-600 hover:text-primary-600 transition-colors">
                 내 팀
@@ -146,6 +149,13 @@ export default function Header() {
                 onClick={() => setIsMobileMenuOpen(false)}
               >
                 팀 탐색
+              </Link>
+              <Link
+                to="/community"
+                className="px-4 py-2 text-neutral-600 hover:bg-neutral-50 rounded-lg"
+                onClick={() => setIsMobileMenuOpen(false)}
+              >
+                커뮤니티
               </Link>
               {isAuthenticated ? (
                 <>
