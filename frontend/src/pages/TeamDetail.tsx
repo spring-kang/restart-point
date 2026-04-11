@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import { ChevronLeft, Users, Settings, Check, X as XIcon, Clock, UserPlus, Sparkles, CheckCircle, AlertTriangle } from 'lucide-react';
+import { ChevronLeft, Users, Settings, Check, X as XIcon, Clock, UserPlus, Sparkles, CheckCircle, AlertTriangle, FolderKanban } from 'lucide-react';
 import { teamService, TEAM_STATUS_LABELS, TEAM_STATUS_COLORS, JOB_ROLE_LABELS, JOB_ROLE_COLORS } from '../services/teamService';
 import { matchingService, SCHEDULE_RISK_LABELS, SCHEDULE_RISK_COLORS } from '../services/matchingService';
 import { useAuthStore } from '../stores/authStore';
@@ -173,6 +173,20 @@ export default function TeamDetailPage() {
                 </span>
               ))}
             </div>
+          </div>
+        )}
+
+        {/* 프로젝트 워크스페이스 버튼 - 팀원만 접근 가능 */}
+        {(team.status === 'IN_PROGRESS' || team.status === 'COMPLETE' || team.status === 'SUBMITTED' || team.status === 'REVIEWED') &&
+         team.members?.some((m) => m.userId === user?.id) && (
+          <div className="mt-6">
+            <Link
+              to={`/teams/${team.id}/project`}
+              className="btn-primary inline-flex items-center gap-2"
+            >
+              <FolderKanban className="w-5 h-5" />
+              프로젝트 워크스페이스
+            </Link>
           </div>
         )}
 

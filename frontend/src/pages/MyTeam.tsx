@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Users, Crown, UserCheck, Clock, ChevronRight, Plus } from 'lucide-react';
+import { Users, Crown, UserCheck, Clock, ChevronRight, Plus, FolderKanban } from 'lucide-react';
 import { teamService, TEAM_STATUS_LABELS, TEAM_STATUS_COLORS, JOB_ROLE_LABELS, JOB_ROLE_COLORS } from '../services/teamService';
 import { useAuthStore } from '../stores/authStore';
 import type { Team, TeamMember } from '../types';
@@ -175,35 +175,50 @@ interface TeamCardProps {
 }
 
 function TeamCard({ team, isLeader }: TeamCardProps) {
+  const showProjectButton = team.status === 'IN_PROGRESS' || team.status === 'COMPLETE' || team.status === 'SUBMITTED' || team.status === 'REVIEWED';
+
   return (
-    <Link
-      to={`/teams/${team.id}`}
-      className="card flex items-center justify-between hover:shadow-lg transition-shadow"
-    >
-      <div className="flex-1">
-        <div className="flex items-center gap-3 mb-2">
-          <h3 className="font-semibold text-neutral-900">{team.name}</h3>
-          {isLeader && (
-            <span className="px-2 py-0.5 bg-yellow-100 text-yellow-700 text-xs font-medium rounded">
-              리더
+    <div className="card hover:shadow-lg transition-shadow">
+      <div className="flex items-center justify-between">
+        <Link to={`/teams/${team.id}`} className="flex-1">
+          <div className="flex items-center gap-3 mb-2">
+            <h3 className="font-semibold text-neutral-900">{team.name}</h3>
+            {isLeader && (
+              <span className="px-2 py-0.5 bg-yellow-100 text-yellow-700 text-xs font-medium rounded">
+                리더
+              </span>
+            )}
+            <span className={`px-2 py-0.5 rounded text-xs font-medium ${TEAM_STATUS_COLORS[team.status]}`}>
+              {TEAM_STATUS_LABELS[team.status]}
             </span>
+          </div>
+          {team.description && (
+            <p className="text-sm text-neutral-600 line-clamp-1 mb-2">{team.description}</p>
           )}
-          <span className={`px-2 py-0.5 rounded text-xs font-medium ${TEAM_STATUS_COLORS[team.status]}`}>
-            {TEAM_STATUS_LABELS[team.status]}
-          </span>
-        </div>
-        {team.description && (
-          <p className="text-sm text-neutral-600 line-clamp-1 mb-2">{team.description}</p>
-        )}
-        <div className="flex items-center gap-4 text-sm text-neutral-500">
-          <span className="flex items-center gap-1">
-            <Users className="w-4 h-4" />
-            {team.memberCount}/{team.maxMemberCount}명
-          </span>
+          <div className="flex items-center gap-4 text-sm text-neutral-500">
+            <span className="flex items-center gap-1">
+              <Users className="w-4 h-4" />
+              {team.memberCount}/{team.maxMemberCount}명
+            </span>
+          </div>
+        </Link>
+        <div className="flex items-center gap-2 ml-4">
+          {showProjectButton && (
+            <Link
+              to={`/teams/${team.id}/project`}
+              className="btn-primary text-sm flex items-center gap-1.5"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <FolderKanban className="w-4 h-4" />
+              프로젝트
+            </Link>
+          )}
+          <Link to={`/teams/${team.id}`} className="p-2 hover:bg-neutral-100 rounded-lg">
+            <ChevronRight className="w-5 h-5 text-neutral-400" />
+          </Link>
         </div>
       </div>
-      <ChevronRight className="w-5 h-5 text-neutral-400" />
-    </Link>
+    </div>
   );
 }
 
