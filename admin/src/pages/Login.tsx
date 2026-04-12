@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import axios from 'axios';
 import { useAuthStore } from '../stores/authStore';
 
 export default function LoginPage() {
@@ -19,7 +20,9 @@ export default function LoginPage() {
       await login(email, password);
       navigate('/');
     } catch (err) {
-      if (err instanceof Error) {
+      if (axios.isAxiosError(err)) {
+        setError(err.response?.data?.message || '로그인에 실패했습니다.');
+      } else if (err instanceof Error) {
         setError(err.message);
       } else {
         setError('로그인에 실패했습니다.');
