@@ -1,7 +1,18 @@
+import { useEffect } from 'react';
 import { Outlet } from 'react-router-dom';
 import Header from './Header';
+import { useAuthStore } from '../../stores/authStore';
 
 export default function Layout() {
+  const { isAuthenticated, refreshUser } = useAuthStore();
+
+  // 앱 초기화 시 토큰 유효성 검증
+  useEffect(() => {
+    if (isAuthenticated) {
+      refreshUser();
+    }
+  }, []); // 최초 마운트 시에만 실행
+
   return (
     <div className="min-h-screen bg-background">
       <Header />
