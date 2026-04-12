@@ -68,3 +68,39 @@ jobs:
       - name: Test
         run: npm run test -- --run
         continue-on-error: true
+
+  admin:
+    name: Admin Build & E2E
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: admin
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: admin/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps chromium
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Type check
+        run: npx tsc --noEmit
+
+      - name: Build
+        run: npm run build
+
+      - name: E2E
+        run: npm run test:e2e
