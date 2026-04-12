@@ -91,6 +91,7 @@ async function mockTeamPageApis(page: import('@playwright/test').Page, options?:
   teamsBySeason?: unknown[];
   recruitingTeams?: unknown[];
   unreadCount?: number;
+  createdTeam?: Record<string, unknown>;
 }) {
   const {
     activeSeasons = [activeSeason],
@@ -98,6 +99,26 @@ async function mockTeamPageApis(page: import('@playwright/test').Page, options?:
     teamsBySeason = teams,
     recruitingTeams = teams,
     unreadCount = 0,
+    createdTeam = {
+      id: 99,
+      name: '새 팀',
+      description: '새로 만든 팀 설명',
+      seasonId: 1,
+      seasonTitle: '활성 시즌',
+      leaderId: 1,
+      leaderName: '인증유저',
+      status: 'RECRUITING',
+      recruitingPlanner: false,
+      recruitingUxui: false,
+      recruitingFrontend: true,
+      recruitingBackend: true,
+      memberCount: 1,
+      maxMemberCount: 4,
+      members: [
+        { id: 1, userId: 1, userName: '인증유저', role: 'PLANNER', status: 'ACCEPTED', createdAt: '2026-04-12T00:00:00Z' },
+      ],
+      createdAt: '2026-04-12T00:00:00Z',
+    },
   } = options ?? {};
 
   await page.route('**/api/v1/seasons/active', async (route) => {
@@ -114,6 +135,23 @@ async function mockTeamPageApis(page: import('@playwright/test').Page, options?:
 
   await page.route('**/api/v1/seasons/1/teams', async (route) => {
     await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ success: true, data: teamsBySeason }) });
+  });
+
+  await page.route('**/api/v1/teams', async (route) => {
+    if (route.request().method() !== 'POST') {
+      await route.fallback();
+      return;
+    }
+
+    await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ success: true, data: createdTeam }) });
+  });
+
+  await page.route('**/api/v1/teams/99/applications', async (route) => {
+    await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ success: true, data: [] }) });
+  });
+
+  await page.route('**/api/v1/teams/99', async (route) => {
+    await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ success: true, data: createdTeam }) });
   });
 
   await page.route('**/api/v1/notifications/unread-count', async (route) => {
@@ -225,4 +263,25 @@ test('인증 완료 사용자가 역할 없이 팀 생성 제출하면 에러가
   await page.getByRole('button', { name: '팀 만들기' }).nth(1).click();
 
   await expect(page.getByText('본인의 역할을 선택해주세요.')).toBeVisible();
+});
+
+test('인증 완료 사용자가 팀 생성에 성공하면 생성된 팀 상세로 이동한다', async ({ page }) => {
+  await page.addInitScript((storageValue) => {
+    window.localStorage.setItem('accessToken', 'fake-token');
+    window.localStorage.setItem('auth-storage', JSON.stringify(storageValue));
+  }, authenticatedState);
+
+  await mockTeamPageApis(page);
+
+  await page.goto('/teams');
+  await page.getByRole('button', { name: '팀 만들기' }).first().click();
+  await page.getByPlaceholder('팀 이름을 입력하세요').fill('새 팀');
+  await page.getByPlaceholder('팀의 목표나 프로젝트 아이디어를 소개해주세요').fill('새로 만든 팀 설명');
+  await page.getByRole('radio', { name: '기획자' }).check();
+  await page.getByRole('checkbox', { name: '프론트엔드' }).check();
+  await page.getByRole('checkbox', { name: '백엔드' }).check();
+  await page.getByRole('button', { name: '팀 만들기' }).nth(1).click();
+
+  await expect(page).toHaveURL(/\/teams\/99$/);
+  await expect(page.getByRole('heading', { name: '새 팀' })).toBeVisible();
 });
