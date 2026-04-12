@@ -92,6 +92,8 @@ async function mockTeamPageApis(page: import('@playwright/test').Page, options?:
   recruitingTeams?: unknown[];
   unreadCount?: number;
   createdTeam?: Record<string, unknown>;
+  teamRecommendations?: unknown[];
+  teamRecommendationError?: { message?: string; errorCode?: string; status?: number };
 }) {
   const {
     activeSeasons = [activeSeason],
@@ -119,6 +121,25 @@ async function mockTeamPageApis(page: import('@playwright/test').Page, options?:
       ],
       createdAt: '2026-04-12T00:00:00Z',
     },
+    teamRecommendations = [
+      {
+        team: teams[0],
+        matchScore: 92,
+        reasons: ['프론트엔드 역할과 잘 맞습니다.', '협업 스타일이 유사합니다.'],
+        balanceAnalysis: '프론트엔드 역량을 보강해 팀 밸런스를 높일 수 있습니다.',
+        scheduleRisk: 'LOW',
+        missingRoles: ['프론트엔드'],
+      },
+      {
+        team: teams[1],
+        matchScore: 78,
+        reasons: ['백엔드 경험이 도움됩니다.'],
+        balanceAnalysis: '백엔드 구조 설계에 기여할 수 있습니다.',
+        scheduleRisk: 'MEDIUM',
+        missingRoles: ['백엔드'],
+      },
+    ],
+    teamRecommendationError,
   } = options ?? {};
 
   await page.route('**/api/v1/seasons/active', async (route) => {
@@ -135,6 +156,23 @@ async function mockTeamPageApis(page: import('@playwright/test').Page, options?:
 
   await page.route('**/api/v1/seasons/1/teams', async (route) => {
     await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ success: true, data: teamsBySeason }) });
+  });
+
+  await page.route('**/api/v1/matching/teams**', async (route) => {
+    if (teamRecommendationError) {
+      await route.fulfill({
+        status: teamRecommendationError.status ?? 400,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          success: false,
+          message: teamRecommendationError.message,
+          errorCode: teamRecommendationError.errorCode,
+        }),
+      });
+      return;
+    }
+
+    await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ success: true, data: teamRecommendations }) });
   });
 
   await page.route('**/api/v1/teams', async (route) => {
@@ -284,4 +322,82 @@ test('인증 완료 사용자가 팀 생성에 성공하면 생성된 팀 상세
 
   await expect(page).toHaveURL(/\/teams\/99$/);
   await expect(page.getByRole('heading', { name: '새 팀' })).toBeVisible();
+});
+
+test('AI 추천 성공 시 추천 팀 목록과 이유가 보인다', async ({ page }) => {
+  await page.addInitScript((storageValue) => {
+    window.localStorage.setItem('accessToken', 'fake-token');
+    window.localStorage.setItem('auth-storage', JSON.stringify(storageValue));
+  }, authenticatedState);
+
+  await mockTeamPageApis(page);
+
+  await page.goto('/teams');
+  await page.getByRole('button', { name: 'AI 추천' }).click();
+
+  const modal = page.locator('.fixed.inset-0').last();
+  await expect(page.getByRole('heading', { name: 'AI 팀 추천' })).toBeVisible();
+  await expect(modal.getByRole('heading', { name: '알파 팀' })).toBeVisible();
+  await expect(modal.getByText('프론트엔드 역할과 잘 맞습니다.')).toBeVisible();
+  await expect(modal.getByText('일정 충돌 위험: 낮음')).toBeVisible();
+});
+
+test('AI 추천 실패 시 프로필 먼저 등록 안내가 보인다', async ({ page }) => {
+  await page.addInitScript((storageValue) => {
+    window.localStorage.setItem('accessToken', 'fake-token');
+    window.localStorage.setItem('auth-storage', JSON.stringify(storageValue));
+  }, authenticatedState);
+
+  await mockTeamPageApis(page, {
+    teamRecommendationError: {
+      errorCode: 'PROFILE_001',
+      message: '프로필을 먼저 등록해주세요.',
+      status: 400,
+    },
+  });
+
+  await page.goto('/teams');
+  await page.getByRole('button', { name: 'AI 추천' }).click();
+
+  await expect(page.getByText('프로필을 먼저 등록해주세요. AI가 당신에게 맞는 팀을 추천해드립니다.')).toBeVisible();
+});
+
+test('AI 추천 실패 시 이미 팀 소속 안내가 보인다', async ({ page }) => {
+  await page.addInitScript((storageValue) => {
+    window.localStorage.setItem('accessToken', 'fake-token');
+    window.localStorage.setItem('auth-storage', JSON.stringify(storageValue));
+  }, authenticatedState);
+
+  await mockTeamPageApis(page, {
+    teamRecommendationError: {
+      errorCode: 'TEAM_003',
+      message: '이미 팀에 소속되어 있습니다.',
+      status: 400,
+    },
+  });
+
+  await page.goto('/teams');
+  await page.getByRole('button', { name: 'AI 추천' }).click();
+
+  await expect(page.getByText('이미 팀에 소속되어 있습니다.')).toBeVisible();
+});
+
+test('AI 추천 실패 시 추천 가능한 팀 없음 안내가 보인다', async ({ page }) => {
+  await page.addInitScript((storageValue) => {
+    window.localStorage.setItem('accessToken', 'fake-token');
+    window.localStorage.setItem('auth-storage', JSON.stringify(storageValue));
+  }, authenticatedState);
+
+  await mockTeamPageApis(page, {
+    teamRecommendationError: {
+      errorCode: 'AI_002',
+      message: '현재 추천 가능한 팀이 없습니다.',
+      status: 400,
+    },
+  });
+
+  await page.goto('/teams');
+  await page.getByRole('button', { name: 'AI 추천' }).click();
+
+  await expect(page.getByText('현재 추천 가능한 팀이 없습니다. 나중에 다시 시도해주세요.')).toBeVisible();
 });
