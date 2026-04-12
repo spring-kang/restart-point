@@ -218,16 +218,18 @@ test('로그인 사용자는 댓글을 작성할 수 있다', async ({ page }) =
 
 test('글쓰기 페이지는 비로그인 사용자를 로그인 페이지로 보낸다', async ({ page }) => {
   await setAuth(page, unauthenticatedState);
-  await page.goto('/community/write');
+  await page.goto('/community/write', { waitUntil: 'domcontentloaded' });
   await expect(page).toHaveURL(/\/login$/);
+  await expect(page.getByRole('heading', { name: '로그인' })).toBeVisible();
 });
 
 test('일반 사용자는 글쓰기에서 공지사항 옵션이 숨겨진다', async ({ page }) => {
   await setAuth(page, userState, true);
   await mockWriteApis(page);
 
-  await page.goto('/community/write');
+  await page.goto('/community/write', { waitUntil: 'domcontentloaded' });
 
+  await expect(page.getByRole('heading', { name: '글쓰기' })).toBeVisible();
   await expect(page.getByRole('button', { name: '공지사항' })).not.toBeVisible();
   await expect(page.getByRole('button', { name: '팀원 모집' })).toBeVisible();
   await expect(page.getByRole('button', { name: 'Q&A' })).toBeVisible();

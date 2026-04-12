@@ -110,7 +110,7 @@ test('비로그인 사용자는 로그인 페이지로 이동한다', async ({ p
     window.localStorage.removeItem('accessToken');
   }, createAuthStorage(null));
 
-  await page.goto('/my-team');
+  await page.goto('/my-team', { waitUntil: 'domcontentloaded' });
 
   await expect(page).toHaveURL(/\/login$/);
   await expect(page.getByRole('heading', { name: '로그인' })).toBeVisible();
