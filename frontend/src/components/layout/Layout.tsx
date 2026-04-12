@@ -1,7 +1,20 @@
+import { useEffect, useRef } from 'react';
 import { Outlet } from 'react-router-dom';
 import Header from './Header';
+import { useAuthStore } from '../../stores/authStore';
 
 export default function Layout() {
+  const { isAuthenticated, isHydrated, refreshUser } = useAuthStore();
+  const hasValidated = useRef(false);
+
+  // persist hydration 완료 후 토큰 유효성 검증
+  useEffect(() => {
+    if (isHydrated && isAuthenticated && !hasValidated.current) {
+      hasValidated.current = true;
+      refreshUser();
+    }
+  }, [isHydrated, isAuthenticated, refreshUser]);
+
   return (
     <div className="min-h-screen bg-background">
       <Header />
