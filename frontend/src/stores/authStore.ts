@@ -7,10 +7,12 @@ interface AuthState {
   user: User | null;
   accessToken: string | null;
   isAuthenticated: boolean;
+  isHydrated: boolean;
   setAuth: (user: User, token: string) => void;
   logout: () => void;
   updateUser: (user: Partial<User>) => void;
   refreshUser: () => Promise<void>;
+  setHydrated: (hydrated: boolean) => void;
 }
 
 export const useAuthStore = create<AuthState>()(
@@ -19,6 +21,7 @@ export const useAuthStore = create<AuthState>()(
       user: null,
       accessToken: null,
       isAuthenticated: false,
+      isHydrated: false,
 
       setAuth: (user, token) => {
         localStorage.setItem('accessToken', token);
@@ -53,6 +56,10 @@ export const useAuthStore = create<AuthState>()(
           get().logout();
         }
       },
+
+      setHydrated: (hydrated) => {
+        set({ isHydrated: hydrated });
+      },
     }),
     {
       name: 'auth-storage',
@@ -60,7 +67,12 @@ export const useAuthStore = create<AuthState>()(
         user: state.user,
         accessToken: state.accessToken,
         isAuthenticated: state.isAuthenticated,
+        // isHydrated는 persist 대상에서 제외
       }),
+      onRehydrateStorage: () => (state) => {
+        // localStorage에서 상태 복원 완료 후 호출
+        state?.setHydrated(true);
+      },
     }
   )
 );
