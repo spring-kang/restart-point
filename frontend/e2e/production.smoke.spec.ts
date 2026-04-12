@@ -29,7 +29,14 @@ test.describe('production smoke - user web', () => {
     await page.getByLabel('비밀번호').fill(USER_TEST_PASSWORD);
     await page.getByRole('button', { name: '로그인' }).click();
 
-    await expect(page).toHaveURL(/restart-point\.com\/?$/);
+    try {
+      await expect(page).toHaveURL(/restart-point\.com\/?$/);
+    } catch {
+      const errorMessages = await page.locator('.text-red-500, .bg-red-50, [role="alert"]').allTextContents();
+      const currentUrl = page.url();
+      throw new Error(`User production login did not redirect. url=${currentUrl} errors=${JSON.stringify(errorMessages)}`);
+    }
+
     await expect(page.getByRole('link', { name: '내 팀' })).toBeVisible();
 
     await page.goto(`${USER_BASE_URL}/my-team`);
