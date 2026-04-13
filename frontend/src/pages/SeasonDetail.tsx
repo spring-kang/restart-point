@@ -33,7 +33,8 @@ export default function SeasonDetailPage() {
     if (!isAuthenticated || !user) return false;
     // 모든 사용자는 회원가입 시 이메일 인증 완료됨
     if (user.certificationStatus !== 'APPROVED') return false;
-    return season?.canJoin ?? false;
+    // 모집 중 또는 팀빌딩 기간에 팀 생성/참여 가능
+    return season?.status === 'RECRUITING' || season?.status === 'TEAM_BUILDING';
   };
 
   if (isLoading) {
@@ -119,7 +120,7 @@ export default function SeasonDetailPage() {
           )}
         </div>
 
-        {!isAuthenticated && season.canJoin && (
+        {!isAuthenticated && (season.status === 'RECRUITING' || season.status === 'TEAM_BUILDING') && (
           <div className="bg-primary-50 border border-primary-200 rounded-xl p-4 mt-4">
             <p className="text-primary-700">
               이 시즌에 참여하려면 <Link to="/login" className="font-semibold underline">로그인</Link>이 필요합니다.
@@ -127,7 +128,8 @@ export default function SeasonDetailPage() {
           </div>
         )}
 
-        {isAuthenticated && user?.certificationStatus !== 'APPROVED' && season.canJoin && !season.myTeamId && (
+        {isAuthenticated && user?.certificationStatus !== 'APPROVED' &&
+         (season.status === 'RECRUITING' || season.status === 'TEAM_BUILDING') && !season.myTeamId && (
           <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 mt-4">
             <p className="text-amber-700">
               이 시즌에 참여하려면 <Link to="/certification" className="font-semibold underline">수료 인증</Link>이 필요합니다.
