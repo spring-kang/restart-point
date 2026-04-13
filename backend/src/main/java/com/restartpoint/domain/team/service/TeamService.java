@@ -47,9 +47,9 @@ public class TeamService {
             throw new BusinessException(ErrorCode.CERTIFICATION_REQUIRED);
         }
 
-        // 팀빌딩 기간인지 확인
-        if (season.getStatus() != SeasonStatus.TEAM_BUILDING) {
-            throw new BusinessException(ErrorCode.SEASON_NOT_TEAM_BUILDING);
+        // 팀 생성 가능한 시즌 상태인지 확인 (RECRUITING 또는 TEAM_BUILDING)
+        if (!isTeamCreationAllowed(season.getStatus())) {
+            throw new BusinessException(ErrorCode.INVALID_SEASON_STATUS, "모집 중 또는 팀빌딩 기간에만 팀을 생성할 수 있습니다.");
         }
 
         // 이미 해당 시즌에서 팀에 소속되어 있는지 확인
@@ -349,6 +349,11 @@ public class TeamService {
         if (!isRecruiting) {
             throw new BusinessException(ErrorCode.INVALID_INPUT_VALUE, "현재 모집 중인 역할이 아닙니다.");
         }
+    }
+
+    // 팀 생성이 허용되는 시즌 상태인지 확인
+    private boolean isTeamCreationAllowed(SeasonStatus status) {
+        return status == SeasonStatus.RECRUITING || status == SeasonStatus.TEAM_BUILDING;
     }
 
     // 사용자가 해당 시즌에서 이미 팀에 소속되어 있는지 확인
