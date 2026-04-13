@@ -5,7 +5,6 @@ import com.restartpoint.domain.project.entity.ProjectStatus;
 import com.restartpoint.domain.project.repository.ProjectRepository;
 import com.restartpoint.domain.review.dto.*;
 import com.restartpoint.domain.review.entity.*;
-import com.restartpoint.domain.review.repository.ReviewGuideCompletionRepository;
 import com.restartpoint.domain.review.repository.ReviewRepository;
 import com.restartpoint.domain.review.repository.ReviewScoreRepository;
 import com.restartpoint.domain.season.entity.Season;
@@ -14,7 +13,6 @@ import com.restartpoint.domain.season.repository.SeasonRepository;
 import com.restartpoint.domain.team.entity.TeamMember;
 import com.restartpoint.domain.team.entity.TeamMemberStatus;
 import com.restartpoint.domain.team.repository.TeamMemberRepository;
-import com.restartpoint.domain.user.entity.CertificationStatus;
 import com.restartpoint.domain.user.entity.Role;
 import com.restartpoint.domain.user.entity.User;
 import com.restartpoint.domain.user.repository.UserRepository;
@@ -39,7 +37,6 @@ public class ReviewService {
     private final UserRepository userRepository;
     private final TeamMemberRepository teamMemberRepository;
     private final SeasonRepository seasonRepository;
-    private final ReviewGuideCompletionRepository guideCompletionRepository;
 
     /**
      * 심사 제출
@@ -110,40 +107,26 @@ public class ReviewService {
             validateTeamMemberOrReviewer(user, project);
         }
 
-        List<Review> allReviews = reviewRepository.findByProjectIdWithReviewer(projectId);
-        List<Review> expertReviews = allReviews.stream()
+        List<Review> expertReviews = reviewRepository.findByProjectIdWithReviewer(projectId).stream()
                 .filter(r -> r.getReviewType() == ReviewType.EXPERT)
                 .toList();
-        List<Review> candidateReviews = allReviews.stream()
-                .filter(r -> r.getReviewType() == ReviewType.CANDIDATE)
-                .toList();
 
-        // 평균 점수 계산
         double expertAvg = calculateAverageScore(expertReviews);
-        double candidateAvg = calculateAverageScore(candidateReviews);
 
-        // 가중 평균 계산
-        int expertWeight = season.getExpertReviewWeight();
-        int candidateWeight = season.getCandidateReviewWeight();
-        double weightedAvg = calculateWeightedAverage(expertAvg, candidateAvg, expertWeight, candidateWeight);
-
-        // 루브릭별 평균 점수 계산
-        Map<RubricItem, Double> rubricAverages = calculateRubricAverages(allReviews);
         Map<RubricItem, Double> expertRubricAverages = calculateRubricAverages(expertReviews);
-        Map<RubricItem, Double> candidateRubricAverages = calculateRubricAverages(candidateReviews);
 
         return ReviewSummaryResponse.builder()
                 .projectId(projectId)
                 .projectName(project.getName())
-                .totalReviewCount(allReviews.size())
+                .totalReviewCount(expertReviews.size())
                 .expertReviewCount(expertReviews.size())
-                .candidateReviewCount(candidateReviews.size())
-                .weightedAverageScore(Math.round(weightedAvg * 100.0) / 100.0)
+                .candidateReviewCount(0)
+                .weightedAverageScore(Math.round(expertAvg * 100.0) / 100.0)
                 .expertAverageScore(Math.round(expertAvg * 100.0) / 100.0)
-                .candidateAverageScore(Math.round(candidateAvg * 100.0) / 100.0)
-                .rubricAverages(rubricAverages)
+                .candidateAverageScore(0.0)
+                .rubricAverages(expertRubricAverages)
                 .expertRubricAverages(expertRubricAverages)
-                .candidateRubricAverages(candidateRubricAverages)
+                .candidateRubricAverages(Map.of())
                 .build();
     }
 
@@ -155,40 +138,28 @@ public class ReviewService {
         Project project = findProjectById(projectId);
         Season season = project.getTeam().getSeason();
 
-        List<Review> allReviews = reviewRepository.findByProjectIdWithReviewer(projectId);
-        if (allReviews.isEmpty()) {
+        List<Review> expertReviews = reviewRepository.findByProjectIdWithReviewer(projectId).stream()
+                .filter(r -> r.getReviewType() == ReviewType.EXPERT)
+                .toList();
+        if (expertReviews.isEmpty()) {
             return null;
         }
 
-        List<Review> expertReviews = allReviews.stream()
-                .filter(r -> r.getReviewType() == ReviewType.EXPERT)
-                .toList();
-        List<Review> candidateReviews = allReviews.stream()
-                .filter(r -> r.getReviewType() == ReviewType.CANDIDATE)
-                .toList();
-
         double expertAvg = calculateAverageScore(expertReviews);
-        double candidateAvg = calculateAverageScore(candidateReviews);
-        int expertWeight = season.getExpertReviewWeight();
-        int candidateWeight = season.getCandidateReviewWeight();
-        double weightedAvg = calculateWeightedAverage(expertAvg, candidateAvg, expertWeight, candidateWeight);
-
-        Map<RubricItem, Double> rubricAverages = calculateRubricAverages(allReviews);
         Map<RubricItem, Double> expertRubricAverages = calculateRubricAverages(expertReviews);
-        Map<RubricItem, Double> candidateRubricAverages = calculateRubricAverages(candidateReviews);
 
         return ReviewSummaryResponse.builder()
                 .projectId(projectId)
                 .projectName(project.getName())
-                .totalReviewCount(allReviews.size())
+                .totalReviewCount(expertReviews.size())
                 .expertReviewCount(expertReviews.size())
-                .candidateReviewCount(candidateReviews.size())
-                .weightedAverageScore(Math.round(weightedAvg * 100.0) / 100.0)
+                .candidateReviewCount(0)
+                .weightedAverageScore(Math.round(expertAvg * 100.0) / 100.0)
                 .expertAverageScore(Math.round(expertAvg * 100.0) / 100.0)
-                .candidateAverageScore(Math.round(candidateAvg * 100.0) / 100.0)
-                .rubricAverages(rubricAverages)
+                .candidateAverageScore(0.0)
+                .rubricAverages(expertRubricAverages)
                 .expertRubricAverages(expertRubricAverages)
-                .candidateRubricAverages(candidateRubricAverages)
+                .candidateRubricAverages(Map.of())
                 .build();
     }
 
@@ -199,7 +170,7 @@ public class ReviewService {
         User user = findUserById(userId);
         Season season = findSeasonById(seasonId);
 
-        // 심사자 자격 확인 (REVIEWER 역할이거나 수료 인증 완료)
+        // 전문가 심사위원만 심사 가능
         if (!canReview(user)) {
             return List.of(); // 심사 자격이 없으면 빈 목록 반환
         }
@@ -233,17 +204,9 @@ public class ReviewService {
     // === 헬퍼 메서드 ===
 
     private void validateReviewCreation(User reviewer, Project project, ReviewCreateRequest request) {
-        // 심사자 자격 확인 (REVIEWER 역할이거나 수료 인증 완료)
+        // 전문가 심사위원만 심사 가능
         if (!canReview(reviewer)) {
             throw new BusinessException(ErrorCode.NOT_CERTIFIED_REVIEWER);
-        }
-
-        // CANDIDATE (일반 수료생) 심사자는 가이드 학습 완료 필수
-        ReviewType reviewType = determineReviewType(reviewer);
-        if (reviewType == ReviewType.CANDIDATE) {
-            if (!guideCompletionRepository.existsByUserIdAndFullyCompletedTrue(reviewer.getId())) {
-                throw new BusinessException(ErrorCode.GUIDE_NOT_COMPLETED);
-            }
         }
 
         // 시즌이 심사 기간인지 확인
@@ -279,22 +242,14 @@ public class ReviewService {
 
     /**
      * 심사 가능 여부 확인
-     * - REVIEWER 역할: 전문가 심사자 (항상 심사 가능)
-     * - 일반 사용자: 수료 인증 완료(APPROVED)된 경우만 심사 가능
+     * REVIEWER 역할의 전문가 심사위원만 심사 가능
      */
     private boolean canReview(User user) {
-        if (user.getRole() == Role.REVIEWER || user.getRole() == Role.ADMIN) {
-            return true;
-        }
-        return user.getCertificationStatus() == CertificationStatus.APPROVED;
+        return user.getRole() == Role.REVIEWER;
     }
 
     private ReviewType determineReviewType(User user) {
-        // REVIEWER 역할이면 EXPERT, 그 외는 CANDIDATE
-        if (user.getRole() == Role.REVIEWER) {
-            return ReviewType.EXPERT;
-        }
-        return ReviewType.CANDIDATE;
+        return ReviewType.EXPERT;
     }
 
     private boolean isTeamMember(Long userId, Project project) {
@@ -333,19 +288,6 @@ public class ReviewService {
                 .mapToDouble(Review::calculateAverageScore)
                 .average()
                 .orElse(0.0);
-    }
-
-    private double calculateWeightedAverage(double expertAvg, double candidateAvg, int expertWeight, int candidateWeight) {
-        if (expertAvg == 0 && candidateAvg == 0) {
-            return 0.0;
-        }
-        if (expertAvg == 0) {
-            return candidateAvg;
-        }
-        if (candidateAvg == 0) {
-            return expertAvg;
-        }
-        return (expertAvg * expertWeight + candidateAvg * candidateWeight) / 100.0;
     }
 
     private Map<RubricItem, Double> calculateRubricAverages(List<Review> reviews) {

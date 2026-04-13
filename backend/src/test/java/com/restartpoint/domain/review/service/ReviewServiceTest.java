@@ -8,7 +8,6 @@ import com.restartpoint.domain.review.dto.ReviewResponse;
 import com.restartpoint.domain.review.dto.ReviewScoreRequest;
 import com.restartpoint.domain.review.dto.ReviewSummaryResponse;
 import com.restartpoint.domain.review.entity.*;
-import com.restartpoint.domain.review.repository.ReviewGuideCompletionRepository;
 import com.restartpoint.domain.review.repository.ReviewRepository;
 import com.restartpoint.domain.review.repository.ReviewScoreRepository;
 import com.restartpoint.domain.season.entity.Season;
@@ -16,7 +15,6 @@ import com.restartpoint.domain.season.entity.SeasonStatus;
 import com.restartpoint.domain.season.repository.SeasonRepository;
 import com.restartpoint.domain.team.entity.Team;
 import com.restartpoint.domain.team.repository.TeamMemberRepository;
-import com.restartpoint.domain.user.entity.CertificationStatus;
 import com.restartpoint.domain.user.entity.Role;
 import com.restartpoint.domain.user.entity.User;
 import com.restartpoint.domain.user.repository.UserRepository;
@@ -63,9 +61,6 @@ class ReviewServiceTest {
   @Mock
   private SeasonRepository seasonRepository;
 
-  @Mock
-  private ReviewGuideCompletionRepository guideCompletionRepository;
-
   @InjectMocks
   private ReviewService reviewService;
 
@@ -74,10 +69,10 @@ class ReviewServiceTest {
   class CreateReview {
 
     @Test
-    @DisplayName("수료 인증된 사용자가 심사 기간에 심사를 제출할 수 있다")
+    @DisplayName("전문가 심사위원이 심사 기간에 심사를 제출할 수 있다")
     void createReviewSuccess() {
       // given
-      User reviewer = createCertifiedUser(1L, "reviewer@example.com", "심사자");
+      User reviewer = createExpertReviewer(1L, "reviewer@example.com", "심사자");
       User projectOwner = createCertifiedUser(2L, "owner@example.com", "팀장");
       Season season = createSeason(1L, "시즌1", SeasonStatus.REVIEWING);
       Team team = createTeam(1L, "팀이름", season, projectOwner);
@@ -86,7 +81,6 @@ class ReviewServiceTest {
 
       given(userRepository.findById(1L)).willReturn(Optional.of(reviewer));
       given(projectRepository.findByIdWithTeam(1L)).willReturn(Optional.of(project));
-      given(guideCompletionRepository.existsByUserIdAndFullyCompletedTrue(1L)).willReturn(true);
       given(teamMemberRepository.findByTeamId(1L)).willReturn(List.of());
       given(reviewRepository.existsByProjectIdAndReviewerId(1L, 1L)).willReturn(false);
       given(reviewRepository.save(any(Review.class))).willAnswer(invocation -> {
@@ -104,7 +98,7 @@ class ReviewServiceTest {
     }
 
     @Test
-    @DisplayName("수료 인증되지 않은 사용자는 심사를 제출할 수 없다")
+    @DisplayName("전문가 권한이 없는 사용자는 심사를 제출할 수 없다")
     void createReviewFailsWhenNotCertified() {
       // given
       User uncertifiedUser = createUser(1L, "user@example.com", "사용자");
@@ -132,7 +126,7 @@ class ReviewServiceTest {
     @DisplayName("심사 기간이 아니면 심사를 제출할 수 없다")
     void createReviewFailsWhenNotReviewingPeriod() {
       // given
-      User reviewer = createCertifiedUser(1L, "reviewer@example.com", "심사자");
+      User reviewer = createExpertReviewer(1L, "reviewer@example.com", "심사자");
       User projectOwner = createCertifiedUser(2L, "owner@example.com", "팀장");
       Season season = createSeason(1L, "시즌1", SeasonStatus.IN_PROGRESS); // 프로젝트 진행 중
       Team team = createTeam(1L, "팀이름", season, projectOwner);
@@ -141,7 +135,6 @@ class ReviewServiceTest {
 
       given(userRepository.findById(1L)).willReturn(Optional.of(reviewer));
       given(projectRepository.findByIdWithTeam(1L)).willReturn(Optional.of(project));
-      given(guideCompletionRepository.existsByUserIdAndFullyCompletedTrue(1L)).willReturn(true);
 
       // when & then
       assertThatThrownBy(() -> reviewService.createReview(1L, 1L, request))
@@ -158,7 +151,7 @@ class ReviewServiceTest {
     @DisplayName("제출되지 않은 프로젝트는 심사할 수 없다")
     void createReviewFailsWhenProjectNotSubmitted() {
       // given
-      User reviewer = createCertifiedUser(1L, "reviewer@example.com", "심사자");
+      User reviewer = createExpertReviewer(1L, "reviewer@example.com", "심사자");
       User projectOwner = createCertifiedUser(2L, "owner@example.com", "팀장");
       Season season = createSeason(1L, "시즌1", SeasonStatus.REVIEWING);
       Team team = createTeam(1L, "팀이름", season, projectOwner);
@@ -167,7 +160,6 @@ class ReviewServiceTest {
 
       given(userRepository.findById(1L)).willReturn(Optional.of(reviewer));
       given(projectRepository.findByIdWithTeam(1L)).willReturn(Optional.of(project));
-      given(guideCompletionRepository.existsByUserIdAndFullyCompletedTrue(1L)).willReturn(true);
 
       // when & then
       assertThatThrownBy(() -> reviewService.createReview(1L, 1L, request))
@@ -184,7 +176,7 @@ class ReviewServiceTest {
     @DisplayName("자신의 프로젝트는 심사할 수 없다")
     void createReviewFailsWhenOwnProject() {
       // given
-      User user = createCertifiedUser(1L, "user@example.com", "사용자");
+      User user = createExpertReviewer(1L, "user@example.com", "사용자");
       Season season = createSeason(1L, "시즌1", SeasonStatus.REVIEWING);
       Team team = createTeam(1L, "팀이름", season, user); // 본인이 리더
       Project project = createProject(1L, "프로젝트", team, ProjectStatus.SUBMITTED);
@@ -192,7 +184,6 @@ class ReviewServiceTest {
 
       given(userRepository.findById(1L)).willReturn(Optional.of(user));
       given(projectRepository.findByIdWithTeam(1L)).willReturn(Optional.of(project));
-      given(guideCompletionRepository.existsByUserIdAndFullyCompletedTrue(1L)).willReturn(true);
 
       // when & then
       assertThatThrownBy(() -> reviewService.createReview(1L, 1L, request))
@@ -209,7 +200,7 @@ class ReviewServiceTest {
     @DisplayName("이미 심사한 프로젝트는 중복 심사할 수 없다")
     void createReviewFailsWhenAlreadyReviewed() {
       // given
-      User reviewer = createCertifiedUser(1L, "reviewer@example.com", "심사자");
+      User reviewer = createExpertReviewer(1L, "reviewer@example.com", "심사자");
       User projectOwner = createCertifiedUser(2L, "owner@example.com", "팀장");
       Season season = createSeason(1L, "시즌1", SeasonStatus.REVIEWING);
       Team team = createTeam(1L, "팀이름", season, projectOwner);
@@ -218,7 +209,6 @@ class ReviewServiceTest {
 
       given(userRepository.findById(1L)).willReturn(Optional.of(reviewer));
       given(projectRepository.findByIdWithTeam(1L)).willReturn(Optional.of(project));
-      given(guideCompletionRepository.existsByUserIdAndFullyCompletedTrue(1L)).willReturn(true);
       given(teamMemberRepository.findByTeamId(1L)).willReturn(List.of());
       given(reviewRepository.existsByProjectIdAndReviewerId(1L, 1L)).willReturn(true);
 
@@ -228,32 +218,6 @@ class ReviewServiceTest {
           .satisfies(exception -> {
             BusinessException businessException = (BusinessException) exception;
             assertThat(businessException.getErrorCode()).isEqualTo(ErrorCode.REVIEW_ALREADY_EXISTS);
-          });
-
-      verify(reviewRepository, never()).save(any(Review.class));
-    }
-
-    @Test
-    @DisplayName("CANDIDATE 심사자는 가이드 학습을 완료해야 심사할 수 있다")
-    void createReviewFailsWhenGuideNotCompleted() {
-      // given
-      User reviewer = createCertifiedUser(1L, "reviewer@example.com", "심사자");
-      User projectOwner = createCertifiedUser(2L, "owner@example.com", "팀장");
-      Season season = createSeason(1L, "시즌1", SeasonStatus.REVIEWING);
-      Team team = createTeam(1L, "팀이름", season, projectOwner);
-      Project project = createProject(1L, "프로젝트", team, ProjectStatus.SUBMITTED);
-      ReviewCreateRequest request = createReviewRequest();
-
-      given(userRepository.findById(1L)).willReturn(Optional.of(reviewer));
-      given(projectRepository.findByIdWithTeam(1L)).willReturn(Optional.of(project));
-      given(guideCompletionRepository.existsByUserIdAndFullyCompletedTrue(1L)).willReturn(false);
-
-      // when & then
-      assertThatThrownBy(() -> reviewService.createReview(1L, 1L, request))
-          .isInstanceOf(BusinessException.class)
-          .satisfies(exception -> {
-            BusinessException businessException = (BusinessException) exception;
-            assertThat(businessException.getErrorCode()).isEqualTo(ErrorCode.GUIDE_NOT_COMPLETED);
           });
 
       verify(reviewRepository, never()).save(any(Review.class));
@@ -467,8 +431,8 @@ class ReviewServiceTest {
         .projectEndAt(now.minusDays(10))
         .reviewStartAt(now.minusDays(5))
         .reviewEndAt(now.plusDays(5))
-        .expertReviewWeight(70)
-        .candidateReviewWeight(30)
+        .expertReviewWeight(100)
+        .candidateReviewWeight(0)
         .build();
     setField(season, "id", id);
     season.updateStatus(status);

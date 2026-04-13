@@ -16,8 +16,8 @@ const INITIAL_FORM_DATA: SeasonCreateRequest = {
   projectEndAt: '',
   reviewStartAt: '',
   reviewEndAt: '',
-  expertReviewWeight: 70,
-  candidateReviewWeight: 30,
+  expertReviewWeight: 100,
+  candidateReviewWeight: 0,
 };
 
 // LocalDateTime 형식으로 변환 (YYYY-MM-DDTHH:mm:ss)
@@ -83,8 +83,8 @@ export default function SeasonsPage() {
       projectEndAt: toDateInput(season.projectEndAt),
       reviewStartAt: toDateInput(season.reviewStartAt),
       reviewEndAt: toDateInput(season.reviewEndAt),
-      expertReviewWeight: season.expertReviewWeight,
-      candidateReviewWeight: season.candidateReviewWeight,
+      expertReviewWeight: 100,
+      candidateReviewWeight: 0,
     });
     setShowModal(true);
   };
@@ -276,9 +276,7 @@ export default function SeasonsPage() {
                       </div>
                       <div>
                         <p className="text-gray-500">심사 비중</p>
-                        <p className="text-gray-900">
-                          현직자 {season.expertReviewWeight}% / 참여자 {season.candidateReviewWeight}%
-                        </p>
+                        <p className="text-gray-900">전문가 평가 100%</p>
                       </div>
                     </div>
                   </div>
@@ -476,45 +474,11 @@ export default function SeasonsPage() {
               {/* Review Weight */}
               <div className="space-y-4">
                 <h3 className="font-medium text-gray-900">심사 비중</h3>
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="label">현직자 심사 비중 (%) *</label>
-                    <input
-                      type="number"
-                      value={formData.expertReviewWeight}
-                      onChange={(e) => {
-                        const expert = parseInt(e.target.value);
-                        setFormData({
-                          ...formData,
-                          expertReviewWeight: expert,
-                          candidateReviewWeight: 100 - expert,
-                        });
-                      }}
-                      className="input"
-                      min={0}
-                      max={100}
-                      required
-                    />
-                  </div>
-                  <div>
-                    <label className="label">예비 참여자 심사 비중 (%) *</label>
-                    <input
-                      type="number"
-                      value={formData.candidateReviewWeight}
-                      onChange={(e) => {
-                        const candidate = parseInt(e.target.value);
-                        setFormData({
-                          ...formData,
-                          candidateReviewWeight: candidate,
-                          expertReviewWeight: 100 - candidate,
-                        });
-                      }}
-                      className="input"
-                      min={0}
-                      max={100}
-                      required
-                    />
-                  </div>
+                <div className="rounded-lg border border-blue-200 bg-blue-50 p-4 text-sm text-blue-900">
+                  <p className="font-medium">전문가 평가 100%</p>
+                  <p className="mt-1">
+                    참여자 심사는 비활성화되어 있으며 모든 시즌은 전문가 심사만 사용합니다.
+                  </p>
                 </div>
               </div>
 

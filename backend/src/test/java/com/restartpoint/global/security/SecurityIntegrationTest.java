@@ -21,6 +21,7 @@ import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import software.amazon.awssdk.services.s3.S3Client;
+import software.amazon.awssdk.services.s3.presigner.S3Presigner;
 
 import java.util.Map;
 
@@ -62,6 +63,9 @@ class SecurityIntegrationTest {
 
     @MockBean
     private S3Client s3Client;
+
+    @MockBean
+    private S3Presigner s3Presigner;
 
     @BeforeEach
     void setUp() {
@@ -143,8 +147,8 @@ class SecurityIntegrationTest {
                 .projectEndAt(java.time.LocalDateTime.of(2026, 4, 30, 0, 0))
                 .reviewStartAt(java.time.LocalDateTime.of(2026, 5, 1, 0, 0))
                 .reviewEndAt(java.time.LocalDateTime.of(2026, 5, 7, 0, 0))
-                .expertReviewWeight(70)
-                .candidateReviewWeight(30)
+                .expertReviewWeight(100)
+                .candidateReviewWeight(0)
                 .build());
 
         mockMvc.perform(get("/api/v1/seasons/" + draftSeason.getId()))
@@ -172,8 +176,8 @@ class SecurityIntegrationTest {
                 .projectEndAt(java.time.LocalDateTime.of(2026, 4, 30, 0, 0))
                 .reviewStartAt(java.time.LocalDateTime.of(2026, 5, 1, 0, 0))
                 .reviewEndAt(java.time.LocalDateTime.of(2026, 5, 7, 0, 0))
-                .expertReviewWeight(70)
-                .candidateReviewWeight(30)
+                .expertReviewWeight(100)
+                .candidateReviewWeight(0)
                 .build());
         String token = jwtTokenProvider.createToken(adminUser.getId(), adminUser.getEmail(), adminUser.getRole().name());
 

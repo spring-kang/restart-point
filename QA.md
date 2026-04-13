@@ -186,7 +186,22 @@
 | FE-MYTEAM-015 | P1 | 영입 요청 수락 실패 - 역할 마감 | 해당 역할은 더 이상 모집하지 않습니다 에러가 보인다 | (영입 요청 받은 계정) | Y |
 | FE-MYTEAM-016 | P1 | 영입 요청 수락 실패 - 이미 팀 소속 | 이미 팀에 소속되어 있습니다 에러가 보인다 | (영입 요청 받은 계정) | Y |
 
-## 1-11. 헤더/전역 동작
+## 1-11. 심사 `/seasons/:seasonId/review`
+| ID | 우선순위 | 케이스 | 기대 결과 | 테스트 계정 | AUTO |
+|---|---|---|---|---|---|
+| FE-REVIEW-001 | P0 | 심사 중 시즌 상세 진입 | `프로젝트 심사하기` 버튼이 보인다 | `test1@restart-point.com` | Y |
+| FE-REVIEW-002 | P0 | 전문가 계정으로 심사 페이지 진입 | 심사 대상 프로젝트 목록이 보인다 | `test1@restart-point.com` | Y |
+| FE-REVIEW-003 | P0 | 일반 사용자로 심사 중 시즌 상세 진입 | `프로젝트 심사하기` 버튼이 보이지 않는다 | `test2@restart-point.com` | Y |
+| FE-REVIEW-004 | P0 | 심사 점수 없이 제출 | `모든 항목에 점수를 입력해주세요.` 검증 문구가 보인다 | `test1@restart-point.com` | Y |
+| FE-REVIEW-005 | P0 | 전문가 계정으로 정상 심사 제출 | 목록이 새로고침되고 완료된 심사에 추가된다 | `test1@restart-point.com` | Y |
+| FE-REVIEW-006 | P0 | 보조 전문가 계정으로 정상 심사 제출 | 목록이 새로고침되고 완료된 심사에 추가된다 | `review-admin@restart-point.com` | Y |
+| FE-REVIEW-007 | P1 | 동일 계정으로 같은 프로젝트 재심사 시도 | 목록에서 제거되거나 중복 제출이 차단된다 | `test1@restart-point.com` | Y |
+| FE-REVIEW-008 | P1 | 자기 팀 프로젝트 심사 시도 | 심사 대상 목록에 자기 팀 프로젝트가 보이지 않는다 | `test2@restart-point.com` | Y |
+| FE-REVIEW-009 | P1 | 일반 사용자로 심사 URL 직접 접근 | 심사 대상 프로젝트가 비어 있고 제출이 불가능하다 | `test2@restart-point.com` | Y |
+| FE-REVIEW-010 | P1 | 전문가 심사 완료 후 운영자 분석 진입 | 프로젝트 분석 화면이 전문가 집계 기준으로 보인다 | `admin@restart-point.com` | N |
+| FE-REVIEW-012 | P1 | 심사 기간이 아닌 시즌 상세 진입 | `프로젝트 심사하기` 버튼이 숨겨진다 | 아무 계정 | Y |
+
+## 1-12. 헤더/전역 동작
 | ID | 우선순위 | 케이스 | 기대 결과 | 테스트 계정 | AUTO |
 |---|---|---|---|---|---|
 | FE-GLOBAL-001 | P1 | 비로그인 헤더 | 로그인/회원가입 버튼이 보인다 | (로그아웃) | Y |
@@ -230,7 +245,7 @@
 | AD-SEASON-004 | P0 | DRAFT 시즌 삭제 | 삭제 확인 후 목록에서 제거된다 | `admin@restart-point.com` | Y |
 | AD-SEASON-005 | P0 | 상태 변경 버튼 클릭 | 다음 상태로 전이되고 목록이 갱신된다 | `admin@restart-point.com` | Y |
 | AD-SEASON-006 | P1 | 필터 전환 | 상태별 시즌만 보인다 | `admin@restart-point.com` | Y |
-| AD-SEASON-007 | P1 | 현직자/참여자 비중 입력 | 두 값의 합이 100으로 유지된다 | `admin@restart-point.com` | Y |
+| AD-SEASON-007 | P1 | 시즌 생성/수정 모달 확인 | 심사 비중이 전문가 평가 100%로 고정되어 보인다 | `admin@restart-point.com` | Y |
 | AD-SEASON-008 | P1 | 날짜 입력 누락 | 생성/수정이 막힌다 | `admin@restart-point.com` | Y |
 | AD-SEASON-009 | P2 | 잘못된 기간 순서 입력 | 현재 검증 여부 확인 필요, 백엔드 검증 포함 점검 필요 | `admin@restart-point.com` | N |
 
@@ -319,8 +334,9 @@
 |--------|----------|------|-----------|------------------|
 | `newbie@test.com` | test1234 | 신규회원 | NONE | 미인증 → 인증 신청 플로우 |
 | `rejected@test.com` | test1234 | 거절회원 | REJECTED | 인증 거절 → 재신청 플로우 |
-| `test1@restart-point.com` | test1234 | test1 | PENDING | 인증 대기 상태 UI |
-| `test2@restart-point.com` | test1234 | test2 | APPROVED | 팀 지원 대기 상태, 소속 팀 |
+| `test1@restart-point.com` | test1234 | E2E 리뷰어 | APPROVED | 전문가 심사(E2E 리뷰 시드) |
+| `review-admin@restart-point.com` | test1234 | E2E 보조 리뷰어 | APPROVED | 추가 전문가 심사(E2E 리뷰 시드) |
+| `test2@restart-point.com` | test1234 | E2E 팀장 | APPROVED | 심사 대상 팀 리더(E2E 리뷰 시드) |
 | `test@example.com` | test1234 | 테스트 | APPROVED | 팀 리더 (지원자 관리), 커뮤니티 작성자 |
 | `member1@test.com` | test1234 | 김프론트 | APPROVED | 진행 중 프로젝트 관리, 체크포인트 |
 | `member2@test.com` | test1234 | 이백엔드 | APPROVED | 완료된 프로젝트, SUBMITTED 팀 리더 |
@@ -358,6 +374,8 @@
 | ImageAI - AI 이미지 생성 플랫폼 | IN_PROGRESS | AI 이미지 생성 서비스 | 2개 | 체크포인트 작성/수정 |
 | CodeReview AI - 자동 코드 리뷰 서비스 | SUBMITTED | AI 코드 리뷰어 | 0개 | 제출됨 상태 |
 | StudyMate - AI 학습 추천 시스템 | COMPLETED | AI 학습 도우미 | 2개 | 완료된 프로젝트 |
+| AI 회고 도우미 | SUBMITTED | E2E 심사 대상 팀 | 0개 | 전문가 심사 시드 |
+| 이전 심사 프로젝트 | COMPLETED | E2E 이전 심사 팀 | 0개 | 내가 심사한 목록 시드 |
 
 ## 5-5. 커뮤니티 데이터
 
@@ -409,21 +427,29 @@
 | 2 | 알림 확인 | "수료 인증 거절" 알림 표시 |
 | 3 | 재신청 후 상태 | PENDING으로 변경 |
 
-### `test1@restart-point.com` (test1) - 인증: PENDING
+### `test1@restart-point.com` (E2E 리뷰어) - 인증: APPROVED, 역할: REVIEWER
 | # | 테스트 케이스 | 예상 결과 |
 |---|--------------|-----------|
-| 1 | 헤더 뱃지 확인 | "인증대기" 뱃지 표시 |
-| 2 | 수료 인증 페이지 | "인증 대기 중" 메시지 + 새로고침 버튼 |
-| 3 | 알림 확인 | 체크포인트 리마인더, 댓글 답글 알림 (2개 미읽음) |
-| 4 | 팀 참여 시도 | 인증 완료 후 가능 안내 |
+| 1 | 시즌 상세 진입 | "프로젝트 심사하기" 버튼 표시 |
+| 2 | 심사 페이지 진입 | "AI 회고 도우미" 프로젝트 노출 |
+| 3 | 심사 제출 | 완료된 심사 목록에 반영 |
+| 4 | 운영자 분석 확인 | EXPERT 심사 집계에 반영 |
 
-### `test2@restart-point.com` (test2) - 인증: APPROVED
+### `review-admin@restart-point.com` (E2E 보조 리뷰어) - 인증: APPROVED, 역할: REVIEWER
 | # | 테스트 케이스 | 예상 결과 |
 |---|--------------|-----------|
-| 1 | 내 팀 페이지 | "AI 학습 도우미" 소속 + "AI 일정 관리 앱" PENDING 지원 |
-| 2 | 소속 팀 프로젝트 버튼 | COMPLETE 상태 팀에 프로젝트 버튼 표시 |
-| 3 | 지원 현황 | "대기 중" 상태로 지원 내역 표시 |
-| 4 | 알림 확인 | 제출 리마인더 알림 (1개 미읽음) |
+| 1 | 시즌 상세 진입 | "프로젝트 심사하기" 버튼 표시 |
+| 2 | 심사 페이지 진입 | "AI 회고 도우미" 프로젝트 노출 |
+| 3 | 심사 제출 | 완료된 심사 목록에 반영 |
+| 4 | 운영자 분석 확인 | 추가 EXPERT 심사 집계에 반영 |
+
+### `test2@restart-point.com` (E2E 팀장) - 인증: APPROVED
+| # | 테스트 케이스 | 예상 결과 |
+|---|--------------|-----------|
+| 1 | 내 팀 페이지 | "E2E 심사 대상 팀" 리더 팀 표시 |
+| 2 | 시즌 상세 진입 | 자기 팀 프로젝트라 심사 대상 버튼/목록 제외 확인 |
+| 3 | 프로젝트 상태 확인 | 제출된 프로젝트 "AI 회고 도우미" 확인 |
+| 4 | 운영자 분석 확인 | 팀 프로젝트에 EXPERT 심사 반영 |
 
 ### `test@example.com` (테스트) - 인증: APPROVED, 팀 리더
 | # | 테스트 케이스 | 예상 결과 |
@@ -484,8 +510,9 @@
 |------|---------------------|
 | `newbie@test.com` | 미인증 → 인증 신청 플로우 |
 | `rejected@test.com` | 인증 거절 → 재신청 플로우 |
-| `test1@restart-point.com` | 인증 대기 상태 UI |
-| `test2@restart-point.com` | 팀 지원 대기 상태, 알림 확인 |
+| `test1@restart-point.com` | 전문가 심사(E2E 리뷰 시드) |
+| `review-admin@restart-point.com` | 추가 전문가 심사(E2E 리뷰 시드) |
+| `test2@restart-point.com` | 심사 대상 팀 리더(E2E 리뷰 시드) |
 | `test@example.com` | 팀 리더 (지원자 관리), 커뮤니티 작성자 |
 | `member1@test.com` | 진행 중 프로젝트 관리, 체크포인트 |
 | `member2@test.com` | 완료된 프로젝트, SUBMITTED 팀 리더 |

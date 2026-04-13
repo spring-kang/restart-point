@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { ArrowLeft, AlertTriangle, TrendingUp, TrendingDown, BarChart3 } from 'lucide-react';
+import { ArrowLeft, AlertTriangle, TrendingUp, BarChart3 } from 'lucide-react';
 import { adminService } from '../services/adminService';
 import type { ReviewAnalysis, RubricItem } from '../types';
 import { RUBRIC_ITEM_LABELS } from '../types';
@@ -116,22 +116,22 @@ export default function ReviewAnalysisPage() {
                       subValue={`${selectedAnalysis.totalReviewCount}명 심사`}
                     />
                     <StatCard
-                      label="현직자 평균"
+                      label="전문가 평균"
                       value={`${selectedAnalysis.expertAverageScore.toFixed(1)}점`}
                       subValue={`${selectedAnalysis.expertReviewCount}명`}
                       color="blue"
                     />
                     <StatCard
-                      label="예비참여자 평균"
-                      value={`${selectedAnalysis.candidateAverageScore.toFixed(1)}점`}
-                      subValue={`${selectedAnalysis.candidateReviewCount}명`}
-                      color="purple"
+                      label="심사 유형"
+                      value="전문가 전용"
+                      subValue="참여자 심사 비활성화"
+                      color="green"
                     />
                     <StatCard
-                      label="점수 차이"
-                      value={`${selectedAnalysis.scoreDifference >= 0 ? '+' : ''}${selectedAnalysis.scoreDifference.toFixed(1)}점`}
-                      icon={selectedAnalysis.scoreDifference > 0 ? TrendingUp : TrendingDown}
-                      color={Math.abs(selectedAnalysis.scoreDifference) > 0.5 ? 'red' : 'gray'}
+                      label="운영 참고"
+                      value="전문가 기준"
+                      icon={TrendingUp}
+                      color="gray"
                     />
                   </div>
                 </div>
@@ -185,9 +185,9 @@ export default function ReviewAnalysisPage() {
                 </div>
 
                 {/* Expert vs Candidate Analysis */}
-                <div className="bg-purple-50 rounded-lg p-4 border border-purple-200">
-                  <h3 className="font-semibold text-purple-900 mb-3">현직자 vs 예비참여자 분석</h3>
-                  <p className="text-purple-800 text-sm">{selectedAnalysis.expertVsCandidateAnalysis}</p>
+                <div className="bg-blue-50 rounded-lg p-4 border border-blue-200">
+                  <h3 className="font-semibold text-blue-900 mb-3">전문가 심사 운영 메모</h3>
+                  <p className="text-blue-800 text-sm">{selectedAnalysis.expertVsCandidateAnalysis}</p>
                 </div>
 
                 {/* Rubric Analysis */}
@@ -202,9 +202,7 @@ export default function ReviewAnalysisPage() {
                           </span>
                           <div className="text-right text-sm">
                             <div className="text-gray-900 font-medium">{rubric.averageScore.toFixed(1)}점</div>
-                            <div className="text-gray-500">
-                              현직자 {rubric.expertAverageScore.toFixed(1)} / 예비 {rubric.candidateAverageScore.toFixed(1)}
-                            </div>
+                            <div className="text-gray-500">전문가 평균 {rubric.expertAverageScore.toFixed(1)}점</div>
                           </div>
                         </div>
                         <div className="h-2 bg-gray-200 rounded-full overflow-hidden mb-2">
@@ -244,12 +242,8 @@ export default function ReviewAnalysisPage() {
                               <span className="font-medium text-gray-900">
                                 {RUBRIC_ITEM_LABELS[outlier.rubricItem as RubricItem]}
                               </span>
-                              <span className={`ml-2 text-xs px-2 py-0.5 rounded ${
-                                outlier.reviewType === 'EXPERT'
-                                  ? 'bg-blue-100 text-blue-700'
-                                  : 'bg-purple-100 text-purple-700'
-                              }`}>
-                                {outlier.reviewType === 'EXPERT' ? '현직자' : '예비참여자'}
+                              <span className="ml-2 text-xs px-2 py-0.5 rounded bg-blue-100 text-blue-700">
+                                전문가
                               </span>
                             </div>
                             <div className="text-right">
