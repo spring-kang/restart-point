@@ -124,9 +124,9 @@ public class Season extends BaseTimeEntity {
 
     /**
      * 팀 생성/참여가 가능한 상태인지 확인
-     * RECRUITING 또는 TEAM_BUILDING 상태에서 true 반환
+     * RECRUITING 또는 TEAM_BUILDING 상태이고, 해당 기간 내일 때 true 반환
      */
     public boolean canJoinTeam() {
-        return status == SeasonStatus.RECRUITING || status == SeasonStatus.TEAM_BUILDING;
+        return isRecruiting() || isTeamBuilding();
     }
 }
