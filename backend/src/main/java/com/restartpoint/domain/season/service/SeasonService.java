@@ -5,6 +5,13 @@ import com.restartpoint.domain.season.dto.SeasonResponse;
 import com.restartpoint.domain.season.entity.Season;
 import com.restartpoint.domain.season.entity.SeasonStatus;
 import com.restartpoint.domain.season.repository.SeasonRepository;
+import com.restartpoint.domain.team.entity.Team;
+import com.restartpoint.domain.team.entity.TeamMember;
+import com.restartpoint.domain.team.entity.TeamMemberStatus;
+import com.restartpoint.domain.team.repository.TeamMemberRepository;
+import com.restartpoint.domain.team.repository.TeamRepository;
+import com.restartpoint.domain.user.entity.User;
+import com.restartpoint.domain.user.repository.UserRepository;
 import com.restartpoint.global.exception.BusinessException;
 import com.restartpoint.global.exception.ErrorCode;
 import lombok.RequiredArgsConstructor;
@@ -14,6 +21,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -21,6 +32,9 @@ import java.util.List;
 public class SeasonService {
 
     private final SeasonRepository seasonRepository;
+    private final TeamRepository teamRepository;
+    private final TeamMemberRepository teamMemberRepository;
+    private final UserRepository userRepository;
 
     // 시즌 생성 (운영자 전용)
     @Transactional
@@ -139,9 +153,82 @@ public class SeasonService {
                 .toList();
     }
 
+    // 공개 시즌 목록 조회 (로그인 사용자용 - 참여 정보 포함)
+    public List<SeasonResponse> getPublicSeasonsForUser(Long userId) {
+        User user = findUserById(userId);
+        List<Season> seasons = seasonRepository.findByStatusNotOrderByRecruitmentStartAtDesc(SeasonStatus.DRAFT);
+
+        // N+1 방지: 사용자의 모든 팀을 한 번에 조회하여 seasonId -> Team 맵 생성
+        Map<Long, Team> seasonTeamMap = buildUserSeasonTeamMap(user);
+
+        return seasons.stream()
+                .map(season -> {
+                    Team myTeam = seasonTeamMap.get(season.getId());
+                    return SeasonResponse.from(season, myTeam);
+                })
+                .toList();
+    }
+
+    // 시즌 상세 조회 (로그인 사용자용 - 참여 정보 포함)
+    public SeasonResponse getSeasonForUser(Long seasonId, Long userId) {
+        User user = findUserById(userId);
+        Season season = findSeasonById(seasonId);
+
+        // DRAFT 상태의 시즌은 공개 API에서 접근 불가
+        if (season.getStatus() == SeasonStatus.DRAFT) {
+            throw new BusinessException(ErrorCode.SEASON_NOT_FOUND);
+        }
+
+        // 단일 시즌 조회는 맵 빌드 오버헤드가 크므로 직접 조회
+        Team myTeam = findUserTeamInSeason(user, season);
+        return SeasonResponse.from(season, myTeam);
+    }
+
+    // 사용자의 시즌별 소속 팀 맵 생성 (N+1 방지)
+    private Map<Long, Team> buildUserSeasonTeamMap(User user) {
+        // 1. 리더로서 소속된 팀들
+        Map<Long, Team> seasonTeamMap = teamRepository.findByLeader(user).stream()
+                .collect(Collectors.toMap(
+                        t -> t.getSeason().getId(),
+                        Function.identity(),
+                        (existing, replacement) -> existing // 중복 시 기존 값 유지
+                ));
+
+        // 2. 팀원으로서 ACCEPTED 상태인 팀들 (리더 팀과 중복되지 않는 경우만 추가)
+        teamMemberRepository.findByUserAndStatus(user, TeamMemberStatus.ACCEPTED).stream()
+                .map(TeamMember::getTeam)
+                .filter(t -> !seasonTeamMap.containsKey(t.getSeason().getId()))
+                .forEach(t -> seasonTeamMap.put(t.getSeason().getId(), t));
+
+        return seasonTeamMap;
+    }
+
+    // 사용자가 해당 시즌에서 소속된 팀 찾기 (단일 시즌 조회용)
+    private Team findUserTeamInSeason(User user, Season season) {
+        // 1. 리더로서 팀이 있는지 확인
+        Optional<Team> leaderTeam = teamRepository.findByLeader(user).stream()
+                .filter(t -> t.getSeason().getId().equals(season.getId()))
+                .findFirst();
+        if (leaderTeam.isPresent()) {
+            return leaderTeam.get();
+        }
+
+        // 2. 팀원으로서 ACCEPTED 상태인 팀이 있는지 확인
+        return teamMemberRepository.findByUserAndStatus(user, TeamMemberStatus.ACCEPTED).stream()
+                .map(TeamMember::getTeam)
+                .filter(t -> t.getSeason().getId().equals(season.getId()))
+                .findFirst()
+                .orElse(null);
+    }
+
     private Season findSeasonById(Long seasonId) {
         return seasonRepository.findById(seasonId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.SEASON_NOT_FOUND));
+    }
+
+    private User findUserById(Long userId) {
+        return userRepository.findById(userId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
     }
 
     private void validateDateOrder(SeasonRequest request) {

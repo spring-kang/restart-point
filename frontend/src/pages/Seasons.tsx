@@ -86,7 +86,11 @@ export default function SeasonsPage() {
                     <span className={`px-3 py-1 rounded-full text-sm font-medium ${SEASON_STATUS_COLORS[season.status]}`}>
                       {SEASON_STATUS_LABELS[season.status]}
                     </span>
-                    {season.canJoin && (
+                    {season.myTeamId ? (
+                      <span className="px-3 py-1 rounded-full text-sm font-medium bg-blue-100 text-blue-700">
+                        참여 중: {season.myTeamName}
+                      </span>
+                    ) : season.canJoin && (
                       <span className="px-3 py-1 rounded-full text-sm font-medium bg-primary-100 text-primary-700">
                         참여 가능
                       </span>

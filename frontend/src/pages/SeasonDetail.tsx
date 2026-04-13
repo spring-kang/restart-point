@@ -70,6 +70,11 @@ export default function SeasonDetailPage() {
             {SEASON_STATUS_LABELS[season.status]}
           </span>
           <span className="text-neutral-500">{season.currentPhase}</span>
+          {season.myTeamId && (
+            <span className="px-3 py-1 rounded-full text-sm font-medium bg-blue-100 text-blue-700">
+              참여 중
+            </span>
+          )}
         </div>
 
         <h1 className="text-2xl font-bold text-neutral-900 mb-4">{season.title}</h1>
@@ -78,11 +83,30 @@ export default function SeasonDetailPage() {
           <p className="text-neutral-600 mb-6 whitespace-pre-wrap">{season.description}</p>
         )}
 
+        {/* 참여 중인 팀 안내 */}
+        {season.myTeamId && (
+          <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 mb-4">
+            <p className="text-blue-700">
+              이 시즌에 <strong>{season.myTeamName}</strong> 팀으로 참여 중입니다.{' '}
+              <Link to={`/teams/${season.myTeamId}`} className="font-semibold underline">
+                팀 보기
+              </Link>
+            </p>
+          </div>
+        )}
+
         <div className="flex flex-wrap gap-3">
-          {canParticipate() && (
+          {canParticipate() && !season.myTeamId && (
             <Link to={`/seasons/${season.id}/teams`} className="btn-primary inline-flex items-center gap-2">
               <UserPlus className="w-5 h-5" />
               팀 찾기 / 팀 만들기
+            </Link>
+          )}
+
+          {season.myTeamId && (
+            <Link to={`/teams/${season.myTeamId}`} className="btn-primary inline-flex items-center gap-2">
+              <Users className="w-5 h-5" />
+              내 팀 보기
             </Link>
           )}
 
@@ -96,15 +120,15 @@ export default function SeasonDetailPage() {
         </div>
 
         {!isAuthenticated && season.canJoin && (
-          <div className="bg-primary-50 border border-primary-200 rounded-xl p-4">
+          <div className="bg-primary-50 border border-primary-200 rounded-xl p-4 mt-4">
             <p className="text-primary-700">
               이 시즌에 참여하려면 <Link to="/login" className="font-semibold underline">로그인</Link>이 필요합니다.
             </p>
           </div>
         )}
 
-        {isAuthenticated && user?.certificationStatus !== 'APPROVED' && season.canJoin && (
-          <div className="bg-amber-50 border border-amber-200 rounded-xl p-4">
+        {isAuthenticated && user?.certificationStatus !== 'APPROVED' && season.canJoin && !season.myTeamId && (
+          <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 mt-4">
             <p className="text-amber-700">
               이 시즌에 참여하려면 <Link to="/certification" className="font-semibold underline">수료 인증</Link>이 필요합니다.
             </p>
