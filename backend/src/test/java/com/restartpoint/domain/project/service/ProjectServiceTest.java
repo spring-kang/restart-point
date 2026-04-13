@@ -431,8 +431,8 @@ class ProjectServiceTest {
                 .projectEndAt(LocalDateTime.now().plusDays(20))
                 .reviewStartAt(LocalDateTime.now().plusDays(20))
                 .reviewEndAt(LocalDateTime.now().plusDays(30))
-                .expertReviewWeight(70)
-                .candidateReviewWeight(30)
+                .expertReviewWeight(100)
+                .candidateReviewWeight(0)
                 .build();
         setField(season, "id", id);
         setField(season, "status", status);

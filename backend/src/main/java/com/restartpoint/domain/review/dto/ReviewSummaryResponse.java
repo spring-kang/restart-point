@@ -21,7 +21,7 @@ public class ReviewSummaryResponse {
     private int expertReviewCount;
     private int candidateReviewCount;
 
-    // 가중 평균 점수 (현직자 70% + 예비 참여자 30%)
+    // 가중 평균 점수 (전문가 평가 100%)
     private double weightedAverageScore;
 
     // 현직자 평균 점수

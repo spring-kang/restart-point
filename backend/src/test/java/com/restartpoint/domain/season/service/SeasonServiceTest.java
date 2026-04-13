@@ -134,8 +134,8 @@ class SeasonServiceTest {
                 .projectEndAt(base.plusDays(30))
                 .reviewStartAt(base.plusDays(31))
                 .reviewEndAt(base.plusDays(37))
-                .expertReviewWeight(70)
-                .candidateReviewWeight(30)
+                .expertReviewWeight(100)
+                .candidateReviewWeight(0)
                 .build();
         setField(season, "id", id);
         setField(season, "status", status);

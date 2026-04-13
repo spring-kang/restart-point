@@ -256,8 +256,8 @@ class TeamMatchingServiceTest {
                 .projectEndAt(LocalDateTime.now().plusDays(40))
                 .reviewStartAt(LocalDateTime.now().plusDays(42))
                 .reviewEndAt(LocalDateTime.now().plusDays(50))
-                .expertReviewWeight(70)
-                .candidateReviewWeight(30)
+                .expertReviewWeight(100)
+                .candidateReviewWeight(0)
                 .build();
         setField(season, "id", id);
         setField(season, "status", status);

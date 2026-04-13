@@ -42,8 +42,8 @@ const activeSeason = {
   projectEndAt: '2026-04-20T00:00:00',
   reviewStartAt: '2026-04-21T00:00:00',
   reviewEndAt: '2026-04-25T00:00:00',
-  expertReviewWeight: 70,
-  candidateReviewWeight: 30,
+  expertReviewWeight: 100,
+  candidateReviewWeight: 0,
   currentPhase: '팀빌딩 진행 중',
   canJoin: true,
 };
