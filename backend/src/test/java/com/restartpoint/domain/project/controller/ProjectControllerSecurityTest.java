@@ -23,6 +23,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.test.web.servlet.MockMvc;
 import software.amazon.awssdk.services.s3.S3Client;
+import software.amazon.awssdk.services.s3.presigner.S3Presigner;
 
 import java.time.LocalDateTime;
 
@@ -57,6 +58,9 @@ class ProjectControllerSecurityTest {
 
     @MockBean
     private S3Client s3Client;
+
+    @MockBean
+    private S3Presigner s3Presigner;
 
     private User teamLeader;
     private User nonMember;
@@ -100,8 +104,8 @@ class ProjectControllerSecurityTest {
                 .projectEndAt(LocalDateTime.now().plusDays(30))
                 .reviewStartAt(LocalDateTime.now().plusDays(31))
                 .reviewEndAt(LocalDateTime.now().plusDays(40))
-                .expertReviewWeight(70)
-                .candidateReviewWeight(30)
+                .expertReviewWeight(100)
+                .candidateReviewWeight(0)
                 .build();
         season.updateStatus(SeasonStatus.IN_PROGRESS);
         season = seasonRepository.save(season);

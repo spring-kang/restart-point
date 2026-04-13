@@ -27,7 +27,7 @@ $env:E2E_TARGET="production"
 $env:USER_BASE_URL="https://restart-point.com"
 $env:ADMIN_BASE_URL="https://admin.restart-point.com"
 $env:USER_TEST_EMAIL="test1@restart-point.com"
-$env:USER_TEST_PASSWORD="1234"
+$env:USER_TEST_PASSWORD="test1234"
 $env:ADMIN_TEST_EMAIL="admin@restart-point.com"
 $env:ADMIN_TEST_PASSWORD="<admin-password>"
 npm run test:e2e -- production.smoke.spec.ts
@@ -59,8 +59,9 @@ npm run test:e2e -- production.smoke.spec.ts
 - cleanup: `scripts/e2e-review-cleanup.sql`
 
 기본 계정
-- `test1@restart-point.com / 1234` → 리뷰어 계정
-- `test2@restart-point.com / 1234` → 심사 대상 팀장 계정
+- `test1@restart-point.com / test1234` → 전문가 심사 계정
+- `review-admin@restart-point.com / test1234` → 보조 전문가 심사 계정
+- `test2@restart-point.com / test1234` → 심사 대상 팀장 계정
 
 ## 다음 추천 작업
 1. 테스트 시즌(`테스트 시즌`) 전용 write 시나리오 설계

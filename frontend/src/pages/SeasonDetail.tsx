@@ -111,8 +111,7 @@ export default function SeasonDetailPage() {
             </Link>
           )}
 
-          {isAuthenticated && season.status === 'REVIEWING' &&
-           (user?.role === 'REVIEWER' || user?.role === 'ADMIN' || user?.certificationStatus === 'APPROVED') && (
+          {isAuthenticated && season.status === 'REVIEWING' && user?.role === 'REVIEWER' && (
             <Link to={`/seasons/${season.id}/review`} className="btn-secondary inline-flex items-center gap-2">
               <ClipboardCheck className="w-5 h-5" />
               프로젝트 심사하기
@@ -183,19 +182,11 @@ export default function SeasonDetailPage() {
           심사 비중
         </h2>
 
-        <div className="grid grid-cols-2 gap-4">
-          <div className="bg-neutral-50 rounded-xl p-4 text-center">
-            <div className="text-3xl font-bold text-primary-600 mb-1">
-              {season.expertReviewWeight}%
-            </div>
-            <div className="text-sm text-neutral-600">현직자 심사</div>
+        <div className="bg-neutral-50 rounded-xl p-6 text-center">
+          <div className="text-4xl font-bold text-primary-600 mb-2">
+            {season.expertReviewWeight}%
           </div>
-          <div className="bg-neutral-50 rounded-xl p-4 text-center">
-            <div className="text-3xl font-bold text-secondary-600 mb-1">
-              {season.candidateReviewWeight}%
-            </div>
-            <div className="text-sm text-neutral-600">예비 참여자 심사</div>
-          </div>
+          <div className="text-sm text-neutral-600">전문가 평가</div>
         </div>
       </div>
     </div>

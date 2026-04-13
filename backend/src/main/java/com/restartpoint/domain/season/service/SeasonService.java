@@ -257,8 +257,8 @@ public class SeasonService {
     }
 
     private void validateReviewWeights(SeasonRequest request) {
-        int total = request.getExpertReviewWeight() + request.getCandidateReviewWeight();
-        if (total != 100) {
+        boolean expertOnly = request.getExpertReviewWeight() == 100 && request.getCandidateReviewWeight() == 0;
+        if (!expertOnly) {
             throw new BusinessException(ErrorCode.INVALID_REVIEW_WEIGHT);
         }
     }

@@ -14,8 +14,6 @@ import MyTeam from './pages/MyTeam';
 import ProjectWorkspace from './pages/ProjectWorkspace';
 import ReviewProjects from './pages/ReviewProjects';
 import GrowthReport from './pages/GrowthReport';
-import ReviewGuide from './pages/ReviewGuide';
-import ReviewPattern from './pages/ReviewPattern';
 import Community from './pages/Community';
 import PostDetail from './pages/PostDetail';
 import PostWrite from './pages/PostWrite';
@@ -50,8 +48,6 @@ function App() {
             <Route path="my-team" element={<MyTeam />} />
             <Route path="seasons/:seasonId/review" element={<ReviewProjects />} />
             <Route path="projects/:projectId/growth-report" element={<GrowthReport />} />
-            <Route path="review-guide" element={<ReviewGuide />} />
-            <Route path="my-reviews/pattern" element={<ReviewPattern />} />
             <Route path="community" element={<Community />} />
             <Route path="community/posts/:postId" element={<PostDetail />} />
             <Route path="community/write" element={<PostWrite />} />

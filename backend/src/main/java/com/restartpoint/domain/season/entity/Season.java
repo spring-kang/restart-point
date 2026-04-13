@@ -59,10 +59,10 @@ public class Season extends BaseTimeEntity {
 
     // 심사 비중 설정
     @Column(name = "expert_review_weight")
-    private Integer expertReviewWeight = 70;  // 현직자 심사 비중 (%)
+    private Integer expertReviewWeight = 100;  // 전문가 심사 비중 (%)
 
     @Column(name = "candidate_review_weight")
-    private Integer candidateReviewWeight = 30;  // 예비 참여자 심사 비중 (%)
+    private Integer candidateReviewWeight = 0;  // 참여자 심사는 비활성화
 
     @Builder
     public Season(String title, String description,
@@ -82,8 +82,8 @@ public class Season extends BaseTimeEntity {
         this.projectEndAt = projectEndAt;
         this.reviewStartAt = reviewStartAt;
         this.reviewEndAt = reviewEndAt;
-        this.expertReviewWeight = expertReviewWeight != null ? expertReviewWeight : 70;
-        this.candidateReviewWeight = candidateReviewWeight != null ? candidateReviewWeight : 30;
+        this.expertReviewWeight = expertReviewWeight != null ? expertReviewWeight : 100;
+        this.candidateReviewWeight = candidateReviewWeight != null ? candidateReviewWeight : 0;
     }
 
     public void updateStatus(SeasonStatus status) {
@@ -106,8 +106,8 @@ public class Season extends BaseTimeEntity {
         this.projectEndAt = projectEndAt;
         this.reviewStartAt = reviewStartAt;
         this.reviewEndAt = reviewEndAt;
-        this.expertReviewWeight = expertReviewWeight != null ? expertReviewWeight : 70;
-        this.candidateReviewWeight = candidateReviewWeight != null ? candidateReviewWeight : 30;
+        this.expertReviewWeight = expertReviewWeight != null ? expertReviewWeight : 100;
+        this.candidateReviewWeight = candidateReviewWeight != null ? candidateReviewWeight : 0;
     }
 
     public boolean isRecruiting() {

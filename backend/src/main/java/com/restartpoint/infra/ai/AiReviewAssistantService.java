@@ -32,9 +32,8 @@ public class AiReviewAssistantService {
 
             분석 시 다음 사항을 고려하세요:
             1. 심사 코멘트에서 반복되는 키워드와 주요 피드백 추출
-            2. 현직자(EXPERT)와 예비참여자(CANDIDATE) 간의 평가 경향 차이
-            3. 특정 루브릭 항목에서의 강점과 약점 파악
-            4. 평균에서 크게 벗어나는 이상치 점수의 가능한 원인 분석
+            2. 전문가(EXPERT) 평가 기준에서 특정 루브릭 항목의 강점과 약점 파악
+            3. 평균에서 크게 벗어나는 이상치 점수의 가능한 원인 분석
 
             응답은 반드시 JSON 형식으로 제공하세요.
             """;
@@ -157,58 +156,8 @@ public class AiReviewAssistantService {
         return result;
     }
 
-    /**
-     * 현직자 vs 예비참여자 점수 차이 분석
-     */
-    public String analyzeExpertVsCandidateDifference(
-            double expertAvg, double candidateAvg,
-            Map<RubricItem, Double> expertRubricAvg, Map<RubricItem, Double> candidateRubricAvg) {
-
-        if (expertAvg == 0 || candidateAvg == 0) {
-            return "현직자 또는 예비참여자 심사 데이터가 부족합니다.";
-        }
-
-        StringBuilder rubricComparison = new StringBuilder();
-        for (RubricItem item : RubricItem.values()) {
-            double expertScore = expertRubricAvg.getOrDefault(item, 0.0);
-            double candidateScore = candidateRubricAvg.getOrDefault(item, 0.0);
-            double diff = expertScore - candidateScore;
-            rubricComparison.append(String.format("- %s: 현직자 %.1f점, 예비참여자 %.1f점 (차이: %+.1f)\n",
-                    item.getLabel(), expertScore, candidateScore, diff));
-        }
-
-        String userMessage = String.format("""
-                현직자와 예비참여자의 심사 점수 차이를 분석해주세요.
-
-                전체 평균:
-                - 현직자: %.1f점
-                - 예비참여자: %.1f점
-                - 차이: %+.1f점
-
-                루브릭별 비교:
-                %s
-
-                다음을 포함하여 2-3문장으로 분석해주세요:
-                1. 점수 차이의 패턴 (현직자가 더 엄격한지, 관대한지)
-                2. 특히 차이가 큰 항목과 그 이유 추측
-                3. 운영자가 주의해야 할 점
-
-                JSON 형식: {"analysis": "분석 내용"}
-                """,
-                expertAvg, candidateAvg, expertAvg - candidateAvg, rubricComparison.toString());
-
-        String response = groqService.chat(SYSTEM_PROMPT, userMessage);
-        if (response == null) {
-            return String.format("현직자와 예비참여자 평균 점수 차이: %+.1f점", expertAvg - candidateAvg);
-        }
-
-        try {
-            Map<String, Object> parsed = objectMapper.readValue(extractJson(response), Map.class);
-            return (String) parsed.getOrDefault("analysis", response);
-        } catch (JsonProcessingException e) {
-            log.warn("점수 차이 분석 파싱 실패: {}", e.getMessage());
-            return response;
-        }
+    public String summarizeExpertReviewPolicy() {
+        return "현재 시즌 심사는 전문가 평가만 운영합니다. 프로젝트별 평균, 강점, 약점, 이상치 분석은 모두 전문가 심사 데이터만 기준으로 집계합니다.";
     }
 
     /**
@@ -254,7 +203,7 @@ public class AiReviewAssistantService {
      * 루브릭별 AI 인사이트 생성
      */
     public String generateRubricInsight(RubricItem item, double avgScore,
-            double expertAvg, double candidateAvg, List<String> relatedComments) {
+            double expertAvg, List<String> relatedComments) {
 
         String commentsText = relatedComments.isEmpty() ? "없음" :
                 String.join("\n", relatedComments.stream().limit(5).toList());
@@ -264,8 +213,7 @@ public class AiReviewAssistantService {
 
                 점수 현황:
                 - 전체 평균: %.1f점
-                - 현직자 평균: %.1f점
-                - 예비참여자 평균: %.1f점
+                - 전문가 평균: %.1f점
 
                 관련 코멘트:
                 %s
@@ -273,7 +221,7 @@ public class AiReviewAssistantService {
                 1문장으로 핵심 인사이트를 제공하세요.
                 JSON 형식: {"insight": "인사이트 내용"}
                 """,
-                item.getLabel(), avgScore, expertAvg, candidateAvg, commentsText);
+                item.getLabel(), avgScore, expertAvg, commentsText);
 
         String response = groqService.chat(SYSTEM_PROMPT, userMessage);
         if (response == null) {

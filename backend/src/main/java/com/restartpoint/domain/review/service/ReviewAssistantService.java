@@ -55,51 +55,43 @@ public class ReviewAssistantService {
         Project project = projectRepository.findByIdWithTeam(projectId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.PROJECT_NOT_FOUND));
 
-        List<Review> allReviews = reviewRepository.findByProjectIdWithReviewer(projectId);
+        List<Review> expertReviews = reviewRepository.findByProjectIdWithReviewer(projectId).stream()
+                .filter(r -> r.getReviewType() == ReviewType.EXPERT)
+                .toList();
 
-        if (allReviews.isEmpty()) {
+        if (expertReviews.isEmpty()) {
             return buildEmptyAnalysis(project);
         }
 
-        List<Review> expertReviews = allReviews.stream()
-                .filter(r -> r.getReviewType() == ReviewType.EXPERT)
-                .toList();
-        List<Review> candidateReviews = allReviews.stream()
-                .filter(r -> r.getReviewType() == ReviewType.CANDIDATE)
-                .toList();
-
         // 기본 통계 계산
-        double overallAvg = calculateAverageScore(allReviews);
+        double overallAvg = calculateAverageScore(expertReviews);
         double expertAvg = calculateAverageScore(expertReviews);
-        double candidateAvg = calculateAverageScore(candidateReviews);
 
         // 루브릭별 평균 계산
-        Map<RubricItem, Double> rubricAvg = calculateRubricAverages(allReviews);
+        Map<RubricItem, Double> rubricAvg = calculateRubricAverages(expertReviews);
         Map<RubricItem, Double> expertRubricAvg = calculateRubricAverages(expertReviews);
-        Map<RubricItem, Double> candidateRubricAvg = calculateRubricAverages(candidateReviews);
 
         // AI 분석을 병렬로 실행
         CompletableFuture<String> commentSummaryFuture = CompletableFuture.supplyAsync(
-                () -> aiReviewAssistantService.summarizeComments(allReviews, project.getName()),
+                () -> aiReviewAssistantService.summarizeComments(expertReviews, project.getName()),
                 aiExecutor);
 
         CompletableFuture<Map<String, List<String>>> strengthsWeaknessesFuture = CompletableFuture.supplyAsync(
-                () -> aiReviewAssistantService.analyzeStrengthsAndWeaknesses(allReviews, project.getName(), rubricAvg),
+                () -> aiReviewAssistantService.analyzeStrengthsAndWeaknesses(expertReviews, project.getName(), rubricAvg),
                 aiExecutor);
 
         CompletableFuture<String> expertVsCandidateFuture = CompletableFuture.supplyAsync(
-                () -> aiReviewAssistantService.analyzeExpertVsCandidateDifference(
-                        expertAvg, candidateAvg, expertRubricAvg, candidateRubricAvg),
+                aiReviewAssistantService::summarizeExpertReviewPolicy,
                 aiExecutor);
 
         // 루브릭별 분석 (병렬 처리)
         CompletableFuture<List<RubricAnalysis>> rubricAnalysesFuture = CompletableFuture.supplyAsync(
-                () -> buildRubricAnalyses(allReviews, rubricAvg, expertRubricAvg, candidateRubricAvg),
+                () -> buildRubricAnalyses(expertReviews, rubricAvg, expertRubricAvg),
                 aiExecutor);
 
         // 이상치 감지 (병렬 처리)
         CompletableFuture<List<OutlierScore>> outliersFuture = CompletableFuture.supplyAsync(
-                () -> detectOutliers(allReviews, rubricAvg, project),
+                () -> detectOutliers(expertReviews, rubricAvg, project),
                 aiExecutor);
 
         // 모든 AI 분석 완료 대기
@@ -122,13 +114,13 @@ public class ReviewAssistantService {
                 .projectId(projectId)
                 .projectName(project.getName())
                 .teamName(project.getTeam().getName())
-                .totalReviewCount(allReviews.size())
+                .totalReviewCount(expertReviews.size())
                 .expertReviewCount(expertReviews.size())
-                .candidateReviewCount(candidateReviews.size())
+                .candidateReviewCount(0)
                 .overallAverageScore(round(overallAvg))
                 .expertAverageScore(round(expertAvg))
-                .candidateAverageScore(round(candidateAvg))
-                .scoreDifference(round(expertAvg - candidateAvg))
+                .candidateAverageScore(0)
+                .scoreDifference(0)
                 .rubricAnalyses(rubricAnalyses)
                 .commentSummary(commentSummary)
                 .strengths(strengthsWeaknesses.get("strengths"))
@@ -277,15 +269,13 @@ public class ReviewAssistantService {
     private List<RubricAnalysis> buildRubricAnalyses(
             List<Review> reviews,
             Map<RubricItem, Double> rubricAvg,
-            Map<RubricItem, Double> expertRubricAvg,
-            Map<RubricItem, Double> candidateRubricAvg) {
+            Map<RubricItem, Double> expertRubricAvg) {
 
         // 각 루브릭 항목에 대해 병렬로 AI 분석 실행
         List<CompletableFuture<RubricAnalysis>> futures = Arrays.stream(RubricItem.values())
                 .map(item -> CompletableFuture.supplyAsync(() -> {
                     double avg = rubricAvg.getOrDefault(item, 0.0);
                     double expertAvg = expertRubricAvg.getOrDefault(item, 0.0);
-                    double candidateAvg = candidateRubricAvg.getOrDefault(item, 0.0);
 
                     // 해당 항목 관련 코멘트 수집
                     List<String> relatedComments = reviews.stream()
@@ -296,15 +286,15 @@ public class ReviewAssistantService {
                             .toList();
 
                     String aiInsight = aiReviewAssistantService.generateRubricInsight(
-                            item, avg, expertAvg, candidateAvg, relatedComments);
+                            item, avg, expertAvg, relatedComments);
 
                     return RubricAnalysis.builder()
                             .rubricItem(item)
                             .label(item.getLabel())
                             .averageScore(round(avg))
                             .expertAverageScore(round(expertAvg))
-                            .candidateAverageScore(round(candidateAvg))
-                            .scoreDifference(round(expertAvg - candidateAvg))
+                            .candidateAverageScore(0)
+                            .scoreDifference(0)
                             .aiInsight(aiInsight)
                             .build();
                 }, aiExecutor))

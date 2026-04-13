@@ -81,7 +81,7 @@ class ReviewControllerTest {
     @DisplayName("심사 제출에 성공한다")
     void createReviewSuccess() throws Exception {
       // given
-      setAuthentication(1L, "reviewer@test.com", "USER");
+      setAuthentication(1L, "reviewer@test.com", "REVIEWER");
       ReviewCreateRequest request = createReviewCreateRequest();
       ReviewResponse response = createReviewResponse(1L);
 
@@ -200,7 +200,7 @@ class ReviewControllerTest {
     @DisplayName("심사 가능한 프로젝트 목록 조회에 성공한다")
     void getReviewableProjectsSuccess() throws Exception {
       // given
-      setAuthentication(1L, "reviewer@test.com", "USER");
+      setAuthentication(1L, "reviewer@test.com", "REVIEWER");
       given(reviewService.getReviewableProjects(1L, 1L)).willReturn(List.of());
 
       // when & then
@@ -219,7 +219,7 @@ class ReviewControllerTest {
     @DisplayName("내 심사 목록 조회에 성공한다")
     void getMyReviewsSuccess() throws Exception {
       // given
-      setAuthentication(1L, "reviewer@test.com", "USER");
+      setAuthentication(1L, "reviewer@test.com", "REVIEWER");
       List<ReviewResponse> reviews = List.of(createReviewResponse(1L));
       given(reviewService.getMyReviews(1L)).willReturn(reviews);
 
@@ -353,7 +353,7 @@ class ReviewControllerTest {
         .projectName("프로젝트")
         .reviewerId(1L)
         .reviewerName("심사자")
-        .reviewType(ReviewType.CANDIDATE)
+        .reviewType(ReviewType.EXPERT)
         .overallComment("좋은 프로젝트입니다.")
         .averageScore(4.5)
         .scores(List.of())
@@ -371,14 +371,14 @@ class ReviewControllerTest {
         .projectId(1L)
         .projectName("프로젝트")
         .totalReviewCount(10)
-        .expertReviewCount(3)
-        .candidateReviewCount(7)
+        .expertReviewCount(10)
+        .candidateReviewCount(0)
         .weightedAverageScore(4.5)
-        .expertAverageScore(4.6)
-        .candidateAverageScore(4.4)
+        .expertAverageScore(4.5)
+        .candidateAverageScore(0.0)
         .rubricAverages(rubricAverages)
         .expertRubricAverages(rubricAverages)
-        .candidateRubricAverages(rubricAverages)
+        .candidateRubricAverages(Map.of())
         .build();
   }
 

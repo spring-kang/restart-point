@@ -1,7 +1,7 @@
 -- Review E2E seed for PostgreSQL
 -- Purpose:
 -- 1) make a REVIEWING season
--- 2) prepare a reviewer account that can login with password 1234
+-- 2) prepare an expert reviewer account that can login with password test1234
 -- 3) prepare another user/team/project that appears in reviewable projects
 -- 4) optionally create one existing review history row for UI verification
 --
@@ -30,7 +30,7 @@ INSERT INTO users (
 VALUES
   (
     'test1@restart-point.com',
-    '$2a$10$9CN.6Ju4YixbxgzIemu1n.vmkBtA1XZdpzBBm0/5wTomeWWw40JFW',
+    '$2a$10$wNA.hdZDoVEnd3AuFfcV/e.VVrn0J6CXZBuAUKXEFxWYXAcVJjAau',
     'E2E 리뷰어',
     'REVIEWER',
     'APPROVED',
@@ -44,7 +44,7 @@ VALUES
   ),
   (
     'test2@restart-point.com',
-    '$2a$10$9CN.6Ju4YixbxgzIemu1n.vmkBtA1XZdpzBBm0/5wTomeWWw40JFW',
+    '$2a$10$wNA.hdZDoVEnd3AuFfcV/e.VVrn0J6CXZBuAUKXEFxWYXAcVJjAau',
     'E2E 팀장',
     'USER',
     'APPROVED',
@@ -58,7 +58,7 @@ VALUES
   ),
   (
     'review-target@restart-point.com',
-    '$2a$10$9CN.6Ju4YixbxgzIemu1n.vmkBtA1XZdpzBBm0/5wTomeWWw40JFW',
+    '$2a$10$wNA.hdZDoVEnd3AuFfcV/e.VVrn0J6CXZBuAUKXEFxWYXAcVJjAau',
     'E2E 일반유저',
     'USER',
     'APPROVED',
@@ -67,6 +67,20 @@ VALUES
     '10기',
     '2026-03-01',
     'https://example.com/certificate/member',
+    NOW(),
+    NOW()
+  ),
+  (
+    'review-admin@restart-point.com',
+    '$2a$10$wNA.hdZDoVEnd3AuFfcV/e.VVrn0J6CXZBuAUKXEFxWYXAcVJjAau',
+    'E2E 보조 리뷰어',
+    'REVIEWER',
+    'APPROVED',
+    true,
+    'Restart Camp',
+    '10기',
+    '2026-03-01',
+    'https://example.com/certificate/review-admin',
     NOW(),
     NOW()
   )
@@ -122,8 +136,8 @@ BEGIN
       NOW() - INTERVAL '1 day',
       NOW() - INTERVAL '1 hour',
       NOW() + INTERVAL '30 day',
-      70,
-      30,
+      100,
+      0,
       NOW(),
       NOW()
     ) RETURNING id INTO v_season_id;
@@ -139,8 +153,8 @@ BEGIN
         project_end_at = NOW() - INTERVAL '1 day',
         review_start_at = NOW() - INTERVAL '1 hour',
         review_end_at = NOW() + INTERVAL '30 day',
-        expert_review_weight = 70,
-        candidate_review_weight = 30,
+        expert_review_weight = 100,
+        candidate_review_weight = 0,
         updated_at = NOW()
     WHERE id = v_season_id;
   END IF;

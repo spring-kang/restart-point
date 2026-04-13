@@ -44,9 +44,9 @@ public class SeasonRequest {
 
     @Min(value = 0, message = "현직자 심사 비중은 0 이상이어야 합니다.")
     @Max(value = 100, message = "현직자 심사 비중은 100 이하여야 합니다.")
-    private Integer expertReviewWeight = 70;
+    private Integer expertReviewWeight = 100;
 
     @Min(value = 0, message = "예비 참여자 심사 비중은 0 이상이어야 합니다.")
     @Max(value = 100, message = "예비 참여자 심사 비중은 100 이하여야 합니다.")
-    private Integer candidateReviewWeight = 30;
+    private Integer candidateReviewWeight = 0;
 }
