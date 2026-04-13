@@ -40,17 +40,25 @@ export default function SeasonsPage() {
   const [formData, setFormData] = useState<SeasonCreateRequest>(INITIAL_FORM_DATA);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [filter, setFilter] = useState<'all' | SeasonStatus>('all');
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     loadSeasons();
   }, []);
 
   const loadSeasons = async () => {
+    setError(null);
     try {
       const pageData = await adminService.getSeasons();
       setSeasons(pageData.content);
-    } catch (error) {
-      console.error('Failed to load seasons:', error);
+    } catch (err: unknown) {
+      console.error('Failed to load seasons:', err);
+      const error = err as { response?: { status?: number; data?: { message?: string } } };
+      if (error.response?.status === 403) {
+        setError('관리자 권한이 필요합니다. 다시 로그인해주세요.');
+      } else {
+        setError(error.response?.data?.message || '시즌 목록을 불러오는데 실패했습니다.');
+      }
     } finally {
       setIsLoading(false);
     }
@@ -155,6 +163,17 @@ export default function SeasonsPage() {
     return (
       <div className="flex items-center justify-center h-64">
         <div className="text-gray-500">로딩 중...</div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex flex-col items-center justify-center h-64 space-y-4">
+        <div className="text-red-500">{error}</div>
+        <button onClick={loadSeasons} className="btn-secondary">
+          다시 시도
+        </button>
       </div>
     );
   }
