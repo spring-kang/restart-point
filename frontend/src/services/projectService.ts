@@ -36,6 +36,11 @@ export const projectService = {
     return response.data.data.content || response.data.data;
   },
 
+  async getFeaturedProjects(): Promise<Project[]> {
+    const response = await api.get('/projects/featured');
+    return response.data.data;
+  },
+
   // 프로젝트 수정
   async updateProject(projectId: number, request: ProjectUpdateRequest): Promise<Project> {
     const response = await api.put(`/projects/${projectId}`, request);

@@ -50,10 +50,15 @@ export default function Home() {
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               {isAuthenticated ? (
-                <Link to="/seasons" className="btn-primary text-base px-8 py-3 flex items-center justify-center gap-2">
-                  시즌 참여하기
-                  <ArrowRight className="w-5 h-5" />
-                </Link>
+                <>
+                  <Link to="/seasons" className="btn-primary text-base px-8 py-3 flex items-center justify-center gap-2">
+                    시즌 참여하기
+                    <ArrowRight className="w-5 h-5" />
+                  </Link>
+                  <Link to="/featured-projects" className="btn-secondary text-base px-8 py-3">
+                    우수작 보기
+                  </Link>
+                </>
               ) : (
                 <>
                   <Link to="/signup" className="btn-primary text-base px-8 py-3 flex items-center justify-center gap-2">
@@ -62,6 +67,9 @@ export default function Home() {
                   </Link>
                   <Link to="/seasons" className="btn-secondary text-base px-8 py-3">
                     시즌 둘러보기
+                  </Link>
+                  <Link to="/featured-projects" className="btn-secondary text-base px-8 py-3">
+                    우수작 보기
                   </Link>
                 </>
               )}

@@ -11,6 +11,7 @@ export default function ReviewAnalysisPage() {
   const [selectedAnalysis, setSelectedAnalysis] = useState<ReviewAnalysis | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [updatingProjectId, setUpdatingProjectId] = useState<number | null>(null);
 
   useEffect(() => {
     if (seasonId) {
@@ -32,6 +33,50 @@ export default function ReviewAnalysisPage() {
       setError('심사 분석을 불러오는데 실패했습니다.');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const updateAnalysisState = (projectId: number, featuredRank: number | null) => {
+    setAnalyses((prev) => prev.map((analysis) => {
+      if (analysis.projectId !== projectId) {
+        return analysis;
+      }
+
+      return {
+        ...analysis,
+        featuredRank,
+        featuredAt: featuredRank ? new Date().toISOString() : null,
+      };
+    }));
+
+    setSelectedAnalysis((prev) => {
+      if (!prev || prev.projectId !== projectId) {
+        return prev;
+      }
+
+      return {
+        ...prev,
+        featuredRank,
+        featuredAt: featuredRank ? new Date().toISOString() : null,
+      };
+    });
+  };
+
+  const handleToggleFeatured = async (analysis: ReviewAnalysis) => {
+    try {
+      setUpdatingProjectId(analysis.projectId);
+      if (analysis.featuredRank) {
+        await adminService.unmarkProjectAsFeatured(analysis.projectId);
+        updateAnalysisState(analysis.projectId, null);
+      } else {
+        const project = await adminService.markProjectAsFeatured(analysis.projectId);
+        updateAnalysisState(analysis.projectId, project.featuredRank ?? null);
+      }
+    } catch (err) {
+      console.error('Failed to update featured project:', err);
+      window.alert('우수작 상태를 변경하는데 실패했습니다.');
+    } finally {
+      setUpdatingProjectId(null);
     }
   };
 
@@ -87,8 +132,15 @@ export default function ReviewAnalysisPage() {
                         : 'bg-gray-50 hover:bg-gray-100'
                     }`}
                   >
-                    <div className="font-medium text-gray-900 truncate">
-                      {analysis.projectName}
+                    <div className="flex items-center justify-between gap-2">
+                      <div className="font-medium text-gray-900 truncate">
+                        {analysis.projectName}
+                      </div>
+                      {analysis.featuredRank && (
+                        <span className="shrink-0 rounded-full bg-amber-100 px-2 py-0.5 text-xs font-semibold text-amber-700">
+                          우수작 #{analysis.featuredRank}
+                        </span>
+                      )}
                     </div>
                     <div className="text-sm text-gray-500">{analysis.teamName}</div>
                     <div className="text-sm text-gray-600 mt-1">
@@ -106,9 +158,34 @@ export default function ReviewAnalysisPage() {
               <>
                 {/* Stats Cards */}
                 <div className="bg-white rounded-lg shadow p-6">
-                  <h2 className="text-lg font-semibold text-gray-900 mb-4">
-                    {selectedAnalysis.projectName}
-                  </h2>
+                  <div className="mb-4 flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
+                    <div>
+                      <h2 className="text-lg font-semibold text-gray-900">
+                        {selectedAnalysis.projectName}
+                      </h2>
+                      {selectedAnalysis.featuredRank && (
+                        <p className="mt-1 text-sm font-medium text-amber-700">
+                          현재 우수작 #{selectedAnalysis.featuredRank}
+                        </p>
+                      )}
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => handleToggleFeatured(selectedAnalysis)}
+                      disabled={updatingProjectId === selectedAnalysis.projectId}
+                      className={`rounded-lg px-4 py-2 text-sm font-medium transition ${
+                        selectedAnalysis.featuredRank
+                          ? 'bg-neutral-200 text-neutral-800 hover:bg-neutral-300'
+                          : 'bg-amber-500 text-white hover:bg-amber-600'
+                      } disabled:cursor-not-allowed disabled:opacity-60`}
+                    >
+                      {updatingProjectId === selectedAnalysis.projectId
+                        ? '처리 중...'
+                        : selectedAnalysis.featuredRank
+                          ? '우수작 지정 해제'
+                          : '우수작으로 지정'}
+                    </button>
+                  </div>
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                     <StatCard
                       label="전체 평균"

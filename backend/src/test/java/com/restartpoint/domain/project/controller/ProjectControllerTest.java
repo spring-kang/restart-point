@@ -178,6 +178,23 @@ class ProjectControllerTest {
           .andExpect(jsonPath("$.success").value(true))
           .andExpect(jsonPath("$.data.content.length()").value(2));
     }
+
+    @Test
+    @DisplayName("우수작 목록 조회에 성공한다")
+    void getFeaturedProjectsSuccess() throws Exception {
+      // given
+      List<ProjectResponse> responses = List.of(
+          createProjectResponse(1L, "우수작 프로젝트", ProjectStatus.COMPLETED)
+      );
+      given(projectService.getFeaturedProjects()).willReturn(responses);
+
+      // when & then
+      mockMvc.perform(get("/api/v1/projects/featured"))
+          .andExpect(status().isOk())
+          .andExpect(jsonPath("$.success").value(true))
+          .andExpect(jsonPath("$.data.length()").value(1))
+          .andExpect(jsonPath("$.data[0].name").value("우수작 프로젝트"));
+    }
   }
 
   @Nested
@@ -360,6 +377,43 @@ class ProjectControllerTest {
     }
   }
 
+  @Nested
+  @DisplayName("우수작 지정 API")
+  class FeaturedProjectApi {
+
+    @Test
+    @DisplayName("우수작 지정에 성공한다")
+    void markFeaturedProjectSuccess() throws Exception {
+      // given
+      setAuthentication(4L, "admin@test.com", "ADMIN");
+      ProjectResponse response = createProjectResponse(1L, "우수작 프로젝트", ProjectStatus.COMPLETED);
+
+      given(projectService.markProjectAsFeatured(1L)).willReturn(response);
+
+      // when & then
+      mockMvc.perform(post("/api/v1/admin/projects/1/featured"))
+          .andExpect(status().isOk())
+          .andExpect(jsonPath("$.success").value(true))
+          .andExpect(jsonPath("$.message").value("우수작으로 지정되었습니다."));
+    }
+
+    @Test
+    @DisplayName("우수작 지정 해제에 성공한다")
+    void unmarkFeaturedProjectSuccess() throws Exception {
+      // given
+      setAuthentication(4L, "admin@test.com", "ADMIN");
+      ProjectResponse response = createProjectResponse(1L, "우수작 프로젝트", ProjectStatus.COMPLETED);
+
+      given(projectService.unmarkProjectAsFeatured(1L)).willReturn(response);
+
+      // when & then
+      mockMvc.perform(delete("/api/v1/admin/projects/1/featured"))
+          .andExpect(status().isOk())
+          .andExpect(jsonPath("$.success").value(true))
+          .andExpect(jsonPath("$.message").value("우수작 지정이 해제되었습니다."));
+    }
+  }
+
   // 헬퍼 메서드
   private ProjectCreateRequest createProjectCreateRequest() {
     ProjectCreateRequest request = new ProjectCreateRequest();
@@ -450,9 +504,12 @@ class ProjectControllerTest {
         .id(id)
         .teamId(1L)
         .teamName("테스트 팀")
+        .seasonId(1L)
+        .seasonTitle("테스트 시즌")
         .name(name)
         .problemDefinition("프로젝트 설명")
         .status(status)
+        .featuredRank(1)
         .createdAt(LocalDateTime.now())
         .build();
   }

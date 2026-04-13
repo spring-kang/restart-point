@@ -8,6 +8,7 @@ import lombok.NoArgsConstructor;
 
 import java.util.List;
 import java.util.Map;
+import java.time.LocalDateTime;
 
 /**
  * AI 심사 보조 분석 결과 DTO
@@ -22,6 +23,8 @@ public class ReviewAnalysisResponse {
     private Long projectId;
     private String projectName;
     private String teamName;
+    private Integer featuredRank;
+    private LocalDateTime featuredAt;
 
     // 심사 통계
     private int totalReviewCount;

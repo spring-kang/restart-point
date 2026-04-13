@@ -168,6 +168,8 @@ export interface ReviewAnalysis {
   projectId: number;
   projectName: string;
   teamName: string;
+  featuredRank?: number | null;
+  featuredAt?: string | null;
   totalReviewCount: number;
   expertReviewCount: number;
   candidateReviewCount: number;

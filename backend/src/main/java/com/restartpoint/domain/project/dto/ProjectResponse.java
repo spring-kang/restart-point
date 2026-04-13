@@ -28,6 +28,10 @@ public class ProjectResponse {
     private ProjectStatus status;
     private String teamRetrospective;
     private List<CheckpointResponse> checkpoints;
+    private Long seasonId;
+    private String seasonTitle;
+    private Integer featuredRank;
+    private LocalDateTime featuredAt;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 
@@ -36,6 +40,8 @@ public class ProjectResponse {
                 .id(project.getId())
                 .teamId(project.getTeam().getId())
                 .teamName(project.getTeam().getName())
+                .seasonId(project.getTeam().getSeason().getId())
+                .seasonTitle(project.getTeam().getSeason().getTitle())
                 .name(project.getName())
                 .problemDefinition(project.getProblemDefinition())
                 .targetUsers(project.getTargetUsers())
@@ -47,6 +53,8 @@ public class ProjectResponse {
                 .demoUrl(project.getDemoUrl())
                 .status(project.getStatus())
                 .teamRetrospective(project.getTeamRetrospective())
+                .featuredRank(project.getFeaturedRank())
+                .featuredAt(project.getFeaturedAt())
                 .checkpoints(project.getCheckpoints().stream()
                         .map(CheckpointResponse::from)
                         .collect(Collectors.toList()))
@@ -60,9 +68,13 @@ public class ProjectResponse {
                 .id(project.getId())
                 .teamId(project.getTeam().getId())
                 .teamName(project.getTeam().getName())
+                .seasonId(project.getTeam().getSeason().getId())
+                .seasonTitle(project.getTeam().getSeason().getTitle())
                 .name(project.getName())
                 .problemDefinition(project.getProblemDefinition())
                 .status(project.getStatus())
+                .featuredRank(project.getFeaturedRank())
+                .featuredAt(project.getFeaturedAt())
                 .createdAt(project.getCreatedAt())
                 .updatedAt(project.getUpdatedAt())
                 .build();
@@ -78,6 +90,8 @@ public class ProjectResponse {
                 .id(project.getId())
                 .teamId(project.getTeam().getId())
                 .teamName(project.getTeam().getName())
+                .seasonId(project.getTeam().getSeason().getId())
+                .seasonTitle(project.getTeam().getSeason().getTitle())
                 .name(project.getName())
                 .problemDefinition(project.getProblemDefinition())
                 .targetUsers(project.getTargetUsers())
@@ -87,6 +101,8 @@ public class ProjectResponse {
                 .githubUrl(project.getGithubUrl())
                 .demoUrl(project.getDemoUrl())
                 .status(project.getStatus())
+                .featuredRank(project.getFeaturedRank())
+                .featuredAt(project.getFeaturedAt())
                 .createdAt(project.getCreatedAt())
                 .updatedAt(project.getUpdatedAt())
                 .build();

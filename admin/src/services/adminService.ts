@@ -98,6 +98,16 @@ export const adminService = {
     return response.data.data;
   },
 
+  markProjectAsFeatured: async (projectId: number) => {
+    const response = await api.post<ApiResponse<{ featuredRank?: number | null }>>(`/admin/projects/${projectId}/featured`);
+    return response.data.data;
+  },
+
+  unmarkProjectAsFeatured: async (projectId: number) => {
+    const response = await api.delete<ApiResponse<{ featuredRank?: number | null }>>(`/admin/projects/${projectId}/featured`);
+    return response.data.data;
+  },
+
   // Dashboard APIs
   getOverallDashboard: async (): Promise<OverallDashboard> => {
     const response = await api.get<ApiResponse<OverallDashboard>>('/admin/dashboard');

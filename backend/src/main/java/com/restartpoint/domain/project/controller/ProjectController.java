@@ -13,6 +13,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -64,6 +65,11 @@ public class ProjectController {
             projects = projectService.getProjectsBySeason(seasonId, pageable);
         }
         return ResponseEntity.ok(ApiResponse.success(projects));
+    }
+
+    @GetMapping("/projects/featured")
+    public ResponseEntity<ApiResponse<List<ProjectResponse>>> getFeaturedProjects() {
+        return ResponseEntity.ok(ApiResponse.success(projectService.getFeaturedProjects()));
     }
 
     // 프로젝트 수정
@@ -149,5 +155,19 @@ public class ProjectController {
             @PathVariable Long checkpointId) {
         CheckpointResponse checkpoint = projectService.regenerateAiFeedback(principal.getUserId(), checkpointId);
         return ResponseEntity.ok(ApiResponse.success(checkpoint, "AI 피드백이 재생성되었습니다."));
+    }
+
+    @PreAuthorize("hasRole('ADMIN')")
+    @PostMapping("/admin/projects/{projectId}/featured")
+    public ResponseEntity<ApiResponse<ProjectResponse>> markProjectAsFeatured(@PathVariable Long projectId) {
+        ProjectResponse project = projectService.markProjectAsFeatured(projectId);
+        return ResponseEntity.ok(ApiResponse.success(project, "우수작으로 지정되었습니다."));
+    }
+
+    @PreAuthorize("hasRole('ADMIN')")
+    @DeleteMapping("/admin/projects/{projectId}/featured")
+    public ResponseEntity<ApiResponse<ProjectResponse>> unmarkProjectAsFeatured(@PathVariable Long projectId) {
+        ProjectResponse project = projectService.unmarkProjectAsFeatured(projectId);
+        return ResponseEntity.ok(ApiResponse.success(project, "우수작 지정이 해제되었습니다."));
     }
 }

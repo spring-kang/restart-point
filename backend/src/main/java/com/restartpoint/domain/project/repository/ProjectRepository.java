@@ -22,12 +22,22 @@ public interface ProjectRepository extends JpaRepository<Project, Long> {
     @Query("SELECT p FROM Project p JOIN FETCH p.team t WHERE t.season.id = :seasonId")
     java.util.List<Project> findAllBySeasonId(@Param("seasonId") Long seasonId);
 
+    @Query("SELECT p FROM Project p " +
+           "JOIN FETCH p.team t " +
+           "JOIN FETCH t.season s " +
+           "WHERE p.featuredRank IS NOT NULL " +
+           "ORDER BY s.reviewEndAt DESC, p.featuredRank ASC, p.featuredAt DESC")
+    java.util.List<Project> findAllFeaturedProjects();
+
+    @Query("SELECT COALESCE(MAX(p.featuredRank), 0) FROM Project p JOIN p.team t WHERE t.season.id = :seasonId")
+    int findMaxFeaturedRankBySeasonId(@Param("seasonId") Long seasonId);
+
     @Query("SELECT p FROM Project p JOIN p.team t WHERE t.season.id = :seasonId AND p.status = :status")
     Page<Project> findBySeasonIdAndStatus(@Param("seasonId") Long seasonId,
                                            @Param("status") ProjectStatus status,
                                            Pageable pageable);
 
-    @Query("SELECT p FROM Project p JOIN FETCH p.team t JOIN FETCH t.leader WHERE p.id = :projectId")
+    @Query("SELECT p FROM Project p JOIN FETCH p.team t JOIN FETCH t.leader JOIN FETCH t.season WHERE p.id = :projectId")
     Optional<Project> findByIdWithTeam(@Param("projectId") Long projectId);
 
     @Query("SELECT COUNT(p) FROM Project p JOIN p.team t WHERE t.season.id = :seasonId AND p.status = :status")

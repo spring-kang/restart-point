@@ -41,6 +41,30 @@ public class DatabaseMigrationConfig {
                 UPDATE users SET email_verified = false WHERE email_verified IS NULL
             """);
 
+            jdbcTemplate.execute("""
+                DO $$
+                BEGIN
+                    IF NOT EXISTS (
+                        SELECT 1 FROM information_schema.columns
+                        WHERE table_name = 'projects' AND column_name = 'featured_rank'
+                    ) THEN
+                        ALTER TABLE projects ADD COLUMN featured_rank integer;
+                    END IF;
+                END $$;
+            """);
+
+            jdbcTemplate.execute("""
+                DO $$
+                BEGIN
+                    IF NOT EXISTS (
+                        SELECT 1 FROM information_schema.columns
+                        WHERE table_name = 'projects' AND column_name = 'featured_at'
+                    ) THEN
+                        ALTER TABLE projects ADD COLUMN featured_at timestamp;
+                    END IF;
+                END $$;
+            """);
+
             log.info("데이터베이스 마이그레이션 완료");
         } catch (Exception e) {
             log.warn("마이그레이션 중 오류 (무시 가능): {}", e.getMessage());

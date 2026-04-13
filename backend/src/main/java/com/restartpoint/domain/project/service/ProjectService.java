@@ -19,6 +19,7 @@ import com.restartpoint.global.exception.ErrorCode;
 import com.restartpoint.infra.ai.AiProjectCoachService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -99,6 +100,12 @@ public class ProjectService {
     public Page<ProjectResponse> getProjectsBySeasonAndStatus(Long seasonId, ProjectStatus status, Pageable pageable) {
         return projectRepository.findBySeasonIdAndStatus(seasonId, status, pageable)
                 .map(ProjectResponse::simpleFrom);
+    }
+
+    public List<ProjectResponse> getFeaturedProjects() {
+        return projectRepository.findAllFeaturedProjects().stream()
+                .map(ProjectResponse::simpleFrom)
+                .toList();
     }
 
     // 프로젝트 수정 (팀원만 가능)
@@ -259,6 +266,26 @@ public class ProjectService {
         return CheckpointResponse.from(checkpoint);
     }
 
+    @Transactional
+    public ProjectResponse markProjectAsFeatured(Long projectId) {
+        Project project = findProjectByIdWithTeam(projectId);
+        validateProjectEligibleForFeatured(project);
+
+        if (project.getFeaturedRank() == null) {
+            int nextRank = projectRepository.findMaxFeaturedRankBySeasonId(project.getTeam().getSeason().getId()) + 1;
+            project.markAsFeatured(nextRank);
+        }
+
+        return ProjectResponse.simpleFrom(project);
+    }
+
+    @Transactional
+    public ProjectResponse unmarkProjectAsFeatured(Long projectId) {
+        Project project = findProjectByIdWithTeam(projectId);
+        project.unmarkAsFeatured();
+        return ProjectResponse.simpleFrom(project);
+    }
+
     // 프로젝트의 체크포인트 목록 조회 (팀원만 가능)
     public List<CheckpointResponse> getCheckpointsByProject(Long userId, Long projectId) {
         Project project = findProjectByIdWithTeam(projectId);
@@ -354,6 +381,17 @@ public class ProjectService {
     private Project findProjectByIdWithTeam(Long projectId) {
         return projectRepository.findByIdWithTeam(projectId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.PROJECT_NOT_FOUND));
+    }
+
+    private void validateProjectEligibleForFeatured(Project project) {
+        SeasonStatus seasonStatus = project.getTeam().getSeason().getStatus();
+        if (seasonStatus != SeasonStatus.REVIEWING && seasonStatus != SeasonStatus.COMPLETED) {
+            throw new BusinessException(ErrorCode.INVALID_SEASON_STATUS, "우수작은 심사 중이거나 완료된 시즌에서만 지정할 수 있습니다.");
+        }
+
+        if (project.getStatus() != ProjectStatus.SUBMITTED && project.getStatus() != ProjectStatus.COMPLETED) {
+            throw new BusinessException(ErrorCode.INVALID_PROJECT_STATUS, "제출 완료된 프로젝트만 우수작으로 지정할 수 있습니다.");
+        }
     }
 
     private Checkpoint findCheckpointById(Long checkpointId) {

@@ -210,6 +210,8 @@ export interface Project {
   id: number;
   teamId: number;
   teamName: string;
+  seasonId?: number;
+  seasonTitle?: string;
   name: string;
   problemDefinition?: string;
   targetUsers?: string;
@@ -222,6 +224,8 @@ export interface Project {
   status: ProjectStatus;
   teamRetrospective?: string;
   checkpoints?: Checkpoint[];
+  featuredRank?: number | null;
+  featuredAt?: string | null;
   createdAt: string;
   updatedAt?: string;
 }

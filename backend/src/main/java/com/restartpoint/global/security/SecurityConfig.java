@@ -45,6 +45,7 @@ public class SecurityConfig {
                         // 공개 API
                         .requestMatchers("/api/v1/auth/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/v1/seasons/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/v1/projects/featured").permitAll()
                         // 팀 프로젝트 조회는 인증 필요 (팀 목록/상세는 공개)
                         .requestMatchers(HttpMethod.GET, "/api/v1/teams/*/project").authenticated()
                         .requestMatchers(HttpMethod.GET, "/api/v1/teams/**").permitAll()

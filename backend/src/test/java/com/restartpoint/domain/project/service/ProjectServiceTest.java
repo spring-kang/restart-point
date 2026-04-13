@@ -38,6 +38,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 
 @ExtendWith(MockitoExtension.class)
@@ -404,6 +405,47 @@ class ProjectServiceTest {
                         BusinessException businessException = (BusinessException) exception;
                         assertThat(businessException.getErrorCode()).isEqualTo(ErrorCode.INVALID_PROJECT_STATUS);
                     });
+        }
+    }
+
+    @Nested
+    @DisplayName("우수작 지정")
+    class FeaturedProject {
+
+        @Test
+        @DisplayName("운영자는 제출된 프로젝트를 우수작으로 지정할 수 있다")
+        void markProjectAsFeaturedSuccess() {
+            // given
+            setField(season, "status", SeasonStatus.COMPLETED);
+            project.submit("회고");
+
+            given(projectRepository.findByIdWithTeam(1L)).willReturn(Optional.of(project));
+            given(projectRepository.findMaxFeaturedRankBySeasonId(1L)).willReturn(1);
+
+            // when
+            ProjectResponse response = projectService.markProjectAsFeatured(1L);
+
+            // then
+            assertThat(response.getFeaturedRank()).isEqualTo(2);
+            assertThat(project.getFeaturedAt()).isNotNull();
+        }
+
+        @Test
+        @DisplayName("이미 생성 실패로 남아 있던 우수작 지정은 기존 순번을 유지한다")
+        void keepExistingFeaturedRank() {
+            // given
+            setField(season, "status", SeasonStatus.REVIEWING);
+            project.submit("회고");
+            project.markAsFeatured(3);
+
+            given(projectRepository.findByIdWithTeam(1L)).willReturn(Optional.of(project));
+
+            // when
+            ProjectResponse response = projectService.markProjectAsFeatured(1L);
+
+            // then
+            assertThat(response.getFeaturedRank()).isEqualTo(3);
+            verify(projectRepository, never()).findMaxFeaturedRankBySeasonId(any());
         }
     }
 

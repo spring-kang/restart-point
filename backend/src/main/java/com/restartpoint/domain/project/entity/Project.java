@@ -10,6 +10,7 @@ import lombok.NoArgsConstructor;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "projects")
@@ -69,6 +70,12 @@ public class Project extends BaseTimeEntity {
     @Column(name = "team_retrospective", length = 3000)
     private String teamRetrospective;
 
+    @Column(name = "featured_rank")
+    private Integer featuredRank;
+
+    @Column(name = "featured_at")
+    private LocalDateTime featuredAt;
+
     @Builder
     public Project(Team team, String name, String problemDefinition, String targetUsers,
                    String solution, String aiUsage, String figmaUrl, String githubUrl,
@@ -115,5 +122,15 @@ public class Project extends BaseTimeEntity {
 
     public void addCheckpoint(Checkpoint checkpoint) {
         this.checkpoints.add(checkpoint);
+    }
+
+    public void markAsFeatured(int featuredRank) {
+        this.featuredRank = featuredRank;
+        this.featuredAt = LocalDateTime.now();
+    }
+
+    public void unmarkAsFeatured() {
+        this.featuredRank = null;
+        this.featuredAt = null;
     }
 }
