@@ -78,10 +78,10 @@
 | FE-CERT-001 | P0 | 비로그인 사용자가 접근 | 로그인 페이지로 이동한다 | (로그아웃) | Y |
 | FE-CERT-002 | P0 | 모든 필드 정상 입력 후 제출 | 인증 요청이 접수되고 상태가 갱신된다 | `newbie@test.com` | Y |
 | FE-CERT-003 | P1 | 잘못된 URL 또는 서버 검증 실패 | 에러 문구가 표시된다 | `newbie@test.com` | Y |
-| FE-CERT-004 | P1 | 인증 상태가 `PENDING`인 사용자가 진입 | 대기 상태 화면과 새로고침 버튼이 보인다 | `test1@restart-point.com` | Y |
+| FE-CERT-004 | P1 | 인증 상태가 `PENDING`인 사용자가 진입 | 대기 상태 화면과 새로고침 버튼이 보인다 | `pending@restart-point.com` | Y |
 | FE-CERT-005 | P1 | 인증 상태가 `APPROVED`인 사용자가 진입 | 인증 완료 화면이 보인다 | `test@example.com` | Y |
 | FE-CERT-006 | P1 | 인증 상태가 `REJECTED`인 사용자가 진입 | 거절 안내와 재신청 폼이 보인다 | `rejected@test.com` | Y |
-| FE-CERT-007 | P2 | 상태 새로고침 클릭 | 최신 사용자 상태를 다시 조회한다 | `test1@restart-point.com` | Y |
+| FE-CERT-007 | P2 | 상태 새로고침 클릭 | 최신 사용자 상태를 다시 조회한다 | `pending@restart-point.com` | Y |
 
 ## 1-5. 프로필 `/profile`
 | ID | 우선순위 | 케이스 | 기대 결과 | 테스트 계정 | AUTO |
@@ -333,6 +333,7 @@
 | 이메일 | 비밀번호 | 이름 | 인증 상태 | 주요 테스트 용도 |
 |--------|----------|------|-----------|------------------|
 | `newbie@test.com` | test1234 | 신규회원 | NONE | 미인증 → 인증 신청 플로우 |
+| `pending@restart-point.com` | test1234 | 인증대기회원 | PENDING | 인증 대기 상태 화면 |
 | `rejected@test.com` | test1234 | 거절회원 | REJECTED | 인증 거절 → 재신청 플로우 |
 | `test1@restart-point.com` | test1234 | E2E 리뷰어 | APPROVED | 전문가 심사(E2E 리뷰 시드) |
 | `review-admin@restart-point.com` | test1234 | E2E 보조 리뷰어 | APPROVED | 추가 전문가 심사(E2E 리뷰 시드) |
@@ -399,19 +400,19 @@
 | TEAM_RECRUIT_REQUEST | (영입 요청 받은 계정) | 영입 요청 알림 |
 | TEAM_RECRUIT_ACCEPTED | test@example.com | 영입 요청 수락 알림 (리더에게) |
 | TEAM_RECRUIT_REJECTED | test@example.com | 영입 요청 거절 알림 (리더에게) |
-| CERTIFICATION_APPROVED | test1@restart-point.com | 인증 승인 알림 |
+| CERTIFICATION_APPROVED | newbie@test.com | 인증 승인 알림 |
 | CERTIFICATION_REJECTED | rejected@test.com | 인증 거절 알림 |
-| CHECKPOINT_REMINDER | test1@restart-point.com | 체크포인트 마감 알림 |
+| CHECKPOINT_REMINDER | member1@test.com | 체크포인트 마감 알림 |
 | SUBMISSION_REMINDER | test2@restart-point.com | 제출 마감 알림 |
 | REVIEW_START | test2@restart-point.com | 심사 시작 알림 |
 | REVIEW_END | member1@test.com | 심사 완료 알림 |
 | REPORT_PUBLISHED | member1@test.com | 성장 리포트 발행 알림 |
 | COMMENT_ON_POST | test@example.com | 댓글 알림 |
-| REPLY_ON_COMMENT | test1@restart-point.com | 대댓글 알림 |
+| REPLY_ON_COMMENT | member3@test.com | 대댓글 알림 |
 
 ## 5-7. 계정별 상세 테스트 시나리오
 
-### `newbie@test.com` (신규회원) - 인증: NONE
+### `newbie@test.com / test1234` (신규회원) - 인증: NONE
 | # | 테스트 케이스 | 예상 결과 |
 |---|--------------|-----------|
 | 1 | 헤더 뱃지 확인 | "미인증" 뱃지 표시 |
@@ -420,14 +421,21 @@
 | 4 | 팀 생성 시도 | 인증 필요 안내 |
 | 5 | 팀 지원 시도 | 인증 필요 안내 |
 
-### `rejected@test.com` (거절회원) - 인증: REJECTED
+### `pending@restart-point.com / test1234` (인증대기회원) - 인증: PENDING
+| # | 테스트 케이스 | 예상 결과 |
+|---|--------------|-----------|
+| 1 | 수료 인증 페이지 진입 | 대기 상태 화면 표시 |
+| 2 | 상태 새로고침 클릭 | 최신 인증 상태 재조회 |
+| 3 | 헤더 뱃지 확인 | "인증대기" 뱃지 표시 |
+
+### `rejected@test.com / test1234` (거절회원) - 인증: REJECTED
 | # | 테스트 케이스 | 예상 결과 |
 |---|--------------|-----------|
 | 1 | 수료 인증 페이지 | "인증 거절됨" 메시지 + 재신청 폼 표시 |
 | 2 | 알림 확인 | "수료 인증 거절" 알림 표시 |
 | 3 | 재신청 후 상태 | PENDING으로 변경 |
 
-### `test1@restart-point.com` (E2E 리뷰어) - 인증: APPROVED, 역할: REVIEWER
+### `test1@restart-point.com / test1234` (E2E 리뷰어) - 인증: APPROVED, 역할: REVIEWER
 | # | 테스트 케이스 | 예상 결과 |
 |---|--------------|-----------|
 | 1 | 시즌 상세 진입 | "프로젝트 심사하기" 버튼 표시 |
@@ -435,7 +443,7 @@
 | 3 | 심사 제출 | 완료된 심사 목록에 반영 |
 | 4 | 운영자 분석 확인 | EXPERT 심사 집계에 반영 |
 
-### `review-admin@restart-point.com` (E2E 보조 리뷰어) - 인증: APPROVED, 역할: REVIEWER
+### `review-admin@restart-point.com / test1234` (E2E 보조 리뷰어) - 인증: APPROVED, 역할: REVIEWER
 | # | 테스트 케이스 | 예상 결과 |
 |---|--------------|-----------|
 | 1 | 시즌 상세 진입 | "프로젝트 심사하기" 버튼 표시 |
@@ -443,7 +451,7 @@
 | 3 | 심사 제출 | 완료된 심사 목록에 반영 |
 | 4 | 운영자 분석 확인 | 추가 EXPERT 심사 집계에 반영 |
 
-### `test2@restart-point.com` (E2E 팀장) - 인증: APPROVED
+### `test2@restart-point.com / test1234` (E2E 팀장) - 인증: APPROVED
 | # | 테스트 케이스 | 예상 결과 |
 |---|--------------|-----------|
 | 1 | 내 팀 페이지 | "E2E 심사 대상 팀" 리더 팀 표시 |
@@ -451,7 +459,7 @@
 | 3 | 프로젝트 상태 확인 | 제출된 프로젝트 "AI 회고 도우미" 확인 |
 | 4 | 운영자 분석 확인 | 팀 프로젝트에 EXPERT 심사 반영 |
 
-### `test@example.com` (테스트) - 인증: APPROVED, 팀 리더
+### `test@example.com / test1234` (테스트) - 인증: APPROVED, 팀 리더
 | # | 테스트 케이스 | 예상 결과 |
 |---|--------------|-----------|
 | 1 | 내 팀 페이지 - 리더 팀 | "AI 챗봇 프로젝트", "AI 코드 리뷰어" 2개 팀 |
@@ -462,7 +470,7 @@
 | 6 | 커뮤니티 | 본인 게시글 2개 수정/삭제 가능 |
 | 7 | 알림 확인 | 팀 지원 알림, 댓글 알림 (2개 미읽음) |
 
-### `member1@test.com` (김프론트) - 인증: APPROVED, 팀 리더
+### `member1@test.com / test1234` (김프론트) - 인증: APPROVED, 팀 리더
 | # | 테스트 케이스 | 예상 결과 |
 |---|--------------|-----------|
 | 1 | 내 팀 페이지 - 리더 팀 | "AI 이미지 생성 서비스" (IN_PROGRESS) |
@@ -471,7 +479,7 @@
 | 4 | 체크포인트 수정 | 기존 체크포인트 편집 |
 | 5 | 알림 확인 | 성장 리포트 발행 알림 (1개 미읽음) |
 
-### `member2@test.com` (이백엔드) - 인증: APPROVED, 팀 리더
+### `member2@test.com / test1234` (이백엔드) - 인증: APPROVED, 팀 리더
 | # | 테스트 케이스 | 예상 결과 |
 |---|--------------|-----------|
 | 1 | 내 팀 페이지 - 리더 팀 | "AI 학습 도우미" (COMPLETE), "AI 번역 서비스" (SUBMITTED) |
@@ -480,7 +488,7 @@
 | 4 | 소속 팀 | "AI 이미지 생성 서비스" 팀원 |
 | 5 | 알림 확인 | 팀 지원 거절 알림 (1개 미읽음) |
 
-### `member3@test.com` (박디자인) - 인증: APPROVED
+### `member3@test.com / test1234` (박디자인) - 인증: APPROVED
 | # | 테스트 케이스 | 예상 결과 |
 |---|--------------|-----------|
 | 1 | 소속 팀 | "AI 이미지 생성 서비스" UX/UI 디자이너 |
@@ -488,7 +496,7 @@
 | 3 | 거절된 지원 확인 | "AI 챗봇 프로젝트" 지원 거절 이력 |
 | 4 | 알림 확인 | 팀 초대 알림 (1개 미읽음) |
 
-### `member4@test.com` (최기획) - 인증: APPROVED, 팀 리더
+### `member4@test.com / test1234` (최기획) - 인증: APPROVED, 팀 리더
 | # | 테스트 케이스 | 예상 결과 |
 |---|--------------|-----------|
 | 1 | 내 팀 페이지 - 리더 팀 | "AI 일정 관리 앱" (RECRUITING) |
@@ -497,7 +505,7 @@
 | 4 | 지원자 거절 | test2 상태 REJECTED로 변경 |
 | 5 | 알림 확인 | 새 팀 지원 알림 (1개 미읽음) |
 
-### `java7ang@gmail.com` (강성지) - 인증: APPROVED, 팀 없음
+### `java7ang@gmail.com / test1234` (강성지) - 인증: APPROVED, 팀 없음
 | # | 테스트 케이스 | 예상 결과 |
 |---|--------------|-----------|
 | 1 | 내 팀 페이지 | "아직 팀이 없습니다" + 팀 둘러보기 CTA |
@@ -506,19 +514,20 @@
 
 ## 5-8. 계정별 빠른 테스트 가이드
 
-| 계정 | 주요 테스트 시나리오 |
-|------|---------------------|
-| `newbie@test.com` | 미인증 → 인증 신청 플로우 |
-| `rejected@test.com` | 인증 거절 → 재신청 플로우 |
-| `test1@restart-point.com` | 전문가 심사(E2E 리뷰 시드) |
-| `review-admin@restart-point.com` | 추가 전문가 심사(E2E 리뷰 시드) |
-| `test2@restart-point.com` | 심사 대상 팀 리더(E2E 리뷰 시드) |
-| `test@example.com` | 팀 리더 (지원자 관리), 커뮤니티 작성자 |
-| `member1@test.com` | 진행 중 프로젝트 관리, 체크포인트 |
-| `member2@test.com` | 완료된 프로젝트, SUBMITTED 팀 리더 |
-| `member3@test.com` | 팀 초대 알림, 거절된 지원 이력 |
-| `member4@test.com` | 지원자 승인/거절 테스트 |
-| `java7ang@gmail.com` | 팀 없는 인증 사용자 |
+| 계정 | 비밀번호 | 주요 테스트 시나리오 |
+|------|----------|---------------------|
+| `newbie@test.com` | `test1234` | 미인증 → 인증 신청 플로우 |
+| `pending@restart-point.com` | `test1234` | 인증 대기 상태 화면 |
+| `rejected@test.com` | `test1234` | 인증 거절 → 재신청 플로우 |
+| `test1@restart-point.com` | `test1234` | 전문가 심사(E2E 리뷰 시드) |
+| `review-admin@restart-point.com` | `test1234` | 추가 전문가 심사(E2E 리뷰 시드) |
+| `test2@restart-point.com` | `test1234` | 심사 대상 팀 리더(E2E 리뷰 시드) |
+| `test@example.com` | `test1234` | 팀 리더 (지원자 관리), 커뮤니티 작성자 |
+| `member1@test.com` | `test1234` | 진행 중 프로젝트 관리, 체크포인트 |
+| `member2@test.com` | `test1234` | 완료된 프로젝트, SUBMITTED 팀 리더 |
+| `member3@test.com` | `test1234` | 팀 초대 알림, 거절된 지원 이력 |
+| `member4@test.com` | `test1234` | 지원자 승인/거절 테스트 |
+| `java7ang@gmail.com` | `test1234` | 팀 없는 인증 사용자 |
 
 > **모든 계정 비밀번호**: `test1234`
 
