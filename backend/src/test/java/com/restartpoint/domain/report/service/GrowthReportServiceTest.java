@@ -40,6 +40,7 @@ import java.util.Optional;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.*;
 
@@ -259,6 +260,34 @@ class GrowthReportServiceTest {
       // then
       verify(growthReportRepository, never()).save(any(GrowthReport.class));
     }
+
+    @Test
+    @DisplayName("AI 생성이 실패해도 fallback 내용으로 팀과 개인 리포트를 생성한다")
+    void generateReportsWithFallbackWhenAiFails() throws Exception {
+      // given
+      User leader = createUser(1L, "leader@example.com", "팀장", Role.USER);
+      Season season = createSeason(1L, "시즌1", SeasonStatus.COMPLETED);
+      Team team = createTeam(1L, "팀이름", season, leader);
+      Project project = createProject(1L, "프로젝트", team, ProjectStatus.SUBMITTED);
+      ReviewSummaryResponse reviewSummary = createReviewSummary(project.getId(), project.getName());
+
+      given(projectRepository.findByIdWithTeam(1L)).willReturn(Optional.of(project));
+      given(growthReportRepository.existsByProjectIdAndReportType(1L, ReportType.TEAM)).willReturn(false);
+      given(reviewService.getReviewSummaryInternal(1L)).willReturn(reviewSummary);
+      given(objectMapper.writeValueAsString(any())).willReturn("{\"summary\":true}");
+      given(aiGrowthReportService.generateTeamReport(project, reviewSummary)).willReturn(null);
+      given(aiGrowthReportService.generateIndividualReport(eq(project), eq(reviewSummary), eq(1L), eq("팀장"), any()))
+          .willReturn(null);
+      given(teamMemberRepository.findByTeamId(1L)).willReturn(List.of());
+
+      // when
+      growthReportService.generateReportsForProject(1L);
+
+      // then
+      verify(growthReportRepository, times(2)).save(any(GrowthReport.class));
+      verify(aiGrowthReportService).generateTeamReport(project, reviewSummary);
+      verify(aiGrowthReportService).generateIndividualReport(eq(project), eq(reviewSummary), eq(1L), eq("팀장"), any());
+    }
   }
 
   @Nested
@@ -340,6 +369,30 @@ class GrowthReportServiceTest {
     setField(project, "id", id);
     setField(project, "status", status);
     return project;
+  }
+
+  private ReviewSummaryResponse createReviewSummary(Long projectId, String projectName) {
+    Map<RubricItem, Double> rubricAverages = new EnumMap<>(RubricItem.class);
+    rubricAverages.put(RubricItem.PROBLEM_DEFINITION, 4.5);
+    rubricAverages.put(RubricItem.USER_VALUE, 4.2);
+    rubricAverages.put(RubricItem.AI_USAGE, 3.8);
+    rubricAverages.put(RubricItem.UX_COMPLETENESS, 3.6);
+    rubricAverages.put(RubricItem.TECHNICAL_FEASIBILITY, 3.2);
+    rubricAverages.put(RubricItem.COLLABORATION, 4.0);
+
+    return ReviewSummaryResponse.builder()
+        .projectId(projectId)
+        .projectName(projectName)
+        .totalReviewCount(1)
+        .expertReviewCount(1)
+        .candidateReviewCount(0)
+        .weightedAverageScore(3.9)
+        .expertAverageScore(3.9)
+        .candidateAverageScore(0.0)
+        .rubricAverages(rubricAverages)
+        .expertRubricAverages(rubricAverages)
+        .candidateRubricAverages(Map.of())
+        .build();
   }
 
   private GrowthReport createTeamReport(Long id, Project project) {

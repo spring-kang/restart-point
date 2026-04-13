@@ -33,8 +33,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -261,10 +263,12 @@ public class GrowthReportService {
                 );
                 log.info("팀 리포트 AI 생성 완료 - 프로젝트: {}", project.getName());
             } else {
-                log.warn("팀 리포트 AI 생성 실패 - 프로젝트: {}", project.getName());
+                applyTeamFallbackContent(report, project, reviewSummary);
+                log.warn("팀 리포트 AI 생성 실패로 fallback 적용 - 프로젝트: {}", project.getName());
             }
         } catch (Exception e) {
-            log.error("팀 리포트 생성 중 오류: {}", e.getMessage());
+            applyTeamFallbackContent(report, project, reviewSummary);
+            log.error("팀 리포트 생성 중 오류로 fallback 적용: {}", e.getMessage());
         }
     }
 
@@ -286,11 +290,147 @@ public class GrowthReportService {
                 );
                 log.info("개인 리포트 AI 생성 완료 - 사용자: {}", user.getName());
             } else {
-                log.warn("개인 리포트 AI 생성 실패 - 사용자: {}", user.getName());
+                applyIndividualFallbackContent(report, reviewSummary, user, jobRole);
+                log.warn("개인 리포트 AI 생성 실패로 fallback 적용 - 사용자: {}", user.getName());
             }
         } catch (Exception e) {
-            log.error("개인 리포트 생성 중 오류: {}", e.getMessage());
+            applyIndividualFallbackContent(report, reviewSummary, user, jobRole);
+            log.error("개인 리포트 생성 중 오류로 fallback 적용: {}", e.getMessage());
         }
+    }
+
+    private void applyTeamFallbackContent(GrowthReport report, Project project, ReviewSummaryResponse reviewSummary) {
+        report.updateContent(
+                buildTeamStrengthsFallback(project, reviewSummary),
+                buildTeamImprovementsFallback(reviewSummary),
+                null,
+                buildNextActionFallback(reviewSummary),
+                null,
+                buildRecommendedAreasFallback(reviewSummary)
+        );
+    }
+
+    private void applyIndividualFallbackContent(GrowthReport report, ReviewSummaryResponse reviewSummary,
+                                                User user, JobRole jobRole) {
+        String roleLabel = getRoleLabel(jobRole);
+        report.updateContent(
+                null,
+                null,
+                buildRoleSpecificFallback(user.getName(), roleLabel, reviewSummary),
+                buildNextActionFallback(reviewSummary),
+                buildPortfolioFallback(roleLabel, reviewSummary),
+                buildRecommendedAreasFallback(reviewSummary)
+        );
+    }
+
+    private String buildTeamStrengthsFallback(Project project, ReviewSummaryResponse reviewSummary) {
+        RubricItem strongestRubric = findExtremeRubric(reviewSummary, Comparator.reverseOrder());
+        String strongestLabel = strongestRubric != null ? strongestRubric.getLabel() : "협업 완성도";
+
+        return """
+                - %s 팀은 %s 측면에서 가장 안정적인 평가를 받았습니다.
+                - 전체 평균 %.1f점으로 핵심 기능과 전달력이 기본 기준을 충족했습니다.
+                - 프로젝트 '%s'의 문제 정의와 해결 방향이 심사자에게 일관되게 전달되었습니다.
+                """.formatted(
+                project.getTeam().getName(),
+                strongestLabel,
+                reviewSummary.getWeightedAverageScore(),
+                project.getName()
+        ).trim();
+    }
+
+    private String buildTeamImprovementsFallback(ReviewSummaryResponse reviewSummary) {
+        RubricItem weakestRubric = findExtremeRubric(reviewSummary, Comparator.naturalOrder());
+        String weakestLabel = weakestRubric != null ? weakestRubric.getLabel() : "기술 구현 가능성";
+
+        return """
+                - %s 항목의 점수가 상대적으로 낮아 다음 프로젝트에서 우선 보완이 필요합니다.
+                - 심사 코멘트 없이도 재현 가능하도록 산출물 구조와 설명 흐름을 더 정리하는 것이 좋습니다.
+                - 기능 구현 근거와 사용자 가치 연결을 한 화면 안에서 더 명확히 보여주는 구성이 필요합니다.
+                """.formatted(weakestLabel).trim();
+    }
+
+    private String buildRoleSpecificFallback(String userName, String roleLabel, ReviewSummaryResponse reviewSummary) {
+        RubricItem weakestRubric = findExtremeRubric(reviewSummary, Comparator.naturalOrder());
+        String weakestLabel = weakestRubric != null ? weakestRubric.getLabel() : "협업 완성도";
+
+        return """
+                - %s 님은 %s 역할 관점에서 %s 보완에 가장 먼저 집중하는 것이 좋습니다.
+                - 자신의 의사결정 근거를 팀 산출물과 연결해 설명하는 방식이 다음 프로젝트에서 더 중요합니다.
+                - 역할 범위 안에서 끝내지 말고 사용자 가치와 구현 결과를 함께 설명할 수 있어야 합니다.
+                """.formatted(userName, roleLabel, weakestLabel).trim();
+    }
+
+    private String buildNextActionFallback(ReviewSummaryResponse reviewSummary) {
+        List<RubricItem> weakestRubrics = getSortedRubrics(reviewSummary, Comparator.naturalOrder()).stream()
+                .limit(2)
+                .toList();
+
+        if (weakestRubrics.isEmpty()) {
+            return """
+                    - 다음 프로젝트 시작 전에 역할별 목표와 완료 기준을 문서로 먼저 합의하세요.
+                    - 중간 점검 시 사용자 가치와 구현 가능성을 함께 검토하세요.
+                    - 최종 제출 전 데모 흐름과 핵심 메시지를 리허설하세요.
+                    """.trim();
+        }
+
+        return weakestRubrics.stream()
+                .map(item -> "- " + item.getLabel() + " 보완 계획을 다음 프로젝트 킥오프 문서에 명시하세요.")
+                .collect(Collectors.joining("\n"));
+    }
+
+    private String buildPortfolioFallback(String roleLabel, ReviewSummaryResponse reviewSummary) {
+        RubricItem strongestRubric = findExtremeRubric(reviewSummary, Comparator.reverseOrder());
+        String strongestLabel = strongestRubric != null ? strongestRubric.getLabel() : "사용자 가치";
+
+        return """
+                - %s 관점에서 담당 범위, 의사결정 이유, 최종 결과를 한 흐름으로 정리하세요.
+                - 특히 %s와 연결되는 산출물 캡처와 설명을 추가하면 포트폴리오 전달력이 좋아집니다.
+                - 프로젝트 회고에서 본인이 해결한 문제와 협업 기여를 분리해서 기록하세요.
+                """.formatted(roleLabel, strongestLabel).trim();
+    }
+
+    private String buildRecommendedAreasFallback(ReviewSummaryResponse reviewSummary) {
+        List<RubricItem> strongestRubrics = getSortedRubrics(reviewSummary, Comparator.reverseOrder()).stream()
+                .limit(2)
+                .toList();
+
+        if (strongestRubrics.isEmpty()) {
+            return "사용자 조사 정리, 구현 우선순위 설정, 데모 스토리텔링을 함께 훈련할 수 있는 프로젝트를 추천합니다.";
+        }
+
+        String labels = strongestRubrics.stream()
+                .map(RubricItem::getLabel)
+                .collect(Collectors.joining(", "));
+
+        return "%s 강점을 더 확장할 수 있는 문제 중심 프로젝트를 추천합니다.".formatted(labels);
+    }
+
+    private RubricItem findExtremeRubric(ReviewSummaryResponse reviewSummary, Comparator<Double> comparator) {
+        return getSortedRubrics(reviewSummary, comparator).stream()
+                .findFirst()
+                .orElse(null);
+    }
+
+    private List<RubricItem> getSortedRubrics(ReviewSummaryResponse reviewSummary, Comparator<Double> comparator) {
+        if (reviewSummary.getRubricAverages() == null || reviewSummary.getRubricAverages().isEmpty()) {
+            return List.of();
+        }
+
+        return reviewSummary.getRubricAverages().entrySet().stream()
+                .filter(entry -> entry.getValue() != null)
+                .sorted((left, right) -> comparator.compare(left.getValue(), right.getValue()))
+                .map(Map.Entry::getKey)
+                .toList();
+    }
+
+    private String getRoleLabel(JobRole role) {
+        return switch (role) {
+            case PLANNER -> "기획자";
+            case UXUI -> "UX/UI 디자이너";
+            case FRONTEND -> "프론트엔드 개발자";
+            case BACKEND -> "백엔드 개발자";
+        };
     }
 
     private ReviewSummaryResponse getReviewSummaryForReport(Project project) {
