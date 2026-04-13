@@ -85,6 +85,8 @@ public class SecurityConfig {
         configuration.setAllowedOriginPatterns(List.of(
                 "https://*.vercel.app",
                 "https://*.up.railway.app",
+                "https://*.restart-point.com",
+                "https://restart-point.com",
                 "http://localhost:*"
         ));
 
