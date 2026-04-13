@@ -314,6 +314,49 @@ public class NotificationService {
         );
     }
 
+    /**
+     * 영입 요청 받음 알림 (초대받은 사용자에게)
+     */
+    @Transactional
+    public void notifyRecruitRequest(Long invitedUserId, String teamName, String leaderName, Long teamId) {
+        createNotification(
+                invitedUserId,
+                NotificationType.TEAM_RECRUIT_REQUEST,
+                "팀 영입 요청을 받았습니다",
+                "'" + teamName + "' 팀의 '" + leaderName + "'님이 영입 요청을 보냈습니다. 확인해보세요!",
+                "TEAM",
+                teamId
+        );
+    }
+
+    /**
+     * 영입 요청 수락됨 알림 (팀 리더에게)
+     */
+    @Transactional
+    public void notifyRecruitAccepted(Long leaderId, String acceptedUserName, String teamName, Long teamId) {
+        createNotification(
+                leaderId,
+                NotificationType.TEAM_RECRUIT_ACCEPTED,
+                "영입 요청이 수락되었습니다",
+                "'" + acceptedUserName + "'님이 '" + teamName + "' 팀 영입 요청을 수락했습니다!",
+                "TEAM",
+                teamId
+        );
+    }
+
+    /**
+     * 영입 요청 거절됨 알림 (팀 리더에게)
+     */
+    @Transactional
+    public void notifyRecruitRejected(Long leaderId, String rejectedUserName, String teamName) {
+        createNotification(
+                leaderId,
+                NotificationType.TEAM_RECRUIT_REJECTED,
+                "영입 요청이 거절되었습니다",
+                "'" + rejectedUserName + "'님이 '" + teamName + "' 팀 영입 요청을 거절했습니다."
+        );
+    }
+
     private String truncate(String text, int maxLength) {
         if (text == null) return "";
         if (text.length() <= maxLength) return text;

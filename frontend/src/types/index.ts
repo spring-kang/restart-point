@@ -63,6 +63,7 @@ export interface Season {
 // 팀 관련 타입
 export type TeamStatus = 'RECRUITING' | 'COMPLETE' | 'IN_PROGRESS' | 'SUBMITTED' | 'REVIEWED';
 export type TeamMemberStatus = 'PENDING' | 'ACCEPTED' | 'REJECTED';
+export type InvitationStatus = 'PENDING' | 'ACCEPTED' | 'REJECTED' | 'EXPIRED';
 
 export interface Team {
   id: number;
@@ -113,6 +114,34 @@ export interface TeamRequest {
 export interface TeamApplyRequest {
   role: JobRole;
   applicationMessage?: string;
+}
+
+// 영입 요청 관련 타입
+export interface TeamInvitation {
+  id: number;
+  teamId: number;
+  teamName: string;
+  teamDescription?: string;
+  seasonId: number;
+  seasonName: string;
+  invitedUserId: number;
+  invitedUserName: string;
+  invitedUserEmail: string;
+  invitedById: number;
+  invitedByName: string;
+  suggestedRole: JobRole;
+  status: InvitationStatus;
+  message?: string;
+  matchScore?: number;
+  createdAt: string;
+  expiresAt: string;
+}
+
+export interface TeamInvitationRequest {
+  userId: number;
+  role: JobRole;
+  message?: string;
+  matchScore?: number;
 }
 
 // API 응답 타입
@@ -580,6 +609,9 @@ export type NotificationType =
   | 'TEAM_INVITATION'
   | 'TEAM_APPLICATION'
   | 'TEAM_APPLICATION_REJECTED'
+  | 'TEAM_RECRUIT_REQUEST'
+  | 'TEAM_RECRUIT_ACCEPTED'
+  | 'TEAM_RECRUIT_REJECTED'
   | 'CHECKPOINT_REMINDER'
   | 'SUBMISSION_REMINDER'
   | 'REVIEW_START'
