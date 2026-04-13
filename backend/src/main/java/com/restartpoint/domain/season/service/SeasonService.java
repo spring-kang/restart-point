@@ -5,6 +5,12 @@ import com.restartpoint.domain.season.dto.SeasonResponse;
 import com.restartpoint.domain.season.entity.Season;
 import com.restartpoint.domain.season.entity.SeasonStatus;
 import com.restartpoint.domain.season.repository.SeasonRepository;
+import com.restartpoint.domain.team.entity.Team;
+import com.restartpoint.domain.team.entity.TeamMemberStatus;
+import com.restartpoint.domain.team.repository.TeamMemberRepository;
+import com.restartpoint.domain.team.repository.TeamRepository;
+import com.restartpoint.domain.user.entity.User;
+import com.restartpoint.domain.user.repository.UserRepository;
 import com.restartpoint.global.exception.BusinessException;
 import com.restartpoint.global.exception.ErrorCode;
 import lombok.RequiredArgsConstructor;
@@ -14,6 +20,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -21,6 +28,9 @@ import java.util.List;
 public class SeasonService {
 
     private final SeasonRepository seasonRepository;
+    private final TeamRepository teamRepository;
+    private final TeamMemberRepository teamMemberRepository;
+    private final UserRepository userRepository;
 
     // 시즌 생성 (운영자 전용)
     @Transactional
@@ -139,9 +149,59 @@ public class SeasonService {
                 .toList();
     }
 
+    // 공개 시즌 목록 조회 (로그인 사용자용 - 참여 정보 포함)
+    public List<SeasonResponse> getPublicSeasonsForUser(Long userId) {
+        User user = findUserById(userId);
+        List<Season> seasons = seasonRepository.findByStatusNotOrderByRecruitmentStartAtDesc(SeasonStatus.DRAFT);
+
+        return seasons.stream()
+                .map(season -> {
+                    Team myTeam = findUserTeamInSeason(user, season);
+                    return SeasonResponse.from(season, myTeam);
+                })
+                .toList();
+    }
+
+    // 시즌 상세 조회 (로그인 사용자용 - 참여 정보 포함)
+    public SeasonResponse getSeasonForUser(Long seasonId, Long userId) {
+        User user = findUserById(userId);
+        Season season = findSeasonById(seasonId);
+
+        // DRAFT 상태의 시즌은 공개 API에서 접근 불가
+        if (season.getStatus() == SeasonStatus.DRAFT) {
+            throw new BusinessException(ErrorCode.SEASON_NOT_FOUND);
+        }
+
+        Team myTeam = findUserTeamInSeason(user, season);
+        return SeasonResponse.from(season, myTeam);
+    }
+
+    // 사용자가 해당 시즌에서 소속된 팀 찾기
+    private Team findUserTeamInSeason(User user, Season season) {
+        // 1. 리더로서 팀이 있는지 확인
+        Optional<Team> leaderTeam = teamRepository.findByLeader(user).stream()
+                .filter(t -> t.getSeason().getId().equals(season.getId()))
+                .findFirst();
+        if (leaderTeam.isPresent()) {
+            return leaderTeam.get();
+        }
+
+        // 2. 팀원으로서 ACCEPTED 상태인 팀이 있는지 확인
+        return teamMemberRepository.findByUserAndStatus(user, TeamMemberStatus.ACCEPTED).stream()
+                .map(tm -> tm.getTeam())
+                .filter(t -> t.getSeason().getId().equals(season.getId()))
+                .findFirst()
+                .orElse(null);
+    }
+
     private Season findSeasonById(Long seasonId) {
         return seasonRepository.findById(seasonId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.SEASON_NOT_FOUND));
+    }
+
+    private User findUserById(Long userId) {
+        return userRepository.findById(userId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
     }
 
     private void validateDateOrder(SeasonRequest request) {

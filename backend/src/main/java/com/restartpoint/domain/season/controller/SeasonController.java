@@ -5,6 +5,8 @@ import com.restartpoint.domain.season.dto.SeasonResponse;
 import com.restartpoint.domain.season.dto.SeasonStatusRequest;
 import com.restartpoint.domain.season.service.SeasonService;
 import com.restartpoint.global.common.ApiResponse;
+import com.restartpoint.global.security.CurrentUser;
+import com.restartpoint.global.security.CustomUserPrincipal;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -22,10 +24,16 @@ public class SeasonController {
 
     private final SeasonService seasonService;
 
-    // 공개 시즌 목록 조회 (모든 사용자)
+    // 공개 시즌 목록 조회 (모든 사용자, 로그인 시 참여 정보 포함)
     @GetMapping("/seasons")
-    public ResponseEntity<ApiResponse<List<SeasonResponse>>> getPublicSeasons() {
-        List<SeasonResponse> seasons = seasonService.getPublicSeasons();
+    public ResponseEntity<ApiResponse<List<SeasonResponse>>> getPublicSeasons(
+            @CurrentUser CustomUserPrincipal principal) {
+        List<SeasonResponse> seasons;
+        if (principal != null) {
+            seasons = seasonService.getPublicSeasonsForUser(principal.getUserId());
+        } else {
+            seasons = seasonService.getPublicSeasons();
+        }
         return ResponseEntity.ok(ApiResponse.success(seasons));
     }
 
@@ -36,10 +44,17 @@ public class SeasonController {
         return ResponseEntity.ok(ApiResponse.success(seasons));
     }
 
-    // 시즌 상세 조회
+    // 시즌 상세 조회 (로그인 시 참여 정보 포함)
     @GetMapping("/seasons/{seasonId}")
-    public ResponseEntity<ApiResponse<SeasonResponse>> getSeason(@PathVariable Long seasonId) {
-        SeasonResponse season = seasonService.getSeason(seasonId);
+    public ResponseEntity<ApiResponse<SeasonResponse>> getSeason(
+            @PathVariable Long seasonId,
+            @CurrentUser CustomUserPrincipal principal) {
+        SeasonResponse season;
+        if (principal != null) {
+            season = seasonService.getSeasonForUser(seasonId, principal.getUserId());
+        } else {
+            season = seasonService.getSeason(seasonId);
+        }
         return ResponseEntity.ok(ApiResponse.success(season));
     }
 

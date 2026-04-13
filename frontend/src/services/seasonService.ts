@@ -19,6 +19,9 @@ export interface Season {
   updatedAt: string;
   currentPhase: string;
   canJoin: boolean;
+  // 로그인 사용자의 참여 정보 (로그인 시에만 포함)
+  myTeamId?: number;
+  myTeamName?: string;
 }
 
 export type SeasonStatus =

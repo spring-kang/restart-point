@@ -2,6 +2,7 @@ package com.restartpoint.domain.season.dto;
 
 import com.restartpoint.domain.season.entity.Season;
 import com.restartpoint.domain.season.entity.SeasonStatus;
+import com.restartpoint.domain.team.entity.Team;
 import lombok.Builder;
 import lombok.Getter;
 
@@ -32,6 +33,10 @@ public class SeasonResponse {
     private String currentPhase;
     private boolean canJoin;
 
+    // 사용자 참여 정보 (로그인한 사용자 전용)
+    private Long myTeamId;
+    private String myTeamName;
+
     public static SeasonResponse from(Season season) {
         return SeasonResponse.builder()
                 .id(season.getId())
@@ -52,6 +57,31 @@ public class SeasonResponse {
                 .updatedAt(season.getUpdatedAt())
                 .currentPhase(calculateCurrentPhase(season))
                 .canJoin(season.isRecruiting())
+                .build();
+    }
+
+    public static SeasonResponse from(Season season, Team myTeam) {
+        return SeasonResponse.builder()
+                .id(season.getId())
+                .title(season.getTitle())
+                .description(season.getDescription())
+                .status(season.getStatus())
+                .recruitmentStartAt(season.getRecruitmentStartAt())
+                .recruitmentEndAt(season.getRecruitmentEndAt())
+                .teamBuildingStartAt(season.getTeamBuildingStartAt())
+                .teamBuildingEndAt(season.getTeamBuildingEndAt())
+                .projectStartAt(season.getProjectStartAt())
+                .projectEndAt(season.getProjectEndAt())
+                .reviewStartAt(season.getReviewStartAt())
+                .reviewEndAt(season.getReviewEndAt())
+                .expertReviewWeight(season.getExpertReviewWeight())
+                .candidateReviewWeight(season.getCandidateReviewWeight())
+                .createdAt(season.getCreatedAt())
+                .updatedAt(season.getUpdatedAt())
+                .currentPhase(calculateCurrentPhase(season))
+                .canJoin(season.isRecruiting())
+                .myTeamId(myTeam != null ? myTeam.getId() : null)
+                .myTeamName(myTeam != null ? myTeam.getName() : null)
                 .build();
     }
 
