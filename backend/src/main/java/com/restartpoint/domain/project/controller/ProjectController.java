@@ -6,6 +6,10 @@ import com.restartpoint.domain.project.service.ProjectService;
 import com.restartpoint.global.common.ApiResponse;
 import com.restartpoint.global.security.CurrentUser;
 import com.restartpoint.global.security.CustomUserPrincipal;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -21,6 +25,7 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/v1")
 @RequiredArgsConstructor
+@Tag(name = "Project", description = "프로젝트 및 우수작 API")
 public class ProjectController {
 
     private final ProjectService projectService;
@@ -53,6 +58,7 @@ public class ProjectController {
     }
 
     // 시즌별 프로젝트 목록 조회
+    @Operation(summary = "시즌별 프로젝트 목록 조회", description = "시즌에 속한 프로젝트 목록을 상태별로 조회합니다.")
     @GetMapping("/seasons/{seasonId}/projects")
     public ResponseEntity<ApiResponse<Page<ProjectResponse>>> getProjectsBySeason(
             @PathVariable Long seasonId,
@@ -67,6 +73,12 @@ public class ProjectController {
         return ResponseEntity.ok(ApiResponse.success(projects));
     }
 
+    @Operation(summary = "우수작 목록 조회", description = "메인 화면과 우수작 페이지에서 사용하는 시즌별 우수작 목록을 조회합니다.")
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(
+            responseCode = "200",
+            description = "우수작 목록 조회 성공",
+            content = @Content(schema = @Schema(implementation = ProjectResponse.class))
+    )
     @GetMapping("/projects/featured")
     public ResponseEntity<ApiResponse<List<ProjectResponse>>> getFeaturedProjects() {
         return ResponseEntity.ok(ApiResponse.success(projectService.getFeaturedProjects()));
@@ -157,6 +169,12 @@ public class ProjectController {
         return ResponseEntity.ok(ApiResponse.success(checkpoint, "AI 피드백이 재생성되었습니다."));
     }
 
+    @Operation(summary = "우수작 지정", description = "운영자가 프로젝트를 우수작으로 지정합니다. 시즌 내 우수작 순번은 자동 재정렬됩니다.")
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(
+            responseCode = "200",
+            description = "우수작 지정 성공",
+            content = @Content(schema = @Schema(implementation = ProjectResponse.class))
+    )
     @PreAuthorize("hasRole('ADMIN')")
     @PostMapping("/admin/projects/{projectId}/featured")
     public ResponseEntity<ApiResponse<ProjectResponse>> markProjectAsFeatured(@PathVariable Long projectId) {
@@ -164,6 +182,12 @@ public class ProjectController {
         return ResponseEntity.ok(ApiResponse.success(project, "우수작으로 지정되었습니다."));
     }
 
+    @Operation(summary = "우수작 지정 해제", description = "운영자가 프로젝트의 우수작 지정을 해제합니다. 해제 후 시즌 내 우수작 순번은 자동 재정렬됩니다.")
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(
+            responseCode = "200",
+            description = "우수작 지정 해제 성공",
+            content = @Content(schema = @Schema(implementation = ProjectResponse.class))
+    )
     @PreAuthorize("hasRole('ADMIN')")
     @DeleteMapping("/admin/projects/{projectId}/featured")
     public ResponseEntity<ApiResponse<ProjectResponse>> unmarkProjectAsFeatured(@PathVariable Long projectId) {

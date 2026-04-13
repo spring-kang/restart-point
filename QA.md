@@ -43,8 +43,18 @@
 |---|---|---|---|---|---|
 | FE-HOME-001 | P1 | 비로그인 상태로 홈 진입 | 시작하기, 시즌 둘러보기 CTA가 보인다 | (로그아웃) | Y |
 | FE-HOME-002 | P1 | 로그인 상태로 홈 진입 | 시작하기 대신 시즌 참여하기 CTA가 보인다 | `test@example.com` | Y |
+| FE-HOME-002-1 | P1 | 로그인 상태로 홈 진입 | `시즌 참여하기`, `우수작 보기` 버튼 크기와 정렬이 동일하다 | `test@example.com` | Y |
 | FE-HOME-003 | P2 | 주요 섹션 스크롤 확인 | 기능 소개, 진행 과정, CTA 섹션이 정상 노출된다 | 아무 계정 | N |
 | FE-HOME-004 | P2 | 헤더 네비게이션 클릭 | 시즌, 팀 탐색, 내 팀(로그인 시) 이동이 정상 동작한다 | `test@example.com` | Y |
+
+## 1-1-1. 우수작 `/featured-projects`
+| ID | 우선순위 | 케이스 | 기대 결과 | 테스트 계정 | AUTO |
+|---|---|---|---|---|---|
+| FE-FEATURED-001 | P1 | 메인에서 `우수작 보기` 클릭 | `/featured-projects`로 이동한다 | 아무 계정 | Y |
+| FE-FEATURED-002 | P1 | 우수작 목록 페이지 진입 | 시즌별 우수작 카드가 노출된다 | 아무 계정 | Y |
+| FE-FEATURED-003 | P1 | 우수작 카드 확인 | `데모 보기`, `GitHub` 링크가 노출되고 `시즌 보기` 링크는 없다 | 아무 계정 | Y |
+| FE-FEATURED-004 | P1 | 우수작이 없는 환경 | 우수작 empty state가 보인다 | 아무 계정 | Y |
+| FE-FEATURED-005 | P1 | 현재 운영 데이터 확인 | `2023 가을 시즌` 우수작 3개와 `테스트 시즌` 우수작 1개가 보인다 | 아무 계정 | N |
 
 ## 1-2. 로그인 `/login`
 | ID | 우선순위 | 케이스 | 기대 결과 | 테스트 계정 | AUTO |
@@ -251,6 +261,14 @@
 | AD-SEASON-008 | P1 | 날짜 입력 누락 | 생성/수정이 막힌다 | `admin@restart-point.com` | Y |
 | AD-SEASON-009 | P2 | 잘못된 기간 순서 입력 | 현재 검증 여부 확인 필요, 백엔드 검증 포함 점검 필요 | `admin@restart-point.com` | N |
 
+## 2-4-1. 우수작 운영 `/seasons/:seasonId/review-analysis`
+| ID | 우선순위 | 케이스 | 기대 결과 | 테스트 계정 | AUTO |
+|---|---|---|---|---|---|
+| AD-FEATURED-001 | P0 | 심사 분석에서 프로젝트 선택 후 `우수작으로 지정` 클릭 | 해당 프로젝트에 `우수작 #n` 배지가 붙는다 | `admin@restart-point.com` | N |
+| AD-FEATURED-002 | P0 | 이미 지정된 우수작에서 `우수작 지정 해제` 클릭 | 우수작 배지가 사라지고 사용자 웹 우수작 목록에서도 제거된다 | `admin@restart-point.com` | N |
+| AD-FEATURED-003 | P1 | `#2` 우수작 해제 후 다른 프로젝트를 다시 지정 | 시즌 내 우수작 번호가 빈 순번부터 다시 정렬된다 | `admin@restart-point.com` | N |
+| AD-FEATURED-004 | P1 | `2023 가을 시즌` 심사 분석 진입 | 전문가 심사 데이터가 있는 프로젝트 분석 목록이 보인다 | `admin@restart-point.com` | N |
+
 ## 2-5. 수료 인증 관리 `/certifications`
 | ID | 우선순위 | 케이스 | 기대 결과 | 테스트 계정 | AUTO |
 |---|---|---|---|---|---|
@@ -387,6 +405,8 @@ curl -X POST "https://restart-point-backend-production.up.railway.app/api/v1/adm
 
 ## 5-2. 시즌 데이터
 
+> 우수작 QA를 시작하기 전에는 사용자 웹 `/featured-projects`와 관리자 `심사 분석`에 같은 우수작 순번이 보이는지 먼저 확인한다.
+
 | 시즌명 | ID | 상태 | 테스트 용도 |
 |--------|-----|------|-------------|
 | 2026 봄 시즌 | 1 | RECRUITING | 모집 중 시즌 - 팀 생성/지원 가능 |
@@ -420,8 +440,19 @@ curl -X POST "https://restart-point-backend-production.up.railway.app/api/v1/adm
 | ImageAI - AI 이미지 생성 플랫폼 | IN_PROGRESS | AI 이미지 생성 서비스 | 2개 | 체크포인트 작성/수정 |
 | CodeReview AI - 자동 코드 리뷰 서비스 | SUBMITTED | AI 코드 리뷰어 | 0개 | 제출됨 상태 |
 | StudyMate - AI 학습 추천 시스템 | COMPLETED | AI 학습 도우미 | 2개 | 완료된 프로젝트 |
+| CareerFlow - AI 커리어 트래커 | COMPLETED | AI 커리어 트래커 | 0개 | 2023 가을 시즌 우수작 |
+| MeetPilot - AI 회의 어시스턴트 | COMPLETED | AI 회의 어시스턴트 | 0개 | 2023 가을 시즌 우수작 |
 | AI 회고 도우미 | SUBMITTED | E2E 심사 대상 팀 | 0개 | 전문가 심사 시드 |
 | 이전 심사 프로젝트 | COMPLETED | E2E 이전 심사 팀 | 0개 | 내가 심사한 목록 시드 |
+
+## 5-4-1. 우수작 기본 데이터
+
+| 시즌 | 프로젝트 | 현재 우수작 순번 | 확인 위치 |
+|------|----------|------------------|-----------|
+| 2023 가을 시즌 | StudyMate - AI 학습 추천 시스템 | #1 | 사용자 웹 `/featured-projects`, 관리자 심사 분석 |
+| 2023 가을 시즌 | CareerFlow - AI 커리어 트래커 | #2 | 사용자 웹 `/featured-projects`, 관리자 심사 분석 |
+| 2023 가을 시즌 | MeetPilot - AI 회의 어시스턴트 | #3 | 사용자 웹 `/featured-projects`, 관리자 심사 분석 |
+| 테스트 시즌 | 이전 심사 프로젝트 | #1 | 사용자 웹 `/featured-projects`, 관리자 심사 분석 |
 
 ## 5-5. 커뮤니티 데이터
 
@@ -525,6 +556,7 @@ curl -X POST "https://restart-point-backend-production.up.railway.app/api/v1/adm
 | 3 | 체크포인트 작성 | 새 체크포인트 작성 폼 |
 | 4 | 체크포인트 수정 | 기존 체크포인트 편집 |
 | 5 | 알림 확인 | 성장 리포트 발행 알림 (1개 미읽음) |
+| 6 | 메인 `우수작 보기` 진입 | 2023 가을 시즌 우수작 3개와 테스트 시즌 우수작 1개 확인 |
 
 ### `member2@test.com / test1234` (이백엔드) - 인증: APPROVED, 팀 리더
 | # | 테스트 케이스 | 예상 결과 |
