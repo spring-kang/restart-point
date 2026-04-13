@@ -33,6 +33,7 @@ export default function SeasonDetailPage() {
     if (!isAuthenticated || !user) return false;
     // 모든 사용자는 회원가입 시 이메일 인증 완료됨
     if (user.certificationStatus !== 'APPROVED') return false;
+    // 백엔드에서 팀 생성/참여 가능 여부를 canJoin으로 전달
     return season?.canJoin ?? false;
   };
 
