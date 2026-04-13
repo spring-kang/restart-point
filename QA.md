@@ -115,7 +115,7 @@
 | FE-SEASON-003 | P0 | 비로그인 + 참여 가능한 시즌 | 로그인 필요 안내가 보인다 | (로그아웃) | Y |
 | FE-SEASON-004 | P0 | 로그인 + 미인증 사용자 | 수료 인증 필요 안내가 보인다 | `newbie@test.com` | Y |
 | FE-SEASON-005 | P0 | 로그인 + 인증 완료 + 참여 가능 시즌 + 팀 없음 | `팀 찾기 / 팀 만들기` 버튼이 보인다 | `java7ang@gmail.com` → 2026 봄 시즌 | Y |
-| FE-SEASON-005-1 | P0 | 로그인 + 인증 완료 + 끝난 시즌 | `팀 찾기 / 팀 만들기` 버튼이 숨겨진다 | `java7ang@gmail.com` → 2024 겨울 시즌 | Y |
+| FE-SEASON-005-1 | P0 | 로그인 + 인증 완료 + 참여 불가 시즌(`IN_PROGRESS`) | `팀 찾기 / 팀 만들기` 버튼이 숨겨진다 | `java7ang@gmail.com` → 2024 겨울 시즌 | Y |
 | FE-SEASON-006 | P1 | 현재 상태와 타임라인 active 구간 확인 | 현재 진행 중인 단계가 강조된다 | 아무 계정 | Y |
 | FE-SEASON-007 | P1 | 로그인 + 참여 중인 시즌 | `참여 중` 배지 + 팀 안내 배너가 보인다 | `test@example.com` | Y |
 | FE-SEASON-008 | P1 | 로그인 + 참여 중인 시즌 | `내 팀 보기` 버튼이 보인다 | `test@example.com` | Y |
@@ -131,7 +131,7 @@
 | FE-TEAMS-004 | P1 | 역할 필터 전환 | 해당 역할 모집 팀만 남는다 | 아무 계정 | Y |
 | FE-TEAMS-005 | P1 | 비로그인 사용자 진입 | 목록은 조회 가능하지만 팀 생성/AI 추천 버튼은 숨김 | (로그아웃) | Y |
 | FE-TEAMS-006 | P0 | 인증 완료 사용자 + 참여 가능 시즌 | 팀 만들기, AI 추천 버튼이 보인다 | `java7ang@gmail.com` → 2026 봄 시즌 | Y |
-| FE-TEAMS-006-1 | P0 | 인증 완료 사용자 + 끝난 시즌 | 팀 만들기, AI 추천 버튼이 숨겨진다 | `java7ang@gmail.com` → 2024 겨울 시즌 | Y |
+| FE-TEAMS-006-1 | P0 | 인증 완료 사용자 + 참여 불가 시즌(`IN_PROGRESS`) | 팀 만들기, AI 추천 버튼이 숨겨진다 | `java7ang@gmail.com` → 2024 겨울 시즌 | Y |
 | FE-TEAMS-007 | P0 | 팀 생성 모달에서 이름 없이 제출 | 생성이 막히고 에러가 보인다 | `java7ang@gmail.com` | Y |
 | FE-TEAMS-008 | P0 | 팀 생성 모달에서 본인 역할 미선택 제출 | 생성이 막히고 에러가 보인다 | `java7ang@gmail.com` | Y |
 | FE-TEAMS-009 | P0 | 정상 팀 생성 | 생성 후 생성된 팀 상세로 이동한다 | `java7ang@gmail.com` | Y |
@@ -351,10 +351,12 @@
 | 시즌명 | ID | 상태 | 테스트 용도 |
 |--------|-----|------|-------------|
 | 2026 봄 시즌 | 1 | RECRUITING | 모집 중 시즌 - 팀 생성/지원 가능 |
-| 2024 여름 시즌 | 5 | TEAM_BUILDING | 팀빌딩 단계 - 팀 생성/지원 가능 |
-| 2024 봄 시즌 (심사중) | 6 | REVIEWING | 심사 중 시즌 |
 | 2024 겨울 시즌 | 2 | IN_PROGRESS | 진행 중 시즌 |
 | 2023 가을 시즌 | 3 | COMPLETED | 완료된 시즌 - 결과 확인 |
+| 2025 여름 시즌 (준비중) | 4 | DRAFT | 관리자 전용 초안 시즌 |
+| 2024 여름 시즌 | 5 | TEAM_BUILDING | 팀빌딩 단계 - 팀 생성/지원 가능 |
+| 2024 봄 시즌 (심사중) | 6 | REVIEWING | 일반 심사 QA용 시즌 |
+| 테스트 시즌 | 7 | REVIEWING | 전문가 심사 E2E QA용 시즌 |
 
 ## 5-3. 팀 데이터
 
@@ -366,6 +368,8 @@
 | AI 학습 도우미 | 3 | COMPLETE | 2023 가을 시즌 | member2@test.com | 완료된 프로젝트 |
 | AI 코드 리뷰어 | 4 | REVIEWED | 2023 가을 시즌 | test@example.com | 심사 완료 프로젝트 |
 | AI 번역 서비스 | 6 | SUBMITTED | 2024 봄 시즌 (심사중) | member2@test.com | 제출됨 상태 |
+| E2E 심사 대상 팀 | 8 | SUBMITTED | 테스트 시즌 | test2@restart-point.com | 전문가 심사 대상 팀 |
+| E2E 이전 심사 팀 | 9 | REVIEWED | 테스트 시즌 | review-target@restart-point.com | 이전 심사 이력 확인 |
 
 ## 5-4. 프로젝트 데이터
 
