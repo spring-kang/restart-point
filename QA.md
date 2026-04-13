@@ -160,6 +160,11 @@
 | FE-TEAM-014 | P1 | AI 멤버 추천 실패 - 팀 정원 초과 | 정원 가득 안내가 보인다 | `member1@test.com` → AI 이미지 생성 서비스 | Y |
 | FE-TEAM-015 | P1 | AI 멤버 추천 실패 - 추천 후보 없음 | 추천 가능한 멤버 없음 안내가 보인다 | `test@example.com` → AI 챗봇 프로젝트 | Y |
 | FE-TEAM-016 | P2 | `팀 설정` 버튼 클릭 | 현재 미구현 여부 확인 필요, 동작 정의 필요 | `test@example.com` | N |
+| FE-TEAM-017 | P0 | 리더가 AI 추천 모달에서 영입 요청 발송 | 영입 요청 발송 성공 메시지가 보인다 | `test@example.com` → AI 챗봇 프로젝트 | Y |
+| FE-TEAM-018 | P1 | 영입 요청 발송 실패 - 이미 영입 요청 보냄 | 이미 영입 요청을 보낸 사용자 에러가 보인다 | `test@example.com` | Y |
+| FE-TEAM-019 | P1 | 영입 요청 발송 실패 - 이미 지원한 사용자 | 이미 지원한 사용자 에러가 보인다 | `test@example.com` | Y |
+| FE-TEAM-020 | P1 | 영입 요청 발송 실패 - 이미 다른 팀 소속 | 이미 팀에 소속된 사용자 에러가 보인다 | `test@example.com` | Y |
+| FE-TEAM-021 | P1 | 영입 요청 발송 후 목록 갱신 | 영입 요청 목록에서 발송된 요청 확인 가능 | `test@example.com` | Y |
 
 ## 1-10. 내 팀 `/my-team`
 | ID | 우선순위 | 케이스 | 기대 결과 | 테스트 계정 | AUTO |
@@ -172,6 +177,14 @@
 | FE-MYTEAM-006 | P1 | 데이터가 아무것도 없음 + 미인증 | 수료 인증하기 CTA가 보인다 | `newbie@test.com` | Y |
 | FE-MYTEAM-007 | P1 | 팀 카드 클릭 | 팀 상세로 이동한다 | `test@example.com` | Y |
 | FE-MYTEAM-008 | P2 | 지원 현황 카드에 teamId 존재 | 팀 보기 버튼이 동작한다 | `test2@restart-point.com` | Y |
+| FE-MYTEAM-009 | P0 | 받은 영입 요청 존재 | `받은 영입 요청` 섹션이 보인다 | (영입 요청 받은 계정) | Y |
+| FE-MYTEAM-010 | P0 | 영입 요청 수락 | 팀에 합류되고 소속 팀 섹션에 추가된다 | (영입 요청 받은 계정) | Y |
+| FE-MYTEAM-011 | P0 | 영입 요청 거절 | 거절됨 상태로 변경되고 버튼이 사라진다 | (영입 요청 받은 계정) | Y |
+| FE-MYTEAM-012 | P1 | 만료된 영입 요청 | 만료됨 상태 배지가 보이고 수락/거절 버튼이 숨겨진다 | (만료된 요청 받은 계정) | Y |
+| FE-MYTEAM-013 | P1 | 영입 요청 마감일 표시 | D-day 남은 일수가 표시된다 | (영입 요청 받은 계정) | Y |
+| FE-MYTEAM-014 | P1 | 영입 요청 수락 실패 - 팀 모집 완료 | 더 이상 모집 중이 아닙니다 에러가 보인다 | (영입 요청 받은 계정) | Y |
+| FE-MYTEAM-015 | P1 | 영입 요청 수락 실패 - 역할 마감 | 해당 역할은 더 이상 모집하지 않습니다 에러가 보인다 | (영입 요청 받은 계정) | Y |
+| FE-MYTEAM-016 | P1 | 영입 요청 수락 실패 - 이미 팀 소속 | 이미 팀에 소속되어 있습니다 에러가 보인다 | (영입 요청 받은 계정) | Y |
 
 ## 1-11. 헤더/전역 동작
 | ID | 우선순위 | 케이스 | 기대 결과 | 테스트 계정 | AUTO |
@@ -292,7 +305,9 @@
 3. 리더의 지원자 수락/거절
 4. AI 팀 추천 모달
 5. AI 멤버 추천 모달
-6. 관리자 회원 역할 USER ↔ ADMIN 양방향 전환 결과 검증 강화
+6. 리더의 AI 추천 모달에서 영입 요청 발송
+7. 사용자의 영입 요청 수락/거절
+8. 관리자 회원 역할 USER ↔ ADMIN 양방향 전환 결과 검증 강화
 
 ---
 
@@ -363,6 +378,9 @@
 | TEAM_APPLICATION | member4@test.com | 팀 지원 알림 (리더에게) |
 | TEAM_APPLICATION_REJECTED | member2@test.com | 지원 거절 알림 |
 | TEAM_INVITATION | member3@test.com | 팀 초대 알림 |
+| TEAM_RECRUIT_REQUEST | (영입 요청 받은 계정) | 영입 요청 알림 |
+| TEAM_RECRUIT_ACCEPTED | test@example.com | 영입 요청 수락 알림 (리더에게) |
+| TEAM_RECRUIT_REJECTED | test@example.com | 영입 요청 거절 알림 (리더에게) |
 | CERTIFICATION_APPROVED | test1@restart-point.com | 인증 승인 알림 |
 | CERTIFICATION_REJECTED | rejected@test.com | 인증 거절 알림 |
 | CHECKPOINT_REMINDER | test1@restart-point.com | 체크포인트 마감 알림 |
