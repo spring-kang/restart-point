@@ -475,19 +475,10 @@ export default function SeasonsPage() {
               <div className="space-y-4">
                 <h3 className="font-medium text-gray-900">심사 비중</h3>
                 <div className="rounded-lg border border-blue-200 bg-blue-50 p-4 text-sm text-blue-900">
-                  전문가 평가만 운영합니다. 심사 비중은 100%로 고정됩니다.
-                </div>
-                <div>
-                  <div>
-                    <label className="label">현직자 심사 비중 (%) *</label>
-                    <input
-                      type="number"
-                      value={formData.expertReviewWeight}
-                      readOnly
-                      className="input"
-                      required
-                    />
-                  </div>
+                  <p className="font-medium">전문가 평가 100%</p>
+                  <p className="mt-1">
+                    참여자 심사는 비활성화되어 있으며 모든 시즌은 전문가 심사만 사용합니다.
+                  </p>
                 </div>
               </div>
 
