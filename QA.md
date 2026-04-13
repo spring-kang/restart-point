@@ -201,6 +201,8 @@
 | FE-REVIEW-010 | P1 | 전문가 심사 완료 후 운영자 분석 진입 | 프로젝트 분석 화면이 전문가 집계 기준으로 보인다 | `admin@restart-point.com` | N |
 | FE-REVIEW-012 | P1 | 심사 기간이 아닌 시즌 상세 진입 | `프로젝트 심사하기` 버튼이 숨겨진다 | 아무 계정 | Y |
 
+> 심사 QA 전에 `테스트 시즌`이나 `AI 회고 도우미`가 없으면 `5-1-1. 리뷰 테스트 데이터 재설정 방법`을 먼저 실행한다.
+
 ## 1-12. 헤더/전역 동작
 | ID | 우선순위 | 케이스 | 기대 결과 | 테스트 계정 | AUTO |
 |---|---|---|---|---|---|
@@ -346,6 +348,43 @@
 | `java7ang@gmail.com` | test1234 | 강성지 | APPROVED | 팀 없는 인증 사용자 |
 | `admin@restart-point.com` | (개인) | Admin | APPROVED | 관리자 계정 |
 
+## 5-1-1. 리뷰 테스트 데이터 재설정 방법
+
+- 심사 QA 기준 데이터가 꼬였거나 `테스트 시즌`, `E2E 심사 대상 팀`, `AI 회고 도우미`가 보이지 않으면 아래 API로 재설정한다.
+- 사전 조건:
+  - Railway `restart-point-backend`가 최신 `main`으로 배포되어 있어야 한다.
+  - Railway 환경변수 `APP_TEST_DATA_ENABLED=true`가 켜져 있어야 한다.
+  - 관리자 권한 토큰이 필요하다.
+- 엔드포인트:
+  - `POST https://restart-point-backend-production.up.railway.app/api/v1/admin/test-data/review-seed`
+- 호출 예시:
+
+```bash
+curl -X POST "https://restart-point-backend-production.up.railway.app/api/v1/admin/test-data/review-seed" \
+  -H "Authorization: Bearer <admin_access_token>"
+```
+
+- 성공 응답 예시:
+
+```json
+{
+  "success": true,
+  "data": {
+    "seedType": "review-e2e",
+    "cleanupExecuted": true,
+    "seedExecuted": true,
+    "executedAt": "2026-04-13T13:45:00Z"
+  },
+  "message": "리뷰 테스트 데이터가 재설정되었습니다."
+}
+```
+
+- 실패 시 확인:
+  - `401` 또는 `403`: 관리자 토큰이 아니거나 토큰이 잘못됨
+  - `COMMON_004`: `APP_TEST_DATA_ENABLED`가 꺼져 있음
+  - `500`: 기존 참조 데이터 정리가 안 된 상태일 수 있으니 최신 배포 여부 확인
+- 테스트가 끝나면 `APP_TEST_DATA_ENABLED`를 다시 끄는 것을 권장한다.
+
 ## 5-2. 시즌 데이터
 
 | 시즌명 | ID | 상태 | 테스트 용도 |
@@ -357,6 +396,8 @@
 | 2024 여름 시즌 | 5 | TEAM_BUILDING | 팀빌딩 단계 - 팀 생성/지원 가능 |
 | 2024 봄 시즌 (심사중) | 6 | REVIEWING | 일반 심사 QA용 시즌 |
 | 테스트 시즌 | 7 | REVIEWING | 전문가 심사 E2E QA용 시즌 |
+
+> `테스트 시즌`이 없으면 `5-1-1. 리뷰 테스트 데이터 재설정 방법`으로 다시 생성한다.
 
 ## 5-3. 팀 데이터
 
@@ -462,6 +503,8 @@
 | 2 | 시즌 상세 진입 | 자기 팀 프로젝트라 심사 대상 버튼/목록 제외 확인 |
 | 3 | 프로젝트 상태 확인 | 제출된 프로젝트 "AI 회고 도우미" 확인 |
 | 4 | 운영자 분석 확인 | 팀 프로젝트에 EXPERT 심사 반영 |
+
+> 위 E2E 리뷰 계정들의 데이터가 맞지 않으면 `5-1-1. 리뷰 테스트 데이터 재설정 방법`을 먼저 실행한다.
 
 ### `test@example.com / test1234` (테스트) - 인증: APPROVED, 팀 리더
 | # | 테스트 케이스 | 예상 결과 |

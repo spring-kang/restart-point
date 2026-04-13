@@ -39,6 +39,17 @@ BEGIN
   WHERE project_id IN (v_target_project_id, v_history_project_id)
      OR overall_comment = '기본 시드 리뷰입니다.';
 
+  DELETE FROM notifications
+  WHERE user_id IN (
+    SELECT id FROM users
+    WHERE email IN (
+      'test1@restart-point.com',
+      'test2@restart-point.com',
+      'review-target@restart-point.com',
+      'review-admin@restart-point.com'
+    )
+  );
+
   DELETE FROM projects
   WHERE id IN (v_target_project_id, v_history_project_id)
      OR (name IN ('AI 회고 도우미', '이전 심사 프로젝트')
