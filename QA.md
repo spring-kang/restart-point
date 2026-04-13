@@ -346,7 +346,7 @@
 | `member3@test.com` | test1234 | 박디자인 | APPROVED | 팀 초대 알림, 거절된 지원 이력 |
 | `member4@test.com` | test1234 | 최기획 | APPROVED | 지원자 승인/거절 테스트 |
 | `java7ang@gmail.com` | test1234 | 강성지 | APPROVED | 팀 없는 인증 사용자 |
-| `admin@restart-point.com` | (개인) | Admin | APPROVED | 관리자 계정 |
+| `admin@restart-point.com` | test1234 | Admin | APPROVED | 관리자 계정 (어드민 웹) |
 
 ## 5-1-1. 리뷰 테스트 데이터 재설정 방법
 
@@ -575,6 +575,7 @@ curl -X POST "https://restart-point-backend-production.up.railway.app/api/v1/adm
 | `member3@test.com` | `test1234` | 팀 초대 알림, 거절된 지원 이력 |
 | `member4@test.com` | `test1234` | 지원자 승인/거절 테스트 |
 | `java7ang@gmail.com` | `test1234` | 팀 없는 인증 사용자 |
+| `admin@restart-point.com` | `test1234` | 관리자 계정 (어드민 웹) |
 
 > **모든 계정 비밀번호**: `test1234`
 
