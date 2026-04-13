@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import { ChevronLeft, Users, Settings, Check, X as XIcon, Clock, UserPlus, Sparkles, CheckCircle, AlertTriangle, FolderKanban } from 'lucide-react';
+import { ChevronLeft, Users, Settings, Check, X as XIcon, Clock, UserPlus, Sparkles, CheckCircle, AlertTriangle, FolderKanban, Mail, Loader2 } from 'lucide-react';
 import { teamService, TEAM_STATUS_LABELS, TEAM_STATUS_COLORS, JOB_ROLE_LABELS, JOB_ROLE_COLORS } from '../services/teamService';
 import { matchingService, SCHEDULE_RISK_LABELS, SCHEDULE_RISK_COLORS } from '../services/matchingService';
+import { invitationService } from '../services/invitationService';
 import { useAuthStore } from '../stores/authStore';
 import type { Team, TeamMember, JobRole, MemberRecommendation } from '../types';
 
@@ -477,10 +478,40 @@ function AIMemberRecommendationModal({ teamId, onClose }: AIMemberRecommendation
   const [recommendations, setRecommendations] = useState<MemberRecommendation[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
+  const [sendingInvitation, setSendingInvitation] = useState<number | null>(null);
+  const [sentInvitations, setSentInvitations] = useState<Set<number>>(new Set());
 
   useEffect(() => {
     loadRecommendations();
   }, [teamId]);
+
+  const handleSendInvitation = async (rec: MemberRecommendation) => {
+    if (!rec.profile.userId) return;
+
+    setSendingInvitation(rec.profile.userId);
+    try {
+      await invitationService.sendInvitation(teamId, {
+        userId: rec.profile.userId,
+        role: rec.profile.jobRole,
+        message: `AI 매칭 점수 ${rec.matchScore}점을 기반으로 영입 요청을 드립니다.`,
+        matchScore: rec.matchScore
+      });
+      setSentInvitations(prev => new Set(prev).add(rec.profile.userId!));
+      alert('영입 요청을 보냈습니다!');
+    } catch (err: unknown) {
+      const error = err as { response?: { data?: { message?: string; errorCode?: string } } };
+      if (error.response?.data?.errorCode === 'TEAM_009') {
+        alert('이미 영입 요청을 보낸 사용자입니다.');
+        setSentInvitations(prev => new Set(prev).add(rec.profile.userId!));
+      } else if (error.response?.data?.errorCode === 'TEAM_003') {
+        alert('해당 사용자는 이미 다른 팀에 소속되어 있습니다.');
+      } else {
+        alert(error.response?.data?.message || '영입 요청 발송에 실패했습니다.');
+      }
+    } finally {
+      setSendingInvitation(null);
+    }
+  };
 
   const loadRecommendations = async () => {
     setIsLoading(true);
@@ -638,7 +669,7 @@ function AIMemberRecommendationModal({ teamId, onClose }: AIMemberRecommendation
                       </div>
 
                       {/* 일정 위험도 & 보완 가능한 스킬 */}
-                      <div className="flex flex-wrap gap-2 items-center">
+                      <div className="flex flex-wrap gap-2 items-center mb-3">
                         <div className={`flex items-center gap-1 px-2 py-1 rounded text-xs ${SCHEDULE_RISK_COLORS[rec.scheduleRisk]}`}>
                           {getRiskIcon(rec.scheduleRisk)}
                           일정 충돌 위험: {SCHEDULE_RISK_LABELS[rec.scheduleRisk]}
@@ -647,6 +678,37 @@ function AIMemberRecommendationModal({ teamId, onClose }: AIMemberRecommendation
                           <div className="text-xs text-neutral-500">
                             보완 스킬: {rec.complementarySkills.slice(0, 3).join(', ')}
                           </div>
+                        )}
+                      </div>
+
+                      {/* 영입 요청 버튼 */}
+                      <div className="pt-3 border-t border-neutral-100">
+                        {sentInvitations.has(rec.profile.userId!) ? (
+                          <button
+                            disabled
+                            className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-green-100 text-green-700 rounded-lg text-sm font-medium"
+                          >
+                            <Check className="w-4 h-4" />
+                            영입 요청 전송됨
+                          </button>
+                        ) : (
+                          <button
+                            onClick={() => handleSendInvitation(rec)}
+                            disabled={sendingInvitation === rec.profile.userId}
+                            className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-primary-500 hover:bg-primary-600 text-white rounded-lg text-sm font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                          >
+                            {sendingInvitation === rec.profile.userId ? (
+                              <>
+                                <Loader2 className="w-4 h-4 animate-spin" />
+                                전송 중...
+                              </>
+                            ) : (
+                              <>
+                                <Mail className="w-4 h-4" />
+                                영입 요청 보내기
+                              </>
+                            )}
+                          </button>
                         )}
                       </div>
                     </div>

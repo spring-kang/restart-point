@@ -1,9 +1,10 @@
 import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Users, Crown, UserCheck, Clock, ChevronRight, Plus, FolderKanban } from 'lucide-react';
+import { Users, Crown, UserCheck, Clock, ChevronRight, Plus, FolderKanban, Mail, Check, X, Loader2 } from 'lucide-react';
 import { teamService, TEAM_STATUS_LABELS, TEAM_STATUS_COLORS, JOB_ROLE_LABELS, JOB_ROLE_COLORS } from '../services/teamService';
+import { invitationService, INVITATION_STATUS_LABELS, INVITATION_STATUS_COLORS } from '../services/invitationService';
 import { useAuthStore } from '../stores/authStore';
-import type { Team, TeamMember } from '../types';
+import type { Team, TeamMember, TeamInvitation } from '../types';
 
 type MemberStatus = 'PENDING' | 'ACCEPTED' | 'REJECTED';
 
@@ -25,6 +26,7 @@ export default function MyTeamPage() {
   const [myTeams, setMyTeams] = useState<Team[]>([]);
   const [memberTeams, setMemberTeams] = useState<Team[]>([]);
   const [applications, setApplications] = useState<TeamMember[]>([]);
+  const [invitations, setInvitations] = useState<TeamInvitation[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
 
@@ -40,14 +42,16 @@ export default function MyTeamPage() {
     setIsLoading(true);
     setError('');
     try {
-      const [myTeamsData, memberTeamsData, applicationsData] = await Promise.all([
+      const [myTeamsData, memberTeamsData, applicationsData, invitationsData] = await Promise.all([
         teamService.getMyTeams(),
         teamService.getTeamsAsMember(),
         teamService.getMyApplications(),
+        invitationService.getMyInvitations(),
       ]);
       setMyTeams(myTeamsData);
       setMemberTeams(memberTeamsData);
       setApplications(applicationsData);
+      setInvitations(invitationsData);
     } catch (err) {
       console.error('Failed to load data:', err);
       setError('데이터를 불러오는데 실패했습니다.');
@@ -81,7 +85,8 @@ export default function MyTeamPage() {
     );
   }
 
-  const hasNoData = myTeams.length === 0 && memberTeams.length === 0 && applications.length === 0;
+  const pendingInvitations = invitations.filter(inv => inv.status === 'PENDING');
+  const hasNoData = myTeams.length === 0 && memberTeams.length === 0 && applications.length === 0 && invitations.length === 0;
 
   return (
     <div className="max-w-4xl mx-auto px-4 py-12">
@@ -144,6 +149,30 @@ export default function MyTeamPage() {
               <div className="space-y-3">
                 {memberTeams.map((team) => (
                   <TeamCard key={team.id} team={team} />
+                ))}
+              </div>
+            </section>
+          )}
+
+          {/* 받은 영입 요청 */}
+          {invitations.length > 0 && (
+            <section>
+              <h2 className="text-lg font-semibold text-neutral-900 mb-4 flex items-center gap-2">
+                <Mail className="w-5 h-5 text-purple-500" />
+                받은 영입 요청
+                {pendingInvitations.length > 0 && (
+                  <span className="px-2 py-0.5 bg-purple-100 text-purple-700 text-xs font-medium rounded-full">
+                    {pendingInvitations.length}
+                  </span>
+                )}
+              </h2>
+              <div className="space-y-3">
+                {invitations.map((invitation) => (
+                  <InvitationCard
+                    key={invitation.id}
+                    invitation={invitation}
+                    onUpdate={loadData}
+                  />
                 ))}
               </div>
             </section>
@@ -249,6 +278,137 @@ function ApplicationCard({ application }: ApplicationCardProps) {
         </div>
         {application.teamId && (
           <Link to={`/teams/${application.teamId}`} className="btn-secondary text-sm">
+            팀 보기
+          </Link>
+        )}
+      </div>
+    </div>
+  );
+}
+
+interface InvitationCardProps {
+  invitation: TeamInvitation;
+  onUpdate: () => void;
+}
+
+function InvitationCard({ invitation, onUpdate }: InvitationCardProps) {
+  const [isProcessing, setIsProcessing] = useState(false);
+
+  const handleAccept = async () => {
+    if (!confirm(`'${invitation.teamName}' 팀의 영입 요청을 수락하시겠습니까?`)) return;
+
+    setIsProcessing(true);
+    try {
+      await invitationService.acceptInvitation(invitation.id);
+      alert('영입 요청을 수락했습니다. 팀에 합류되었습니다!');
+      onUpdate();
+    } catch (err: unknown) {
+      const error = err as { response?: { data?: { message?: string } } };
+      alert(error.response?.data?.message || '수락 처리에 실패했습니다.');
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
+  const handleReject = async () => {
+    if (!confirm(`'${invitation.teamName}' 팀의 영입 요청을 거절하시겠습니까?`)) return;
+
+    setIsProcessing(true);
+    try {
+      await invitationService.rejectInvitation(invitation.id);
+      alert('영입 요청을 거절했습니다.');
+      onUpdate();
+    } catch (err: unknown) {
+      const error = err as { response?: { data?: { message?: string } } };
+      alert(error.response?.data?.message || '거절 처리에 실패했습니다.');
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
+  const isExpired = new Date(invitation.expiresAt) < new Date();
+  const isPending = invitation.status === 'PENDING' && !isExpired;
+
+  const formatDate = (dateStr: string) => {
+    const date = new Date(dateStr);
+    return `${date.getMonth() + 1}/${date.getDate()}`;
+  };
+
+  const getDaysLeft = () => {
+    const now = new Date();
+    const expires = new Date(invitation.expiresAt);
+    const diff = Math.ceil((expires.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+    return diff;
+  };
+
+  return (
+    <div className="card">
+      <div className="flex items-start justify-between">
+        <div className="flex-1">
+          <div className="flex items-center gap-3 mb-2">
+            <Link to={`/teams/${invitation.teamId}`} className="font-semibold text-neutral-900 hover:text-primary-600">
+              {invitation.teamName}
+            </Link>
+            <span className={`px-2 py-0.5 rounded text-xs font-medium ${
+              isExpired ? INVITATION_STATUS_COLORS['EXPIRED'] :
+              INVITATION_STATUS_COLORS[invitation.status]
+            }`}>
+              {isExpired ? '만료됨' : INVITATION_STATUS_LABELS[invitation.status]}
+            </span>
+            <span className={`px-2 py-0.5 rounded text-xs ${JOB_ROLE_COLORS[invitation.suggestedRole]}`}>
+              {JOB_ROLE_LABELS[invitation.suggestedRole]}
+            </span>
+            {invitation.matchScore && (
+              <span className="px-2 py-0.5 bg-primary-100 text-primary-700 rounded text-xs">
+                AI 매칭 {invitation.matchScore}점
+              </span>
+            )}
+          </div>
+
+          <div className="text-sm text-neutral-600 mb-2">
+            <span className="font-medium">{invitation.invitedByName}</span>님이 영입 요청을 보냈습니다
+          </div>
+
+          {invitation.message && (
+            <p className="text-sm text-neutral-500 mb-2 line-clamp-2">
+              "{invitation.message}"
+            </p>
+          )}
+
+          <div className="flex items-center gap-4 text-xs text-neutral-400">
+            <span>시즌: {invitation.seasonName}</span>
+            <span>받은 날짜: {formatDate(invitation.createdAt)}</span>
+            {isPending && (
+              <span className={getDaysLeft() <= 2 ? 'text-red-500' : ''}>
+                마감: {getDaysLeft()}일 남음
+              </span>
+            )}
+          </div>
+        </div>
+
+        {isPending && (
+          <div className="flex items-center gap-2 ml-4">
+            <button
+              onClick={handleAccept}
+              disabled={isProcessing}
+              className="flex items-center gap-1 px-3 py-1.5 bg-green-500 hover:bg-green-600 text-white rounded-lg text-sm font-medium transition-colors disabled:opacity-50"
+            >
+              {isProcessing ? <Loader2 className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />}
+              수락
+            </button>
+            <button
+              onClick={handleReject}
+              disabled={isProcessing}
+              className="flex items-center gap-1 px-3 py-1.5 bg-neutral-200 hover:bg-neutral-300 text-neutral-700 rounded-lg text-sm font-medium transition-colors disabled:opacity-50"
+            >
+              <X className="w-4 h-4" />
+              거절
+            </button>
+          </div>
+        )}
+
+        {!isPending && (
+          <Link to={`/teams/${invitation.teamId}`} className="btn-secondary text-sm ml-4">
             팀 보기
           </Link>
         )}

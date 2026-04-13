@@ -56,6 +56,11 @@ public enum ErrorCode {
     ALREADY_APPLIED(HttpStatus.CONFLICT, "TEAM_005", "이미 지원한 팀입니다."),
     APPLICATION_NOT_FOUND(HttpStatus.NOT_FOUND, "TEAM_006", "지원 내역을 찾을 수 없습니다."),
     TEAM_NOT_RECRUITING(HttpStatus.BAD_REQUEST, "TEAM_007", "모집 중인 팀이 아닙니다."),
+    INVITATION_NOT_FOUND(HttpStatus.NOT_FOUND, "TEAM_008", "영입 요청을 찾을 수 없습니다."),
+    INVITATION_ALREADY_SENT(HttpStatus.CONFLICT, "TEAM_009", "이미 영입 요청을 보냈습니다."),
+    INVITATION_EXPIRED(HttpStatus.BAD_REQUEST, "TEAM_010", "만료된 영입 요청입니다."),
+    INVITATION_NOT_PENDING(HttpStatus.BAD_REQUEST, "TEAM_011", "대기 중인 영입 요청이 아닙니다."),
+    CANNOT_INVITE_SELF(HttpStatus.BAD_REQUEST, "TEAM_012", "본인에게 영입 요청을 보낼 수 없습니다."),
 
     // 프로젝트 에러
     PROJECT_NOT_FOUND(HttpStatus.NOT_FOUND, "PROJECT_001", "프로젝트를 찾을 수 없습니다."),

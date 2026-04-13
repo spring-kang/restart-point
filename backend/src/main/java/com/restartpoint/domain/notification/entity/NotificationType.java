@@ -13,6 +13,11 @@ public enum NotificationType {
     TEAM_APPLICATION,          // 팀 지원 알림 (리더에게)
     TEAM_APPLICATION_REJECTED, // 팀 지원 거절
 
+    // 영입 요청 관련
+    TEAM_RECRUIT_REQUEST,      // 영입 요청 받음 (초대받은 사용자에게)
+    TEAM_RECRUIT_ACCEPTED,     // 영입 요청 수락됨 (팀 리더에게)
+    TEAM_RECRUIT_REJECTED,     // 영입 요청 거절됨 (팀 리더에게)
+
     // 마감 임박 리마인더
     CHECKPOINT_REMINDER,       // 체크포인트 마감 임박
     SUBMISSION_REMINDER,       // 최종 제출 마감 임박
