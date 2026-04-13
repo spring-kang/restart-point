@@ -180,8 +180,7 @@ export default function TeamsPage() {
           )}
         </div>
         <div className="flex gap-3">
-          {isAuthenticated && user?.certificationStatus === 'APPROVED' &&
-           (season?.status === 'RECRUITING' || season?.status === 'TEAM_BUILDING') && (
+          {isAuthenticated && user?.certificationStatus === 'APPROVED' && season?.canJoin && (
             <>
               <button
                 onClick={() => setShowAIRecommendation(true)}
@@ -258,8 +257,7 @@ export default function TeamsPage() {
           <p className="text-neutral-500 mb-2">
             {filter === 'recruiting' ? '모집 중인 팀이 없습니다.' : '등록된 팀이 없습니다.'}
           </p>
-          {isAuthenticated && user?.certificationStatus === 'APPROVED' &&
-           (season?.status === 'RECRUITING' || season?.status === 'TEAM_BUILDING') && (
+          {isAuthenticated && user?.certificationStatus === 'APPROVED' && season?.canJoin && (
             <p className="text-neutral-400 text-sm">직접 팀을 만들어보세요!</p>
           )}
         </div>

@@ -56,7 +56,7 @@ public class SeasonResponse {
                 .createdAt(season.getCreatedAt())
                 .updatedAt(season.getUpdatedAt())
                 .currentPhase(calculateCurrentPhase(season))
-                .canJoin(season.isRecruiting())
+                .canJoin(season.canJoinTeam())
                 .build();
     }
 
@@ -79,7 +79,7 @@ public class SeasonResponse {
                 .createdAt(season.getCreatedAt())
                 .updatedAt(season.getUpdatedAt())
                 .currentPhase(calculateCurrentPhase(season))
-                .canJoin(season.isRecruiting())
+                .canJoin(season.canJoinTeam())
                 .myTeamId(myTeam != null ? myTeam.getId() : null)
                 .myTeamName(myTeam != null ? myTeam.getName() : null)
                 .build();
