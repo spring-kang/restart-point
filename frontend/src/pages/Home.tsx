@@ -51,11 +51,11 @@ export default function Home() {
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               {isAuthenticated ? (
                 <>
-                  <Link to="/seasons" className="btn-primary text-base px-8 py-3 flex items-center justify-center gap-2">
+                  <Link to="/seasons" className="btn-primary w-full sm:w-[220px] whitespace-nowrap text-base px-8 py-3 flex items-center justify-center gap-2">
                     시즌 참여하기
                     <ArrowRight className="w-5 h-5" />
                   </Link>
-                  <Link to="/featured-projects" className="btn-secondary text-base px-8 py-3">
+                  <Link to="/featured-projects" className="btn-secondary w-full sm:w-[220px] whitespace-nowrap text-base px-8 py-3 flex items-center justify-center gap-2">
                     우수작 보기
                     <ArrowRight className="w-5 h-5" />
                   </Link>
