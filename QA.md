@@ -147,7 +147,7 @@
 | FE-TEAM-003 | P0 | 비로그인 + 모집중 팀 | 로그인 필요 안내가 보인다 | (로그아웃) | Y |
 | FE-TEAM-004 | P0 | 인증 완료 일반 사용자 + 지원 가능 조건 충족 | 팀 지원하기 버튼이 보인다 | `java7ang@gmail.com` → AI 챗봇 프로젝트 | Y |
 | FE-TEAM-005 | P0 | 리더 본인이 자기 팀 접근 | 지원 버튼이 보이지 않는다 | `test@example.com` → AI 챗봇 프로젝트 | Y |
-| FE-TEAM-006 | P0 | 이미 팀 멤버가 접근 | 지원 버튼이 보이지 않는다 | `member1@test.com` → AI 이미지 생성 서비스 | Y |
+| FE-TEAM-006 | P0 | 이미 팀 멤버가 접근 | 지원 버튼이 보이지 않는다 | `member2@test.com` → AI 이미지 생성 서비스 | Y |
 | FE-TEAM-007 | P1 | 지원 모달에서 역할 미선택 제출 | 에러가 보인다 | `java7ang@gmail.com` | Y |
 | FE-TEAM-008 | P0 | 정상 팀 지원 | 완료 알림 후 팀 목록으로 이동한다 | `java7ang@gmail.com` | Y |
 | FE-TEAM-009 | P1 | 탭 전환 | 팀 정보/팀원/지원자 탭이 정상 전환된다 | `test@example.com` | Y |
@@ -314,25 +314,24 @@
 
 ## 5-2. 시즌 데이터
 
-| 시즌명 | 상태 | 테스트 용도 |
-|--------|------|-------------|
-| 2025 여름 시즌 (준비중) | DRAFT | 일반 사용자에게 비노출 확인 |
-| 2024 봄 시즌 | RECRUITING | 모집 중 시즌 - 팀 생성/지원 가능 |
-| 2024 여름 시즌 | TEAM_BUILDING | 팀빌딩 단계 UI |
-| 2024 겨울 시즌 | IN_PROGRESS | 진행 중 시즌 |
-| 2024 봄 시즌 (심사중) | REVIEWING | 심사 중 시즌 |
-| 2023 가을 시즌 | COMPLETED | 완료된 시즌 - 결과 확인 |
+| 시즌명 | ID | 상태 | 테스트 용도 |
+|--------|-----|------|-------------|
+| 2026 봄 시즌 | 1 | RECRUITING | 모집 중 시즌 - 팀 생성/지원 가능 |
+| 2024 여름 시즌 | 5 | TEAM_BUILDING | 팀빌딩 단계 UI |
+| 2024 봄 시즌 (심사중) | 6 | REVIEWING | 심사 중 시즌 |
+| 2024 겨울 시즌 | 2 | IN_PROGRESS | 진행 중 시즌 |
+| 2023 가을 시즌 | 3 | COMPLETED | 완료된 시즌 - 결과 확인 |
 
 ## 5-3. 팀 데이터
 
-| 팀명 | 상태 | 시즌 | 리더 | 테스트 용도 |
-|------|------|------|------|-------------|
-| AI 챗봇 프로젝트 | RECRUITING | 2024 봄 | test@example.com | 모집 중 팀, 지원하기 |
-| AI 일정 관리 앱 | RECRUITING | 2024 봄 | member4@test.com | 지원자 승인/거절 (test2가 PENDING) |
-| AI 이미지 생성 서비스 | IN_PROGRESS | 2024 겨울 | member1@test.com | 진행 중 프로젝트 관리 |
-| AI 학습 도우미 | COMPLETE | 2023 가을 | member2@test.com | 완료된 프로젝트 |
-| AI 코드 리뷰어 | REVIEWED | 2023 가을 | test@example.com | 심사 완료 프로젝트 |
-| AI 번역 서비스 | SUBMITTED | 2024 봄 (심사중) | member2@test.com | 제출됨 상태 |
+| 팀명 | ID | 상태 | 시즌 | 리더 | 테스트 용도 |
+|------|-----|------|------|------|-------------|
+| AI 챗봇 프로젝트 | 1 | RECRUITING | 2026 봄 시즌 | test@example.com | 모집 중 팀, 지원하기 |
+| AI 일정 관리 앱 | 5 | RECRUITING | 2026 봄 시즌 | member4@test.com | 지원자 승인/거절 (test2가 PENDING) |
+| AI 이미지 생성 서비스 | 2 | IN_PROGRESS | 2024 겨울 시즌 | member1@test.com | 진행 중 프로젝트 관리 |
+| AI 학습 도우미 | 3 | COMPLETE | 2023 가을 시즌 | member2@test.com | 완료된 프로젝트 |
+| AI 코드 리뷰어 | 4 | REVIEWED | 2023 가을 시즌 | test@example.com | 심사 완료 프로젝트 |
+| AI 번역 서비스 | 6 | SUBMITTED | 2024 봄 시즌 (심사중) | member2@test.com | 제출됨 상태 |
 
 ## 5-4. 프로젝트 데이터
 
