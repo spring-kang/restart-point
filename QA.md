@@ -309,7 +309,7 @@
 | `member2@test.com` | test1234 | 이백엔드 | APPROVED | 완료된 프로젝트, SUBMITTED 팀 리더 |
 | `member3@test.com` | test1234 | 박디자인 | APPROVED | 팀 초대 알림, 거절된 지원 이력 |
 | `member4@test.com` | test1234 | 최기획 | APPROVED | 지원자 승인/거절 테스트 |
-| `java7ang@gmail.com` | (개인) | 강성지 | APPROVED | 팀 없는 인증 사용자 |
+| `java7ang@gmail.com` | test1234 | 강성지 | APPROVED | 팀 없는 인증 사용자 |
 | `admin@restart-point.com` | (개인) | Admin | APPROVED | 관리자 계정 |
 
 ## 5-2. 시즌 데이터
