@@ -5,9 +5,18 @@ import com.restartpoint.domain.season.dto.SeasonResponse;
 import com.restartpoint.domain.season.entity.Season;
 import com.restartpoint.domain.season.entity.SeasonStatus;
 import com.restartpoint.domain.season.repository.SeasonRepository;
+import com.restartpoint.domain.team.entity.Team;
+import com.restartpoint.domain.team.entity.TeamMember;
+import com.restartpoint.domain.team.entity.TeamMemberStatus;
+import com.restartpoint.domain.team.repository.TeamMemberRepository;
+import com.restartpoint.domain.team.repository.TeamRepository;
+import com.restartpoint.domain.user.entity.Role;
+import com.restartpoint.domain.user.entity.User;
+import com.restartpoint.domain.user.repository.UserRepository;
 import com.restartpoint.global.exception.BusinessException;
 import com.restartpoint.global.exception.ErrorCode;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -18,6 +27,7 @@ import org.springframework.data.domain.Pageable;
 
 import java.lang.reflect.Field;
 import java.time.LocalDateTime;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
@@ -30,6 +40,15 @@ class SeasonServiceTest {
 
     @Mock
     private SeasonRepository seasonRepository;
+
+    @Mock
+    private TeamRepository teamRepository;
+
+    @Mock
+    private TeamMemberRepository teamMemberRepository;
+
+    @Mock
+    private UserRepository userRepository;
 
     @InjectMocks
     private SeasonService seasonService;
@@ -130,6 +149,243 @@ class SeasonServiceTest {
             field.set(target, value);
         } catch (ReflectiveOperationException exception) {
             throw new IllegalStateException("테스트 필드 설정에 실패했습니다: " + fieldName, exception);
+        }
+    }
+
+    @Nested
+    @DisplayName("사용자별 시즌 조회 테스트")
+    class GetSeasonForUserTest {
+
+        @Test
+        @DisplayName("로그인 사용자 시즌 목록 조회 - 팀 리더인 경우 참여 정보가 포함된다")
+        void getPublicSeasonsForUser_asTeamLeader_includesParticipationInfo() {
+            // given
+            User user = createUser(1L, "user@test.com");
+            Season season = createSeason(1L, SeasonStatus.RECRUITING);
+            Team team = createTeam(1L, "테스트 팀", season, user);
+
+            given(userRepository.findById(1L)).willReturn(Optional.of(user));
+            given(seasonRepository.findByStatusNotOrderByRecruitmentStartAtDesc(SeasonStatus.DRAFT))
+                    .willReturn(List.of(season));
+            given(teamRepository.findByLeader(user)).willReturn(List.of(team));
+            given(teamMemberRepository.findByUserAndStatus(user, TeamMemberStatus.ACCEPTED))
+                    .willReturn(Collections.emptyList());
+
+            // when
+            List<SeasonResponse> responses = seasonService.getPublicSeasonsForUser(1L);
+
+            // then
+            assertThat(responses).hasSize(1);
+            assertThat(responses.get(0).getMyTeamId()).isEqualTo(1L);
+            assertThat(responses.get(0).getMyTeamName()).isEqualTo("테스트 팀");
+        }
+
+        @Test
+        @DisplayName("로그인 사용자 시즌 목록 조회 - 팀원인 경우 참여 정보가 포함된다")
+        void getPublicSeasonsForUser_asTeamMember_includesParticipationInfo() {
+            // given
+            User user = createUser(1L, "user@test.com");
+            User leader = createUser(2L, "leader@test.com");
+            Season season = createSeason(1L, SeasonStatus.RECRUITING);
+            Team team = createTeam(1L, "테스트 팀", season, leader);
+            TeamMember teamMember = createTeamMember(1L, team, user);
+
+            given(userRepository.findById(1L)).willReturn(Optional.of(user));
+            given(seasonRepository.findByStatusNotOrderByRecruitmentStartAtDesc(SeasonStatus.DRAFT))
+                    .willReturn(List.of(season));
+            given(teamRepository.findByLeader(user)).willReturn(Collections.emptyList());
+            given(teamMemberRepository.findByUserAndStatus(user, TeamMemberStatus.ACCEPTED))
+                    .willReturn(List.of(teamMember));
+
+            // when
+            List<SeasonResponse> responses = seasonService.getPublicSeasonsForUser(1L);
+
+            // then
+            assertThat(responses).hasSize(1);
+            assertThat(responses.get(0).getMyTeamId()).isEqualTo(1L);
+            assertThat(responses.get(0).getMyTeamName()).isEqualTo("테스트 팀");
+        }
+
+        @Test
+        @DisplayName("로그인 사용자 시즌 목록 조회 - 참여 팀이 없는 경우 참여 정보가 null이다")
+        void getPublicSeasonsForUser_noTeam_participationInfoIsNull() {
+            // given
+            User user = createUser(1L, "user@test.com");
+            Season season = createSeason(1L, SeasonStatus.RECRUITING);
+
+            given(userRepository.findById(1L)).willReturn(Optional.of(user));
+            given(seasonRepository.findByStatusNotOrderByRecruitmentStartAtDesc(SeasonStatus.DRAFT))
+                    .willReturn(List.of(season));
+            given(teamRepository.findByLeader(user)).willReturn(Collections.emptyList());
+            given(teamMemberRepository.findByUserAndStatus(user, TeamMemberStatus.ACCEPTED))
+                    .willReturn(Collections.emptyList());
+
+            // when
+            List<SeasonResponse> responses = seasonService.getPublicSeasonsForUser(1L);
+
+            // then
+            assertThat(responses).hasSize(1);
+            assertThat(responses.get(0).getMyTeamId()).isNull();
+            assertThat(responses.get(0).getMyTeamName()).isNull();
+        }
+
+        @Test
+        @DisplayName("로그인 사용자 시즌 상세 조회 - 팀 리더인 경우 참여 정보가 포함된다")
+        void getSeasonForUser_asTeamLeader_includesParticipationInfo() {
+            // given
+            User user = createUser(1L, "user@test.com");
+            Season season = createSeason(1L, SeasonStatus.RECRUITING);
+            Team team = createTeam(1L, "테스트 팀", season, user);
+
+            given(userRepository.findById(1L)).willReturn(Optional.of(user));
+            given(seasonRepository.findById(1L)).willReturn(Optional.of(season));
+            given(teamRepository.findByLeader(user)).willReturn(List.of(team));
+
+            // when
+            SeasonResponse response = seasonService.getSeasonForUser(1L, 1L);
+
+            // then
+            assertThat(response.getMyTeamId()).isEqualTo(1L);
+            assertThat(response.getMyTeamName()).isEqualTo("테스트 팀");
+        }
+
+        @Test
+        @DisplayName("로그인 사용자 시즌 상세 조회 - 팀원인 경우 참여 정보가 포함된다")
+        void getSeasonForUser_asTeamMember_includesParticipationInfo() {
+            // given
+            User user = createUser(1L, "user@test.com");
+            User leader = createUser(2L, "leader@test.com");
+            Season season = createSeason(1L, SeasonStatus.RECRUITING);
+            Team team = createTeam(1L, "테스트 팀", season, leader);
+            TeamMember teamMember = createTeamMember(1L, team, user);
+
+            given(userRepository.findById(1L)).willReturn(Optional.of(user));
+            given(seasonRepository.findById(1L)).willReturn(Optional.of(season));
+            given(teamRepository.findByLeader(user)).willReturn(Collections.emptyList());
+            given(teamMemberRepository.findByUserAndStatus(user, TeamMemberStatus.ACCEPTED))
+                    .willReturn(List.of(teamMember));
+
+            // when
+            SeasonResponse response = seasonService.getSeasonForUser(1L, 1L);
+
+            // then
+            assertThat(response.getMyTeamId()).isEqualTo(1L);
+            assertThat(response.getMyTeamName()).isEqualTo("테스트 팀");
+        }
+
+        @Test
+        @DisplayName("로그인 사용자 시즌 상세 조회 - 참여 팀이 없는 경우 참여 정보가 null이다")
+        void getSeasonForUser_noTeam_participationInfoIsNull() {
+            // given
+            User user = createUser(1L, "user@test.com");
+            Season season = createSeason(1L, SeasonStatus.RECRUITING);
+
+            given(userRepository.findById(1L)).willReturn(Optional.of(user));
+            given(seasonRepository.findById(1L)).willReturn(Optional.of(season));
+            given(teamRepository.findByLeader(user)).willReturn(Collections.emptyList());
+            given(teamMemberRepository.findByUserAndStatus(user, TeamMemberStatus.ACCEPTED))
+                    .willReturn(Collections.emptyList());
+
+            // when
+            SeasonResponse response = seasonService.getSeasonForUser(1L, 1L);
+
+            // then
+            assertThat(response.getMyTeamId()).isNull();
+            assertThat(response.getMyTeamName()).isNull();
+        }
+
+        @Test
+        @DisplayName("로그인 사용자 시즌 상세 조회 - DRAFT 시즌은 조회할 수 없다")
+        void getSeasonForUser_draftSeason_throwsException() {
+            // given
+            User user = createUser(1L, "user@test.com");
+            Season season = createSeason(1L, SeasonStatus.DRAFT);
+
+            given(userRepository.findById(1L)).willReturn(Optional.of(user));
+            given(seasonRepository.findById(1L)).willReturn(Optional.of(season));
+
+            // when & then
+            assertThatThrownBy(() -> seasonService.getSeasonForUser(1L, 1L))
+                    .isInstanceOf(BusinessException.class)
+                    .satisfies(exception -> {
+                        BusinessException businessException = (BusinessException) exception;
+                        assertThat(businessException.getErrorCode()).isEqualTo(ErrorCode.SEASON_NOT_FOUND);
+                    });
+        }
+
+        @Test
+        @DisplayName("로그인 사용자 시즌 조회 - 존재하지 않는 사용자인 경우 예외가 발생한다")
+        void getSeasonForUser_userNotFound_throwsException() {
+            // given
+            given(userRepository.findById(1L)).willReturn(Optional.empty());
+
+            // when & then
+            assertThatThrownBy(() -> seasonService.getSeasonForUser(1L, 1L))
+                    .isInstanceOf(BusinessException.class)
+                    .satisfies(exception -> {
+                        BusinessException businessException = (BusinessException) exception;
+                        assertThat(businessException.getErrorCode()).isEqualTo(ErrorCode.USER_NOT_FOUND);
+                    });
+        }
+
+        @Test
+        @DisplayName("로그인 사용자 시즌 목록 조회 - 여러 시즌에 각각 다른 팀으로 참여하는 경우")
+        void getPublicSeasonsForUser_multipleSeasons_eachWithDifferentTeam() {
+            // given
+            User user = createUser(1L, "user@test.com");
+            Season season1 = createSeason(1L, SeasonStatus.RECRUITING);
+            Season season2 = createSeason(2L, SeasonStatus.IN_PROGRESS);
+            Team team1 = createTeam(1L, "시즌1 팀", season1, user);
+            Team team2 = createTeam(2L, "시즌2 팀", season2, user);
+
+            given(userRepository.findById(1L)).willReturn(Optional.of(user));
+            given(seasonRepository.findByStatusNotOrderByRecruitmentStartAtDesc(SeasonStatus.DRAFT))
+                    .willReturn(List.of(season1, season2));
+            given(teamRepository.findByLeader(user)).willReturn(List.of(team1, team2));
+            given(teamMemberRepository.findByUserAndStatus(user, TeamMemberStatus.ACCEPTED))
+                    .willReturn(Collections.emptyList());
+
+            // when
+            List<SeasonResponse> responses = seasonService.getPublicSeasonsForUser(1L);
+
+            // then
+            assertThat(responses).hasSize(2);
+            assertThat(responses.get(0).getMyTeamId()).isEqualTo(1L);
+            assertThat(responses.get(0).getMyTeamName()).isEqualTo("시즌1 팀");
+            assertThat(responses.get(1).getMyTeamId()).isEqualTo(2L);
+            assertThat(responses.get(1).getMyTeamName()).isEqualTo("시즌2 팀");
+        }
+
+        private User createUser(Long id, String email) {
+            User user = User.builder()
+                    .email(email)
+                    .password("password")
+                    .name("테스트 사용자")
+                    .role(Role.USER)
+                    .build();
+            setField(user, "id", id);
+            return user;
+        }
+
+        private Team createTeam(Long id, String name, Season season, User leader) {
+            Team team = Team.builder()
+                    .name(name)
+                    .description("테스트 팀 설명")
+                    .season(season)
+                    .leader(leader)
+                    .build();
+            setField(team, "id", id);
+            return team;
+        }
+
+        private TeamMember createTeamMember(Long id, Team team, User user) {
+            TeamMember teamMember = TeamMember.builder()
+                    .team(team)
+                    .user(user)
+                    .build();
+            setField(teamMember, "id", id);
+            setField(teamMember, "status", TeamMemberStatus.ACCEPTED);
+            return teamMember;
         }
     }
 }

@@ -103,6 +103,9 @@
 | FE-SEASONS-003 | P1 | API 실패 | 에러 문구가 보인다 | 아무 계정 | Y |
 | FE-SEASONS-004 | P1 | 참여 가능한 시즌 | `참여 가능` 배지가 보인다 | 아무 계정 | Y |
 | FE-SEASONS-005 | P1 | 시즌 카드 클릭 | 시즌 상세로 이동한다 | 아무 계정 | Y |
+| FE-SEASONS-006 | P1 | 비로그인 사용자 시즌 목록 조회 | 참여 정보 없이 시즌 목록만 보인다 | (로그아웃) | Y |
+| FE-SEASONS-007 | P1 | 로그인 + 참여 중인 시즌 | `참여 중: {팀명}` 배지가 보인다 | `test@example.com` | Y |
+| FE-SEASONS-008 | P1 | 로그인 + 팀 없는 사용자 | `참여 가능` 배지만 보인다 (참여 중 배지 없음) | `java7ang@gmail.com` | Y |
 
 ## 1-7. 시즌 상세 `/seasons/:seasonId`
 | ID | 우선순위 | 케이스 | 기대 결과 | 테스트 계정 | AUTO |
@@ -111,8 +114,12 @@
 | FE-SEASON-002 | P0 | 존재하지 않는 시즌 ID 접근 | 오류 안내 후 목록 이동 CTA가 보인다 | 아무 계정 | Y |
 | FE-SEASON-003 | P0 | 비로그인 + 참여 가능한 시즌 | 로그인 필요 안내가 보인다 | (로그아웃) | Y |
 | FE-SEASON-004 | P0 | 로그인 + 미인증 사용자 | 수료 인증 필요 안내가 보인다 | `newbie@test.com` | Y |
-| FE-SEASON-005 | P0 | 로그인 + 인증 완료 + 참여 가능 시즌 | `팀 찾기 / 팀 만들기` 버튼이 보인다 | `test@example.com` | Y |
+| FE-SEASON-005 | P0 | 로그인 + 인증 완료 + 참여 가능 시즌 + 팀 없음 | `팀 찾기 / 팀 만들기` 버튼이 보인다 | `java7ang@gmail.com` | Y |
 | FE-SEASON-006 | P1 | 현재 상태와 타임라인 active 구간 확인 | 현재 진행 중인 단계가 강조된다 | 아무 계정 | Y |
+| FE-SEASON-007 | P1 | 로그인 + 참여 중인 시즌 | `참여 중` 배지 + 팀 안내 배너가 보인다 | `test@example.com` | Y |
+| FE-SEASON-008 | P1 | 로그인 + 참여 중인 시즌 | `내 팀 보기` 버튼이 보인다 | `test@example.com` | Y |
+| FE-SEASON-009 | P1 | 로그인 + 참여 중인 시즌 | `팀 찾기 / 팀 만들기` 버튼이 숨겨진다 | `test@example.com` | Y |
+| FE-SEASON-010 | P1 | 내 팀 보기 버튼 클릭 | 해당 팀 상세 페이지로 이동한다 | `test@example.com` | Y |
 
 ## 1-8. 팀 목록 `/teams`, `/seasons/:seasonId/teams`
 | ID | 우선순위 | 케이스 | 기대 결과 | 테스트 계정 | AUTO |
