@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowLeft, Award, ExternalLink, MonitorPlay, Users } from 'lucide-react';
+import { ArrowLeft, Award, MonitorPlay, Users } from 'lucide-react';
 import { projectService } from '../services/projectService';
 import type { Project } from '../types';
 
@@ -124,13 +124,6 @@ export default function FeaturedProjectsPage() {
                           GitHub
                         </a>
                       )}
-                      <Link
-                        to={`/seasons/${project.seasonId}`}
-                        className="inline-flex items-center gap-2 rounded-lg border border-neutral-300 px-3 py-2 text-sm font-medium text-neutral-700 hover:bg-neutral-50"
-                      >
-                        <ExternalLink className="h-4 w-4" />
-                        시즌 보기
-                      </Link>
                     </div>
                   </article>
                 ))}

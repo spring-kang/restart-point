@@ -57,6 +57,7 @@ export default function Home() {
                   </Link>
                   <Link to="/featured-projects" className="btn-secondary text-base px-8 py-3">
                     우수작 보기
+                    <ArrowRight className="w-5 h-5" />
                   </Link>
                 </>
               ) : (
@@ -68,8 +69,9 @@ export default function Home() {
                   <Link to="/seasons" className="btn-secondary text-base px-8 py-3">
                     시즌 둘러보기
                   </Link>
-                  <Link to="/featured-projects" className="btn-secondary text-base px-8 py-3">
+                  <Link to="/featured-projects" className="btn-secondary text-base px-8 py-3 flex items-center justify-center gap-2">
                     우수작 보기
+                    <ArrowRight className="w-5 h-5" />
                   </Link>
                 </>
               )}
