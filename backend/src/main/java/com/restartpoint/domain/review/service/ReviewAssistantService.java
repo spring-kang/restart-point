@@ -23,6 +23,7 @@ import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.function.Supplier;
 
 /**
  * 심사 분석 서비스
@@ -72,27 +73,32 @@ public class ReviewAssistantService {
         Map<RubricItem, Double> expertRubricAvg = calculateRubricAverages(expertReviews);
 
         // AI 분석을 병렬로 실행
-        CompletableFuture<String> commentSummaryFuture = CompletableFuture.supplyAsync(
+        CompletableFuture<String> commentSummaryFuture = supplySafely(
                 () -> aiReviewAssistantService.summarizeComments(expertReviews, project.getName()),
-                aiExecutor);
+                "AI 코멘트 요약",
+                "AI 분석에 실패했습니다.");
 
-        CompletableFuture<Map<String, List<String>>> strengthsWeaknessesFuture = CompletableFuture.supplyAsync(
+        CompletableFuture<Map<String, List<String>>> strengthsWeaknessesFuture = supplySafely(
                 () -> aiReviewAssistantService.analyzeStrengthsAndWeaknesses(expertReviews, project.getName(), rubricAvg),
-                aiExecutor);
+                "AI 강점/약점 분석",
+                defaultStrengthWeaknesses());
 
-        CompletableFuture<String> expertVsCandidateFuture = CompletableFuture.supplyAsync(
+        CompletableFuture<String> expertVsCandidateFuture = supplySafely(
                 aiReviewAssistantService::summarizeExpertReviewPolicy,
-                aiExecutor);
+                "AI 심사 정책 요약",
+                "현재 시즌 심사는 전문가 평가만 운영합니다.");
 
         // 루브릭별 분석 (병렬 처리)
-        CompletableFuture<List<RubricAnalysis>> rubricAnalysesFuture = CompletableFuture.supplyAsync(
+        CompletableFuture<List<RubricAnalysis>> rubricAnalysesFuture = supplySafely(
                 () -> buildRubricAnalyses(expertReviews, rubricAvg, expertRubricAvg),
-                aiExecutor);
+                "AI 루브릭 분석",
+                buildFallbackRubricAnalyses(rubricAvg, expertRubricAvg));
 
         // 이상치 감지 (병렬 처리)
-        CompletableFuture<List<OutlierScore>> outliersFuture = CompletableFuture.supplyAsync(
+        CompletableFuture<List<OutlierScore>> outliersFuture = supplySafely(
                 () -> detectOutliers(expertReviews, rubricAvg, project),
-                aiExecutor);
+                "AI 이상치 분석",
+                List.of());
 
         // 모든 AI 분석 완료 대기
         CompletableFuture.allOf(
@@ -154,7 +160,15 @@ public class ReviewAssistantService {
 
         // 모든 분석 완료 대기 후 결과 수집
         return futures.stream()
-                .map(CompletableFuture::join)
+                .map(future -> {
+                    try {
+                        return future.join();
+                    } catch (Exception e) {
+                        log.error("시즌 심사 분석 집계 실패", e);
+                        return null;
+                    }
+                })
+                .filter(Objects::nonNull)
                 .filter(analysis -> analysis.getTotalReviewCount() > 0)
                 .toList();
     }
@@ -301,7 +315,46 @@ public class ReviewAssistantService {
                 .toList();
 
         return futures.stream()
-                .map(CompletableFuture::join)
+                .map(future -> {
+                    try {
+                        return future.join();
+                    } catch (Exception e) {
+                        log.warn("루브릭별 AI 분석 실패", e);
+                        return null;
+                    }
+                })
+                .filter(Objects::nonNull)
+                .toList();
+    }
+
+    private <T> CompletableFuture<T> supplySafely(Supplier<T> task, String taskName, T fallback) {
+        return CompletableFuture.supplyAsync(task, aiExecutor)
+                .exceptionally(throwable -> {
+                    log.error("{} 실패, fallback 반환", taskName, throwable);
+                    return fallback;
+                });
+    }
+
+    private Map<String, List<String>> defaultStrengthWeaknesses() {
+        Map<String, List<String>> fallback = new HashMap<>();
+        fallback.put("strengths", List.of());
+        fallback.put("weaknesses", List.of());
+        return fallback;
+    }
+
+    private List<RubricAnalysis> buildFallbackRubricAnalyses(
+            Map<RubricItem, Double> rubricAvg,
+            Map<RubricItem, Double> expertRubricAvg) {
+        return Arrays.stream(RubricItem.values())
+                .map(item -> RubricAnalysis.builder()
+                        .rubricItem(item)
+                        .label(item.getLabel())
+                        .averageScore(round(rubricAvg.getOrDefault(item, 0.0)))
+                        .expertAverageScore(round(expertRubricAvg.getOrDefault(item, 0.0)))
+                        .candidateAverageScore(0)
+                        .scoreDifference(0)
+                        .aiInsight("AI 분석 없이 기본 점수 통계만 표시합니다.")
+                        .build())
                 .toList();
     }
 

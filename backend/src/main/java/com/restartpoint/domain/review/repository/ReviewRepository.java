@@ -14,13 +14,19 @@ public interface ReviewRepository extends JpaRepository<Review, Long> {
     /**
      * 프로젝트별 심사 목록 조회
      */
-    @Query("SELECT r FROM Review r JOIN FETCH r.reviewer WHERE r.project.id = :projectId ORDER BY r.submittedAt DESC")
+    @Query("SELECT DISTINCT r FROM Review r " +
+           "JOIN FETCH r.reviewer " +
+           "LEFT JOIN FETCH r.scores " +
+           "WHERE r.project.id = :projectId ORDER BY r.submittedAt DESC")
     List<Review> findByProjectIdWithReviewer(@Param("projectId") Long projectId);
 
     /**
      * 프로젝트별, 심사자 유형별 심사 목록 조회
      */
-    @Query("SELECT r FROM Review r JOIN FETCH r.reviewer WHERE r.project.id = :projectId AND r.reviewType = :reviewType")
+    @Query("SELECT DISTINCT r FROM Review r " +
+           "JOIN FETCH r.reviewer " +
+           "LEFT JOIN FETCH r.scores " +
+           "WHERE r.project.id = :projectId AND r.reviewType = :reviewType")
     List<Review> findByProjectIdAndReviewType(@Param("projectId") Long projectId, @Param("reviewType") ReviewType reviewType);
 
     /**
@@ -36,7 +42,10 @@ public interface ReviewRepository extends JpaRepository<Review, Long> {
     /**
      * 특정 사용자가 심사한 목록 조회
      */
-    @Query("SELECT r FROM Review r JOIN FETCH r.project WHERE r.reviewer.id = :reviewerId ORDER BY r.submittedAt DESC")
+    @Query("SELECT DISTINCT r FROM Review r " +
+           "JOIN FETCH r.project " +
+           "LEFT JOIN FETCH r.scores " +
+           "WHERE r.reviewer.id = :reviewerId ORDER BY r.submittedAt DESC")
     List<Review> findByReviewerIdWithProject(@Param("reviewerId") Long reviewerId);
 
     /**
@@ -52,14 +61,15 @@ public interface ReviewRepository extends JpaRepository<Review, Long> {
     /**
      * 심사자 유형별 심사 목록 조회
      */
-    @Query("SELECT r FROM Review r JOIN FETCH r.scores WHERE r.reviewType = :reviewType")
+    @Query("SELECT DISTINCT r FROM Review r JOIN FETCH r.scores WHERE r.reviewType = :reviewType")
     List<Review> findByReviewType(@Param("reviewType") ReviewType reviewType);
 
     /**
      * 시즌별 모든 심사 조회
      */
-    @Query("SELECT r FROM Review r " +
+    @Query("SELECT DISTINCT r FROM Review r " +
            "JOIN FETCH r.project p " +
+           "LEFT JOIN FETCH r.scores " +
            "JOIN p.team t " +
            "WHERE t.season.id = :seasonId")
     List<Review> findAllBySeasonId(@Param("seasonId") Long seasonId);
