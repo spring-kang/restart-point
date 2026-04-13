@@ -47,6 +47,7 @@ public class TeamInvitationService {
         validateTeamRecruiting(team);
         validateNotSelf(leaderId, request.getUserId());
         validateNotAlreadyInvited(team, invitedUser);
+        validateNotAlreadyApplied(team, invitedUser);  // 이미 지원한 사용자인지 확인
         validateNotAlreadyInTeam(invitedUser, team.getSeason());
         validateTeamNotFull(team);
         validateRecruitingRole(team, request.getRole());
@@ -125,27 +126,31 @@ public class TeamInvitationService {
     @Transactional
     public TeamInvitationResponse acceptInvitation(Long userId, Long invitationId) {
         TeamInvitation invitation = findInvitationById(invitationId);
+        Team team = invitation.getTeam();
 
         // 검증
         validateInvitedUser(invitation, userId);
         validateInvitationPending(invitation);
         validateInvitationNotExpired(invitation);
-        validateTeamNotFull(invitation.getTeam());
-        validateNotAlreadyInTeam(invitation.getInvitedUser(), invitation.getTeam().getSeason());
+        validateTeamRecruiting(team);  // 팀이 아직 모집 중인지 확인
+        validateRecruitingRole(team, invitation.getSuggestedRole());  // 역할이 아직 열려있는지 확인
+        validateTeamNotFull(team);
+        validateNotAlreadyApplied(team, invitation.getInvitedUser());  // 중복 TeamMember 방지
+        validateNotAlreadyInTeam(invitation.getInvitedUser(), team.getSeason());
 
         // 영입 요청 수락
         invitation.accept();
 
         // 팀원으로 추가
         TeamMember teamMember = TeamMember.builder()
-                .team(invitation.getTeam())
+                .team(team)
                 .user(invitation.getInvitedUser())
                 .role(invitation.getSuggestedRole())
                 .applicationMessage("영입 요청을 통해 합류")
                 .build();
         teamMember.accept();
         teamMemberRepository.save(teamMember);
-        invitation.getTeam().addMember(teamMember);
+        team.addMember(teamMember);
 
         log.info("영입 요청 수락: invitationId={}, userId={}, teamId={}",
                 invitationId, userId, invitation.getTeam().getId());
@@ -254,9 +259,17 @@ public class TeamInvitationService {
     }
 
     private void validateNotAlreadyInvited(Team team, User invitedUser) {
-        if (invitationRepository.existsByTeamAndInvitedUserAndStatus(
-                team, invitedUser, InvitationStatus.PENDING)) {
+        // 만료되지 않은 PENDING 상태의 영입 요청이 있는지 확인
+        if (invitationRepository.existsValidPendingInvitation(
+                team, invitedUser, LocalDateTime.now())) {
             throw new BusinessException(ErrorCode.INVITATION_ALREADY_SENT);
+        }
+    }
+
+    private void validateNotAlreadyApplied(Team team, User user) {
+        // 이미 해당 팀에 지원한 레코드가 있는지 확인
+        if (teamMemberRepository.existsByTeamAndUser(team, user)) {
+            throw new BusinessException(ErrorCode.ALREADY_APPLIED, "해당 사용자는 이미 이 팀에 지원했습니다.");
         }
     }
 

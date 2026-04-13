@@ -26,6 +26,15 @@ public interface TeamInvitationRepository extends JpaRepository<TeamInvitation, 
     // 특정 팀과 사용자에 대한 PENDING 상태의 영입 요청이 있는지 확인
     boolean existsByTeamAndInvitedUserAndStatus(Team team, User invitedUser, InvitationStatus status);
 
+    // 특정 팀과 사용자에 대한 아직 만료되지 않은 PENDING 상태의 영입 요청이 있는지 확인
+    @Query("SELECT COUNT(ti) > 0 FROM TeamInvitation ti " +
+           "WHERE ti.team = :team AND ti.invitedUser = :invitedUser " +
+           "AND ti.status = 'PENDING' AND ti.expiresAt > :now")
+    boolean existsValidPendingInvitation(
+            @Param("team") Team team,
+            @Param("invitedUser") User invitedUser,
+            @Param("now") LocalDateTime now);
+
     // 특정 팀과 사용자에 대한 영입 요청 조회
     Optional<TeamInvitation> findByTeamAndInvitedUser(Team team, User invitedUser);
 
