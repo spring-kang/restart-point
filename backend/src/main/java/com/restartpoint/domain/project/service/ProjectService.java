@@ -270,11 +270,13 @@ public class ProjectService {
     public ProjectResponse markProjectAsFeatured(Long projectId) {
         Project project = findProjectByIdWithTeam(projectId);
         validateProjectEligibleForFeatured(project);
+        Long seasonId = project.getTeam().getSeason().getId();
 
         if (project.getFeaturedRank() == null) {
-            int nextRank = projectRepository.findMaxFeaturedRankBySeasonId(project.getTeam().getSeason().getId()) + 1;
-            project.markAsFeatured(nextRank);
+            project.markAsFeatured(Integer.MAX_VALUE);
         }
+
+        reorderFeaturedProjects(seasonId);
 
         return ProjectResponse.simpleFrom(project);
     }
@@ -282,7 +284,9 @@ public class ProjectService {
     @Transactional
     public ProjectResponse unmarkProjectAsFeatured(Long projectId) {
         Project project = findProjectByIdWithTeam(projectId);
+        Long seasonId = project.getTeam().getSeason().getId();
         project.unmarkAsFeatured();
+        reorderFeaturedProjects(seasonId);
         return ProjectResponse.simpleFrom(project);
     }
 
@@ -391,6 +395,14 @@ public class ProjectService {
 
         if (project.getStatus() != ProjectStatus.SUBMITTED && project.getStatus() != ProjectStatus.COMPLETED) {
             throw new BusinessException(ErrorCode.INVALID_PROJECT_STATUS, "제출 완료된 프로젝트만 우수작으로 지정할 수 있습니다.");
+        }
+    }
+
+    private void reorderFeaturedProjects(Long seasonId) {
+        List<Project> featuredProjects = projectRepository.findFeaturedProjectsBySeasonId(seasonId);
+        int rank = 1;
+        for (Project featuredProject : featuredProjects) {
+            featuredProject.markAsFeatured(rank++);
         }
     }
 

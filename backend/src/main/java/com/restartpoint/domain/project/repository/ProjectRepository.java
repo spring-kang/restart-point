@@ -29,8 +29,8 @@ public interface ProjectRepository extends JpaRepository<Project, Long> {
            "ORDER BY s.reviewEndAt DESC, p.featuredRank ASC, p.featuredAt DESC")
     java.util.List<Project> findAllFeaturedProjects();
 
-    @Query("SELECT COALESCE(MAX(p.featuredRank), 0) FROM Project p JOIN p.team t WHERE t.season.id = :seasonId")
-    int findMaxFeaturedRankBySeasonId(@Param("seasonId") Long seasonId);
+    @Query("SELECT p FROM Project p JOIN FETCH p.team t WHERE t.season.id = :seasonId AND p.featuredRank IS NOT NULL ORDER BY p.featuredRank ASC, p.featuredAt ASC, p.id ASC")
+    java.util.List<Project> findFeaturedProjectsBySeasonId(@Param("seasonId") Long seasonId);
 
     @Query("SELECT p FROM Project p JOIN p.team t WHERE t.season.id = :seasonId AND p.status = :status")
     Page<Project> findBySeasonIdAndStatus(@Param("seasonId") Long seasonId,

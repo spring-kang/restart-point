@@ -420,13 +420,13 @@ class ProjectServiceTest {
             project.submit("회고");
 
             given(projectRepository.findByIdWithTeam(1L)).willReturn(Optional.of(project));
-            given(projectRepository.findMaxFeaturedRankBySeasonId(1L)).willReturn(1);
+            given(projectRepository.findFeaturedProjectsBySeasonId(1L)).willReturn(List.of(project));
 
             // when
             ProjectResponse response = projectService.markProjectAsFeatured(1L);
 
             // then
-            assertThat(response.getFeaturedRank()).isEqualTo(2);
+            assertThat(response.getFeaturedRank()).isEqualTo(1);
             assertThat(project.getFeaturedAt()).isNotNull();
         }
 
@@ -439,13 +439,40 @@ class ProjectServiceTest {
             project.markAsFeatured(3);
 
             given(projectRepository.findByIdWithTeam(1L)).willReturn(Optional.of(project));
+            given(projectRepository.findFeaturedProjectsBySeasonId(1L)).willReturn(List.of(project));
 
             // when
             ProjectResponse response = projectService.markProjectAsFeatured(1L);
 
             // then
-            assertThat(response.getFeaturedRank()).isEqualTo(3);
-            verify(projectRepository, never()).findMaxFeaturedRankBySeasonId(any());
+            assertThat(response.getFeaturedRank()).isEqualTo(1);
+        }
+
+        @Test
+        @DisplayName("우수작 해제 후 다시 지정하면 빈 번호부터 다시 채운다")
+        void reuseLowestAvailableFeaturedRank() {
+            // given
+            setField(season, "status", SeasonStatus.COMPLETED);
+            project.submit("회고");
+
+            Project first = createProject(2L, team, "우수작 1");
+            first.submit("회고");
+            first.markAsFeatured(1);
+
+            Project third = createProject(3L, team, "우수작 3");
+            third.submit("회고");
+            third.markAsFeatured(3);
+
+            given(projectRepository.findByIdWithTeam(1L)).willReturn(Optional.of(project));
+            given(projectRepository.findFeaturedProjectsBySeasonId(1L)).willReturn(List.of(first, project, third));
+
+            // when
+            ProjectResponse response = projectService.markProjectAsFeatured(1L);
+
+            // then
+            assertThat(first.getFeaturedRank()).isEqualTo(1);
+            assertThat(response.getFeaturedRank()).isEqualTo(2);
+            assertThat(third.getFeaturedRank()).isEqualTo(3);
         }
     }
 
