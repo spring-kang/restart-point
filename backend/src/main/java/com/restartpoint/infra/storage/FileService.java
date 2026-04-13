@@ -8,9 +8,14 @@ import org.springframework.web.multipart.MultipartFile;
 import software.amazon.awssdk.core.sync.RequestBody;
 import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.model.DeleteObjectRequest;
+import software.amazon.awssdk.services.s3.model.GetObjectRequest;
 import software.amazon.awssdk.services.s3.model.PutObjectRequest;
+import software.amazon.awssdk.services.s3.presigner.S3Presigner;
+import software.amazon.awssdk.services.s3.presigner.model.GetObjectPresignRequest;
+import software.amazon.awssdk.services.s3.presigner.model.PresignedGetObjectRequest;
 
 import java.io.IOException;
+import java.time.Duration;
 import java.util.UUID;
 
 /**
@@ -22,12 +27,16 @@ import java.util.UUID;
 public class FileService {
 
     private final S3Client s3Client;
+    private final S3Presigner s3Presigner;
 
     @Value("${aws.s3.bucket:}")
     private String bucket;
 
     @Value("${aws.s3.region:ap-northeast-2}")
     private String region;
+
+    // Presigned URL 유효 시간 (1시간)
+    private static final Duration PRESIGNED_URL_DURATION = Duration.ofHours(1);
 
     // 허용되는 파일 확장자
     private static final String[] ALLOWED_EXTENSIONS = {"jpg", "jpeg", "png", "gif", "pdf", "webp"};
@@ -102,6 +111,43 @@ public class FileService {
             log.info("파일 삭제 완료: {}", fileUrl);
         } catch (Exception e) {
             log.error("파일 삭제 실패: {}", fileUrl, e);
+        }
+    }
+
+    /**
+     * Presigned URL 생성 (파일 다운로드/조회용)
+     * @param fileUrl S3 파일 URL
+     * @return Presigned URL (1시간 유효)
+     */
+    public String generatePresignedUrl(String fileUrl) {
+        if (s3Presigner == null || fileUrl == null || fileUrl.isEmpty()) {
+            throw new IllegalStateException("S3 Presigner가 설정되지 않았거나 URL이 유효하지 않습니다.");
+        }
+
+        try {
+            String key = extractKeyFromUrl(fileUrl);
+            if (key == null) {
+                throw new IllegalArgumentException("유효하지 않은 S3 URL입니다: " + fileUrl);
+            }
+
+            GetObjectRequest getObjectRequest = GetObjectRequest.builder()
+                    .bucket(bucket)
+                    .key(key)
+                    .build();
+
+            GetObjectPresignRequest presignRequest = GetObjectPresignRequest.builder()
+                    .signatureDuration(PRESIGNED_URL_DURATION)
+                    .getObjectRequest(getObjectRequest)
+                    .build();
+
+            PresignedGetObjectRequest presignedRequest = s3Presigner.presignGetObject(presignRequest);
+            String presignedUrl = presignedRequest.url().toString();
+
+            log.info("Presigned URL 생성 완료: key={}", key);
+            return presignedUrl;
+        } catch (Exception e) {
+            log.error("Presigned URL 생성 실패: {}", fileUrl, e);
+            throw new RuntimeException("파일 URL 생성에 실패했습니다.", e);
         }
     }
 

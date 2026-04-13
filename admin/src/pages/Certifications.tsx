@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { CheckCircle, XCircle, ExternalLink } from 'lucide-react';
+import { CheckCircle, XCircle, ExternalLink, Loader2 } from 'lucide-react';
 import adminService from '../services/adminService';
 import type { User } from '../types';
 
@@ -7,6 +7,7 @@ export default function CertificationsPage() {
   const [users, setUsers] = useState<User[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [loadingCertificateId, setLoadingCertificateId] = useState<number | null>(null);
 
   useEffect(() => {
     loadCertifications();
@@ -50,6 +51,21 @@ export default function CertificationsPage() {
       alert('거절 처리에 실패했습니다.');
     } finally {
       setIsProcessing(false);
+    }
+  };
+
+  const handleViewCertificate = async (user: User) => {
+    if (!user.certificateUrl) return;
+
+    setLoadingCertificateId(user.id);
+    try {
+      const presignedUrl = await adminService.getPresignedUrl(user.certificateUrl);
+      window.open(presignedUrl, '_blank', 'noopener,noreferrer');
+    } catch (error) {
+      console.error('Failed to get presigned URL:', error);
+      alert('수료증을 불러오는데 실패했습니다.');
+    } finally {
+      setLoadingCertificateId(null);
     }
   };
 
@@ -130,15 +146,18 @@ export default function CertificationsPage() {
                     <div>
                       <p className="text-gray-500">수료증</p>
                       {user.certificateUrl ? (
-                        <a
-                          href={user.certificateUrl}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="inline-flex items-center gap-1 text-blue-600 hover:text-blue-800 font-medium"
+                        <button
+                          onClick={() => handleViewCertificate(user)}
+                          disabled={loadingCertificateId === user.id}
+                          className="inline-flex items-center gap-1 text-blue-600 hover:text-blue-800 font-medium disabled:opacity-50"
                         >
-                          <ExternalLink className="w-4 h-4" />
+                          {loadingCertificateId === user.id ? (
+                            <Loader2 className="w-4 h-4 animate-spin" />
+                          ) : (
+                            <ExternalLink className="w-4 h-4" />
+                          )}
                           확인하기
-                        </a>
+                        </button>
                       ) : (
                         <p className="text-gray-900 font-medium">-</p>
                       )}

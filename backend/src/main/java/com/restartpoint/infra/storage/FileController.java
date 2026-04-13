@@ -26,6 +26,24 @@ public class FileController {
     private final FileService fileService;
 
     @Operation(
+            summary = "Presigned URL 생성",
+            description = "S3 파일에 대한 임시 접근 URL을 생성합니다. (1시간 유효)"
+    )
+    @ApiResponse(
+            responseCode = "200",
+            description = "Presigned URL 생성 성공",
+            content = @Content(schema = @Schema(implementation = PresignedUrlResponse.class))
+    )
+    @GetMapping("/presign")
+    public ResponseEntity<Map<String, String>> getPresignedUrl(
+            @Parameter(description = "S3 파일 URL", required = true)
+            @RequestParam("url") String fileUrl
+    ) {
+        String presignedUrl = fileService.generatePresignedUrl(fileUrl);
+        return ResponseEntity.ok(Map.of("presignedUrl", presignedUrl));
+    }
+
+    @Operation(
             summary = "파일 업로드",
             description = "파일을 S3에 업로드하고 URL을 반환합니다. (최대 10MB, 허용 형식: jpg, jpeg, png, gif, pdf, webp)"
     )
@@ -52,5 +70,14 @@ public class FileController {
     private static class FileUploadResponse {
         @Schema(description = "업로드된 파일 URL", example = "https://bucket.s3.ap-northeast-2.amazonaws.com/certificates/uuid.jpg")
         public String url;
+    }
+
+    /**
+     * Presigned URL 응답 스키마 (Swagger 문서용)
+     */
+    @Schema(description = "Presigned URL 응답")
+    private static class PresignedUrlResponse {
+        @Schema(description = "임시 접근 URL (1시간 유효)", example = "https://bucket.s3.ap-northeast-2.amazonaws.com/certificates/uuid.jpg?X-Amz-Algorithm=...")
+        public String presignedUrl;
     }
 }

@@ -203,7 +203,7 @@ export default function SeasonsPage() {
         >
           전체 ({seasons.length})
         </button>
-        {(['DRAFT', 'RECRUITING', 'IN_PROGRESS', 'COMPLETED'] as SeasonStatus[]).map(
+        {(['DRAFT', 'RECRUITING', 'TEAM_BUILDING', 'IN_PROGRESS', 'REVIEWING', 'COMPLETED'] as SeasonStatus[]).map(
           (status) => {
             const count = seasons.filter((s) => s.status === status).length;
             return (
@@ -310,8 +310,9 @@ export default function SeasonsPage() {
                     )}
                     <button
                       onClick={() => openEditModal(season)}
-                      className="btn-secondary p-2"
-                      title="수정"
+                      disabled={season.status !== 'DRAFT'}
+                      className="btn-secondary p-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                      title={season.status === 'DRAFT' ? '수정' : '초안 상태에서만 수정 가능'}
                     >
                       <Edit className="w-4 h-4" />
                     </button>

@@ -108,6 +108,14 @@ export const adminService = {
     const response = await api.get<ApiResponse<SeasonDashboard>>(`/admin/dashboard/seasons/${seasonId}`);
     return response.data.data;
   },
+
+  // File APIs
+  getPresignedUrl: async (fileUrl: string): Promise<string> => {
+    const response = await api.get<{ presignedUrl: string }>('/files/presign', {
+      params: { url: fileUrl },
+    });
+    return response.data.presignedUrl;
+  },
 };
 
 export default adminService;
