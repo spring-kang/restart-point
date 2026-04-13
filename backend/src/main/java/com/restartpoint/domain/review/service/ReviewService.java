@@ -16,10 +16,13 @@ import com.restartpoint.domain.team.repository.TeamMemberRepository;
 import com.restartpoint.domain.user.entity.Role;
 import com.restartpoint.domain.user.entity.User;
 import com.restartpoint.domain.user.repository.UserRepository;
+import com.restartpoint.global.config.CacheConfig;
 import com.restartpoint.global.exception.BusinessException;
 import com.restartpoint.global.exception.ErrorCode;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Caching;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -42,6 +45,9 @@ public class ReviewService {
      * 심사 제출
      */
     @Transactional
+    @Caching(evict = {
+            @CacheEvict(cacheNames = CacheConfig.PROJECT_REVIEW_ANALYSIS_CACHE, key = "#projectId")
+    })
     public ReviewResponse createReview(Long userId, Long projectId, ReviewCreateRequest request) {
         User reviewer = findUserById(userId);
         Project project = findProjectById(projectId);
