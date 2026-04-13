@@ -21,6 +21,7 @@ public class UserResponse {
     private String bootcampName;
     private String bootcampGeneration;
     private String graduationDate;
+    private String certificateUrl;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 
@@ -35,6 +36,7 @@ public class UserResponse {
                 .bootcampName(user.getBootcampName())
                 .bootcampGeneration(user.getBootcampGeneration())
                 .graduationDate(user.getGraduationDate())
+                .certificateUrl(user.getCertificateUrl())
                 .createdAt(user.getCreatedAt())
                 .updatedAt(user.getUpdatedAt())
                 .build();

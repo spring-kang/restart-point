@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { CheckCircle, XCircle } from 'lucide-react';
+import { CheckCircle, XCircle, ExternalLink } from 'lucide-react';
 import adminService from '../services/adminService';
 import type { User } from '../types';
 
@@ -102,7 +102,7 @@ export default function CertificationsPage() {
                     </span>
                   </div>
                   <p className="text-gray-600 mb-3">{user.email}</p>
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                  <div className="grid grid-cols-2 md:grid-cols-5 gap-4 text-sm">
                     <div>
                       <p className="text-gray-500">부트캠프</p>
                       <p className="text-gray-900 font-medium">
@@ -126,6 +126,22 @@ export default function CertificationsPage() {
                       <p className="text-gray-900 font-medium">
                         {new Date(user.createdAt).toLocaleDateString('ko-KR')}
                       </p>
+                    </div>
+                    <div>
+                      <p className="text-gray-500">수료증</p>
+                      {user.certificateUrl ? (
+                        <a
+                          href={user.certificateUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-1 text-blue-600 hover:text-blue-800 font-medium"
+                        >
+                          <ExternalLink className="w-4 h-4" />
+                          확인하기
+                        </a>
+                      ) : (
+                        <p className="text-gray-900 font-medium">-</p>
+                      )}
                     </div>
                   </div>
                 </div>

@@ -29,6 +29,7 @@ export interface User {
   bootcampName?: string;
   bootcampGeneration?: string;
   graduationDate?: string;
+  certificateUrl?: string;
   createdAt: string;
   updatedAt: string;
 }
