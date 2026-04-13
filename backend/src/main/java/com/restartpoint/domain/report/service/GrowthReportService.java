@@ -115,12 +115,6 @@ public class GrowthReportService {
     public void generateReportsForProject(Long projectId) {
         Project project = findProjectById(projectId);
 
-        // 이미 리포트가 생성되었는지 확인
-        if (growthReportRepository.existsByProjectIdAndReportType(projectId, ReportType.TEAM)) {
-            log.info("이미 리포트가 생성된 프로젝트: {}", projectId);
-            return;
-        }
-
         // 제출된 프로젝트만 리포트 생성
         if (project.getStatus() != ProjectStatus.SUBMITTED && project.getStatus() != ProjectStatus.COMPLETED) {
             log.info("제출되지 않은 프로젝트는 리포트 생성 제외: {}", projectId);
@@ -134,11 +128,7 @@ public class GrowthReportService {
             return;
         }
 
-        // 팀 리포트 생성
-        createTeamReport(project, reviewSummary);
-
-        // 팀원별 개인 리포트 생성
-        createIndividualReports(project, reviewSummary);
+        regenerateOrCreateReports(project, reviewSummary);
 
         log.info("성장 리포트 생성 완료 - 프로젝트: {}", project.getName());
     }
@@ -226,6 +216,54 @@ public class GrowthReportService {
 
         for (TeamMember member : members) {
             createIndividualReport(project, reviewSummary, member.getUser(), member.getRole());
+        }
+    }
+
+    private void regenerateOrCreateReports(Project project, ReviewSummaryResponse reviewSummary) {
+        List<GrowthReport> existingReports = growthReportRepository.findAllByProjectId(project.getId());
+        GrowthReport teamReport = existingReports.stream()
+                .filter(report -> report.getReportType() == ReportType.TEAM)
+                .findFirst()
+                .orElse(null);
+
+        if (teamReport == null) {
+            createTeamReport(project, reviewSummary);
+        } else if (!teamReport.isGenerated()) {
+            generateTeamReportContent(teamReport, project, reviewSummary);
+        }
+
+        regenerateOrCreateIndividualReports(project, reviewSummary, existingReports);
+    }
+
+    private void regenerateOrCreateIndividualReports(Project project, ReviewSummaryResponse reviewSummary,
+                                                     List<GrowthReport> existingReports) {
+        Team team = project.getTeam();
+
+        regenerateOrCreateIndividualReport(project, reviewSummary, existingReports,
+                team.getLeader(), getJobRole(team.getLeader().getId(), team));
+
+        List<TeamMember> members = teamMemberRepository.findByTeamId(team.getId()).stream()
+                .filter(member -> member.getStatus() == TeamMemberStatus.ACCEPTED)
+                .toList();
+
+        for (TeamMember member : members) {
+            regenerateOrCreateIndividualReport(project, reviewSummary, existingReports,
+                    member.getUser(), member.getRole());
+        }
+    }
+
+    private void regenerateOrCreateIndividualReport(Project project, ReviewSummaryResponse reviewSummary,
+                                                    List<GrowthReport> existingReports, User user, JobRole jobRole) {
+        GrowthReport existingReport = existingReports.stream()
+                .filter(report -> report.getReportType() == ReportType.INDIVIDUAL)
+                .filter(report -> report.getUser() != null && report.getUser().getId().equals(user.getId()))
+                .findFirst()
+                .orElse(null);
+
+        if (existingReport == null) {
+            createIndividualReport(project, reviewSummary, user, jobRole);
+        } else if (!existingReport.isGenerated()) {
+            generateIndividualReportContent(existingReport, project, reviewSummary, user, jobRole);
         }
     }
 

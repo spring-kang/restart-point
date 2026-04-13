@@ -231,15 +231,23 @@ class GrowthReportServiceTest {
       Season season = createSeason(1L, "시즌1", SeasonStatus.COMPLETED);
       Team team = createTeam(1L, "팀이름", season, leader);
       Project project = createProject(1L, "프로젝트", team, ProjectStatus.SUBMITTED);
+      GrowthReport generatedTeamReport = createTeamReport(10L, project);
+      generatedTeamReport.updateContent("강점", "보완점", null, "다음 액션", null, "추천 영역");
+      GrowthReport generatedIndividualReport = createIndividualReport(11L, project, leader);
+      generatedIndividualReport.updateContent(null, null, "역할 피드백", "다음 액션", "포트폴리오", "추천 영역");
+      ReviewSummaryResponse reviewSummary = createReviewSummary(project.getId(), project.getName());
 
       given(projectRepository.findByIdWithTeam(1L)).willReturn(Optional.of(project));
-      given(growthReportRepository.existsByProjectIdAndReportType(1L, ReportType.TEAM)).willReturn(true);
+      given(reviewService.getReviewSummaryInternal(1L)).willReturn(reviewSummary);
+      given(growthReportRepository.findAllByProjectId(1L))
+          .willReturn(List.of(generatedTeamReport, generatedIndividualReport));
 
       // when
       growthReportService.generateReportsForProject(1L);
 
       // then
       verify(growthReportRepository, never()).save(any(GrowthReport.class));
+      verify(aiGrowthReportService, never()).generateTeamReport(any(), any());
     }
 
     @Test
@@ -252,7 +260,6 @@ class GrowthReportServiceTest {
       Project project = createProject(1L, "프로젝트", team, ProjectStatus.IN_PROGRESS);
 
       given(projectRepository.findByIdWithTeam(1L)).willReturn(Optional.of(project));
-      given(growthReportRepository.existsByProjectIdAndReportType(1L, ReportType.TEAM)).willReturn(false);
 
       // when
       growthReportService.generateReportsForProject(1L);
@@ -272,7 +279,7 @@ class GrowthReportServiceTest {
       ReviewSummaryResponse reviewSummary = createReviewSummary(project.getId(), project.getName());
 
       given(projectRepository.findByIdWithTeam(1L)).willReturn(Optional.of(project));
-      given(growthReportRepository.existsByProjectIdAndReportType(1L, ReportType.TEAM)).willReturn(false);
+      given(growthReportRepository.findAllByProjectId(1L)).willReturn(List.of());
       given(reviewService.getReviewSummaryInternal(1L)).willReturn(reviewSummary);
       given(objectMapper.writeValueAsString(any())).willReturn("{\"summary\":true}");
       given(aiGrowthReportService.generateTeamReport(project, reviewSummary)).willReturn(null);
@@ -287,6 +294,38 @@ class GrowthReportServiceTest {
       verify(growthReportRepository, times(2)).save(any(GrowthReport.class));
       verify(aiGrowthReportService).generateTeamReport(project, reviewSummary);
       verify(aiGrowthReportService).generateIndividualReport(eq(project), eq(reviewSummary), eq(1L), eq("팀장"), any());
+    }
+
+    @Test
+    @DisplayName("생성 실패로 남은 리포트는 기존 row를 재사용해 fallback으로 채운다")
+    void regenerateExistingUngeneratedReports() throws Exception {
+      // given
+      User leader = createUser(1L, "leader@example.com", "팀장", Role.USER);
+      Season season = createSeason(1L, "시즌1", SeasonStatus.COMPLETED);
+      Team team = createTeam(1L, "팀이름", season, leader);
+      Project project = createProject(1L, "프로젝트", team, ProjectStatus.COMPLETED);
+      ReviewSummaryResponse reviewSummary = createReviewSummary(project.getId(), project.getName());
+      GrowthReport pendingTeamReport = createTeamReport(10L, project);
+      GrowthReport pendingIndividualReport = createIndividualReport(11L, project, leader);
+
+      given(projectRepository.findByIdWithTeam(1L)).willReturn(Optional.of(project));
+      given(growthReportRepository.findAllByProjectId(1L))
+          .willReturn(List.of(pendingTeamReport, pendingIndividualReport));
+      given(reviewService.getReviewSummaryInternal(1L)).willReturn(reviewSummary);
+      given(aiGrowthReportService.generateTeamReport(project, reviewSummary)).willReturn(null);
+      given(aiGrowthReportService.generateIndividualReport(eq(project), eq(reviewSummary), eq(1L), eq("팀장"), any()))
+          .willReturn(null);
+      given(teamMemberRepository.findByTeamId(1L)).willReturn(List.of());
+
+      // when
+      growthReportService.generateReportsForProject(1L);
+
+      // then
+      assertThat(pendingTeamReport.isGenerated()).isTrue();
+      assertThat(pendingTeamReport.getTeamStrengths()).isNotBlank();
+      assertThat(pendingIndividualReport.isGenerated()).isTrue();
+      assertThat(pendingIndividualReport.getRoleSpecificFeedback()).isNotBlank();
+      verify(growthReportRepository, never()).save(any(GrowthReport.class));
     }
   }
 
