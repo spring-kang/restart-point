@@ -67,14 +67,6 @@ BEGIN
   WHERE title = '테스트 시즌'
     AND description = 'E2E 리뷰 테스트용 시즌';
 
-  DELETE FROM users
-  WHERE email IN (
-    'test1@restart-point.com',
-    'test2@restart-point.com',
-    'review-target@restart-point.com',
-    'review-admin@restart-point.com'
-  )
-    AND name IN ('E2E 리뷰어', 'E2E 팀장', 'E2E 일반유저', 'E2E 보조 리뷰어');
 END $$;
 
 COMMIT;
