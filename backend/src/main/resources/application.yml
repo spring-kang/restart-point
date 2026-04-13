@@ -84,6 +84,8 @@ springdoc:
 # 앱 설정
 app:
   base-url: ${APP_BASE_URL:http://localhost:8080}
+  test-data:
+    enabled: ${APP_TEST_DATA_ENABLED:false}
 
 ---
 spring:
@@ -127,3 +129,5 @@ app:
   base-url: ${APP_BASE_URL:https://restart-point-backend-production.up.railway.app}
   cors:
     allowed-origins: ${CORS_ALLOWED_ORIGINS:https://restart-point.com,http://localhost:5173}
+  test-data:
+    enabled: ${APP_TEST_DATA_ENABLED:false}
