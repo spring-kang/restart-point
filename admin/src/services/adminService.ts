@@ -126,6 +126,124 @@ export const adminService = {
     });
     return response.data.presignedUrl;
   },
+
+  // ========== Guide/Template APIs ==========
+  getProjectTemplates: async (seasonId: number): Promise<any[]> => {
+    const response = await api.get<ApiResponse<any[]>>(`/seasons/${seasonId}/templates`);
+    return response.data.data;
+  },
+
+  createProjectTemplate: async (seasonId: number, data: any): Promise<any> => {
+    const response = await api.post<ApiResponse<any>>(`/seasons/${seasonId}/templates`, data);
+    return response.data.data;
+  },
+
+  updateProjectTemplate: async (templateId: number, data: any): Promise<any> => {
+    const response = await api.put<ApiResponse<any>>(`/templates/${templateId}`, data);
+    return response.data.data;
+  },
+
+  deleteProjectTemplate: async (templateId: number): Promise<void> => {
+    await api.delete(`/templates/${templateId}`);
+  },
+
+  getWeeklyGuidelines: async (templateId: number): Promise<any[]> => {
+    const response = await api.get<ApiResponse<any[]>>(`/templates/${templateId}/guidelines`);
+    return response.data.data;
+  },
+
+  createWeeklyGuideline: async (templateId: number, data: any): Promise<any> => {
+    const response = await api.post<ApiResponse<any>>(`/templates/${templateId}/guidelines`, data);
+    return response.data.data;
+  },
+
+  updateWeeklyGuideline: async (guidelineId: number, data: any): Promise<any> => {
+    const response = await api.put<ApiResponse<any>>(`/guidelines/${guidelineId}`, data);
+    return response.data.data;
+  },
+
+  deleteWeeklyGuideline: async (guidelineId: number): Promise<void> => {
+    await api.delete(`/guidelines/${guidelineId}`);
+  },
+
+  // ========== Mentoring APIs ==========
+  getMentorings: async (seasonId: number): Promise<any[]> => {
+    const response = await api.get<ApiResponse<any[]>>(`/seasons/${seasonId}/mentorings`);
+    return response.data.data;
+  },
+
+  createMentoring: async (seasonId: number, data: any): Promise<any> => {
+    const response = await api.post<ApiResponse<any>>(`/seasons/${seasonId}/mentorings`, data);
+    return response.data.data;
+  },
+
+  updateMentoring: async (mentoringId: number, data: any): Promise<any> => {
+    const response = await api.put<ApiResponse<any>>(`/mentorings/${mentoringId}`, data);
+    return response.data.data;
+  },
+
+  deleteMentoring: async (mentoringId: number): Promise<void> => {
+    await api.delete(`/mentorings/${mentoringId}`);
+  },
+
+  getMentoringModules: async (mentoringId: number): Promise<any[]> => {
+    const response = await api.get<ApiResponse<any[]>>(`/mentorings/${mentoringId}/modules`);
+    return response.data.data;
+  },
+
+  createMentoringModule: async (mentoringId: number, data: any): Promise<any> => {
+    const response = await api.post<ApiResponse<any>>(`/mentorings/${mentoringId}/modules`, data);
+    return response.data.data;
+  },
+
+  updateMentoringModule: async (moduleId: number, data: any): Promise<any> => {
+    const response = await api.put<ApiResponse<any>>(`/modules/${moduleId}`, data);
+    return response.data.data;
+  },
+
+  deleteMentoringModule: async (moduleId: number): Promise<void> => {
+    await api.delete(`/modules/${moduleId}`);
+  },
+
+  // ========== Payment APIs ==========
+  getPricingPlans: async (seasonId: number): Promise<any[]> => {
+    const response = await api.get<ApiResponse<any[]>>(`/seasons/${seasonId}/pricing-plans`);
+    return response.data.data;
+  },
+
+  createPricingPlan: async (seasonId: number, data: any): Promise<any> => {
+    const response = await api.post<ApiResponse<any>>(`/seasons/${seasonId}/pricing-plans`, data);
+    return response.data.data;
+  },
+
+  updatePricingPlan: async (planId: number, data: any): Promise<any> => {
+    const response = await api.put<ApiResponse<any>>(`/pricing-plans/${planId}`, data);
+    return response.data.data;
+  },
+
+  deletePricingPlan: async (planId: number): Promise<void> => {
+    await api.delete(`/pricing-plans/${planId}`);
+  },
+
+  getOrders: async (seasonId: number): Promise<any[]> => {
+    const response = await api.get<ApiResponse<any[]>>(`/admin/seasons/${seasonId}/orders`);
+    return response.data.data;
+  },
+
+  refundOrder: async (orderId: number, reason: string): Promise<any> => {
+    const response = await api.post<ApiResponse<any>>(`/admin/orders/${orderId}/refund`, { reason });
+    return response.data.data;
+  },
+
+  getSubscriptions: async (seasonId: number): Promise<any[]> => {
+    const response = await api.get<ApiResponse<any[]>>(`/admin/seasons/${seasonId}/subscriptions`);
+    return response.data.data;
+  },
+
+  getPaymentStats: async (seasonId: number): Promise<any> => {
+    const response = await api.get<ApiResponse<any>>(`/admin/seasons/${seasonId}/payment-stats`);
+    return response.data.data;
+  },
 };
 
 export default adminService;

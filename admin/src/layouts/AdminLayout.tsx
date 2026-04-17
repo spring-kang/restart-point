@@ -1,5 +1,5 @@
 import { Link, Outlet, useLocation, useNavigate } from 'react-router-dom';
-import { LayoutDashboard, Calendar, UserCheck, Users, LogOut, Menu, X } from 'lucide-react';
+import { LayoutDashboard, Calendar, UserCheck, Users, LogOut, Menu, X, Book, GraduationCap, CreditCard } from 'lucide-react';
 import { useState } from 'react';
 import { useAuthStore } from '../stores/authStore';
 
@@ -8,6 +8,9 @@ const navigation = [
   { name: '회원 관리', href: '/users', icon: Users },
   { name: '시즌 관리', href: '/seasons', icon: Calendar },
   { name: '인증 관리', href: '/certifications', icon: UserCheck },
+  { name: '가이드 관리', href: '/guides', icon: Book },
+  { name: '멘토링 관리', href: '/mentoring', icon: GraduationCap },
+  { name: '결제 관리', href: '/payments', icon: CreditCard },
 ];
 
 export default function AdminLayout() {
