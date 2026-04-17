@@ -31,7 +31,7 @@ export default function Layout() {
               <span className="text-sm text-neutral-600">Re:Start Point</span>
             </div>
             <p className="text-sm text-neutral-500">
-              부트캠프 수료 이후의 성장을 다시 시작하는 AI 프로젝트 러닝 플랫폼
+              IT 취업을 준비하는 당신의 성장을 다시 시작하는 AI 프로젝트 러닝 플랫폼
             </p>
             <p className="text-xs text-neutral-400">
               © {new Date().getFullYear()} Re:Start Point. All rights reserved.

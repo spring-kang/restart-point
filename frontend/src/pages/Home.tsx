@@ -116,7 +116,7 @@ export default function Home() {
               Re:Start Point가 도와드릴게요
             </h2>
             <p className="text-neutral-600">
-              AI 기반 팀 매칭부터 성장 리포트까지, 수료 이후의 학습을 지원합니다.
+              AI 기반 팀 매칭부터 성장 리포트까지, 취업 준비의 모든 과정을 지원합니다.
             </p>
           </div>
 
