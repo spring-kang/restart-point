@@ -75,14 +75,18 @@ public class PaymentController {
 
     @Operation(summary = "주문 상세 조회", description = "주문의 상세 정보를 조회합니다.")
     @GetMapping("/orders/{orderId}")
-    public ResponseEntity<OrderResponse> getOrder(@PathVariable Long orderId) {
-        return ResponseEntity.ok(paymentService.getOrder(orderId));
+    public ResponseEntity<OrderResponse> getOrder(
+            @Parameter(hidden = true) @CurrentUser CustomUserPrincipal userPrincipal,
+            @PathVariable Long orderId) {
+        return ResponseEntity.ok(paymentService.getOrder(userPrincipal.getUserId(), orderId));
     }
 
     @Operation(summary = "주문번호로 조회", description = "주문번호로 주문을 조회합니다.")
     @GetMapping("/orders/number/{orderNumber}")
-    public ResponseEntity<OrderResponse> getOrderByNumber(@PathVariable String orderNumber) {
-        return ResponseEntity.ok(paymentService.getOrderByOrderNumber(orderNumber));
+    public ResponseEntity<OrderResponse> getOrderByNumber(
+            @Parameter(hidden = true) @CurrentUser CustomUserPrincipal userPrincipal,
+            @PathVariable String orderNumber) {
+        return ResponseEntity.ok(paymentService.getOrderByOrderNumber(userPrincipal.getUserId(), orderNumber));
     }
 
     @Operation(summary = "내 주문 목록", description = "내 주문 목록을 조회합니다.")
@@ -95,16 +99,18 @@ public class PaymentController {
     @Operation(summary = "결제 승인", description = "결제를 승인 처리합니다. (토스페이먼츠 콜백)")
     @PostMapping("/payments/confirm")
     public ResponseEntity<OrderResponse> confirmPayment(
+            @Parameter(hidden = true) @CurrentUser CustomUserPrincipal userPrincipal,
             @Valid @RequestBody PaymentConfirmRequest request) {
-        return ResponseEntity.ok(paymentService.confirmPayment(request));
+        return ResponseEntity.ok(paymentService.confirmPayment(userPrincipal.getUserId(), request));
     }
 
     @Operation(summary = "주문 취소", description = "결제 전 주문을 취소합니다.")
     @PostMapping("/orders/{orderId}/cancel")
     public ResponseEntity<OrderResponse> cancelOrder(
+            @Parameter(hidden = true) @CurrentUser CustomUserPrincipal userPrincipal,
             @PathVariable Long orderId,
             @RequestParam(required = false) String reason) {
-        return ResponseEntity.ok(paymentService.cancelOrder(orderId, reason));
+        return ResponseEntity.ok(paymentService.cancelOrder(userPrincipal.getUserId(), orderId, reason));
     }
 
     @Operation(summary = "환불 요청", description = "결제 완료된 주문을 환불합니다.")

@@ -84,19 +84,25 @@ public class NotionController {
 
     @Operation(summary = "프로젝트 동기화 상태 조회", description = "프로젝트의 Notion 동기화 상태를 조회합니다.")
     @GetMapping("/projects/{projectId}/status")
-    public ResponseEntity<ProjectNotionSyncResponse> getSyncStatus(@PathVariable Long projectId) {
-        return ResponseEntity.ok(notionService.getSyncStatus(projectId));
+    public ResponseEntity<ProjectNotionSyncResponse> getSyncStatus(
+            @Parameter(hidden = true) @CurrentUser CustomUserPrincipal userPrincipal,
+            @PathVariable Long projectId) {
+        return ResponseEntity.ok(notionService.getSyncStatus(userPrincipal.getUserId(), projectId));
     }
 
     @Operation(summary = "자동 동기화 활성화", description = "프로젝트의 자동 Notion 동기화를 활성화합니다.")
     @PostMapping("/projects/{projectId}/auto-sync/enable")
-    public ResponseEntity<ProjectNotionSyncResponse> enableAutoSync(@PathVariable Long projectId) {
-        return ResponseEntity.ok(notionService.enableAutoSync(projectId));
+    public ResponseEntity<ProjectNotionSyncResponse> enableAutoSync(
+            @Parameter(hidden = true) @CurrentUser CustomUserPrincipal userPrincipal,
+            @PathVariable Long projectId) {
+        return ResponseEntity.ok(notionService.enableAutoSync(userPrincipal.getUserId(), projectId));
     }
 
     @Operation(summary = "자동 동기화 비활성화", description = "프로젝트의 자동 Notion 동기화를 비활성화합니다.")
     @PostMapping("/projects/{projectId}/auto-sync/disable")
-    public ResponseEntity<ProjectNotionSyncResponse> disableAutoSync(@PathVariable Long projectId) {
-        return ResponseEntity.ok(notionService.disableAutoSync(projectId));
+    public ResponseEntity<ProjectNotionSyncResponse> disableAutoSync(
+            @Parameter(hidden = true) @CurrentUser CustomUserPrincipal userPrincipal,
+            @PathVariable Long projectId) {
+        return ResponseEntity.ok(notionService.disableAutoSync(userPrincipal.getUserId(), projectId));
     }
 }

@@ -10,6 +10,8 @@ import com.restartpoint.domain.mentoring.entity.MentoringSession.SessionStatus;
 import com.restartpoint.domain.mentoring.repository.JobRoleMentoringRepository;
 import com.restartpoint.domain.mentoring.repository.MentoringModuleRepository;
 import com.restartpoint.domain.mentoring.repository.MentoringSessionRepository;
+import com.restartpoint.domain.payment.entity.Subscription;
+import com.restartpoint.domain.payment.repository.SubscriptionRepository;
 import com.restartpoint.domain.profile.entity.JobRole;
 import com.restartpoint.domain.season.entity.Season;
 import com.restartpoint.domain.season.repository.SeasonRepository;
@@ -39,6 +41,7 @@ public class MentoringService {
     private final SeasonRepository seasonRepository;
     private final TeamMemberRepository teamMemberRepository;
     private final UserRepository userRepository;
+    private final SubscriptionRepository subscriptionRepository;
     private final ObjectMapper objectMapper;
 
     // ========== JobRoleMentoring 관련 ==========
@@ -182,6 +185,10 @@ public class MentoringService {
 
         // 사용자의 TeamMember 찾기 (해당 시즌)
         Long seasonId = module.getMentoring().getSeason().getId();
+
+        // 멘토링 접근 권한 확인 (구독 필요)
+        validateMentoringAccess(userId, seasonId);
+
         TeamMember teamMember = teamMemberRepository.findByUserIdAndSeasonId(userId, seasonId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.TEAM_MEMBER_NOT_FOUND));
 
@@ -344,6 +351,21 @@ public class MentoringService {
     }
 
     // ========== Helper Methods ==========
+
+    /**
+     * 사용자가 해당 시즌의 멘토링 기능에 접근할 수 있는지 확인
+     * (멘토링이 포함된 활성 구독이 있어야 함)
+     */
+    private void validateMentoringAccess(Long userId, Long seasonId) {
+        Subscription subscription = subscriptionRepository.findActiveByUserIdAndSeasonId(userId, seasonId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.SUBSCRIPTION_NOT_FOUND,
+                        "멘토링 기능을 이용하려면 구독이 필요합니다."));
+
+        if (!subscription.hasMentoring()) {
+            throw new BusinessException(ErrorCode.MENTORING_ACCESS_DENIED,
+                    "현재 구독 플랜에 멘토링이 포함되어 있지 않습니다.");
+        }
+    }
 
     private String toJson(Object obj) {
         if (obj == null) {

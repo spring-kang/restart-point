@@ -15,7 +15,7 @@ public interface ProjectTemplateRepository extends JpaRepository<ProjectTemplate
 
     List<ProjectTemplate> findBySeasonIdAndActiveTrue(Long seasonId);
 
-    Optional<ProjectTemplate> findBySeasonIdAndActiveTrue(Long seasonId, Boolean active);
+    Optional<ProjectTemplate> findFirstBySeasonIdAndActiveTrue(Long seasonId);
 
     @Query("SELECT pt FROM ProjectTemplate pt " +
            "LEFT JOIN FETCH pt.guidelines " +

@@ -146,15 +146,17 @@ public class PaymentService {
         return OrderResponse.from(saved);
     }
 
-    public OrderResponse getOrder(Long orderId) {
+    public OrderResponse getOrder(Long userId, Long orderId) {
         Order order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.ORDER_NOT_FOUND));
+        validateOrderOwnership(order, userId);
         return OrderResponse.from(order);
     }
 
-    public OrderResponse getOrderByOrderNumber(String orderNumber) {
+    public OrderResponse getOrderByOrderNumber(Long userId, String orderNumber) {
         Order order = orderRepository.findByOrderNumber(orderNumber)
                 .orElseThrow(() -> new BusinessException(ErrorCode.ORDER_NOT_FOUND));
+        validateOrderOwnership(order, userId);
         return OrderResponse.from(order);
     }
 
@@ -165,12 +167,21 @@ public class PaymentService {
     }
 
     @Transactional
-    public OrderResponse confirmPayment(PaymentConfirmRequest request) {
+    public OrderResponse confirmPayment(Long userId, PaymentConfirmRequest request) {
         Order order = orderRepository.findByOrderNumber(request.getOrderId())
                 .orElseThrow(() -> new BusinessException(ErrorCode.ORDER_NOT_FOUND));
 
+        // 주문 소유자 확인
+        validateOrderOwnership(order, userId);
+
         if (order.getStatus() != OrderStatus.PENDING) {
             throw new BusinessException(ErrorCode.INVALID_ORDER_STATUS);
+        }
+
+        // 결제 금액 검증
+        if (request.getAmount() == null ||
+            order.getAmount().compareTo(request.getAmount()) != 0) {
+            throw new BusinessException(ErrorCode.PAYMENT_FAILED, "결제 금액이 일치하지 않습니다.");
         }
 
         // TODO: 실제 토스페이먼츠 API 호출하여 결제 승인
@@ -184,9 +195,12 @@ public class PaymentService {
     }
 
     @Transactional
-    public OrderResponse cancelOrder(Long orderId, String reason) {
+    public OrderResponse cancelOrder(Long userId, Long orderId, String reason) {
         Order order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.ORDER_NOT_FOUND));
+
+        // 주문 소유자 확인
+        validateOrderOwnership(order, userId);
 
         if (order.getStatus() != OrderStatus.PENDING) {
             throw new BusinessException(ErrorCode.INVALID_ORDER_STATUS);
@@ -270,6 +284,12 @@ public class PaymentService {
 
     private String generateOrderNumber() {
         return "ORD-" + UUID.randomUUID().toString().substring(0, 8).toUpperCase();
+    }
+
+    private void validateOrderOwnership(Order order, Long userId) {
+        if (!order.getUser().getId().equals(userId)) {
+            throw new BusinessException(ErrorCode.ACCESS_DENIED, "본인의 주문만 조회할 수 있습니다.");
+        }
     }
 
     private String toJson(Object obj) {

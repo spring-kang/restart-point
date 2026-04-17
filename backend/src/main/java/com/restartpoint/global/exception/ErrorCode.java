@@ -126,6 +126,7 @@ public enum ErrorCode {
     NOT_SESSION_MENTEE(HttpStatus.FORBIDDEN, "MENTOR_008", "세션 멘티만 수행할 수 있는 작업입니다."),
     NOT_SESSION_MENTOR(HttpStatus.FORBIDDEN, "MENTOR_009", "세션 멘토만 수행할 수 없는 작업입니다."),
     TEAM_MEMBER_NOT_FOUND(HttpStatus.NOT_FOUND, "MENTOR_010", "팀원 정보를 찾을 수 없습니다."),
+    MENTORING_ACCESS_DENIED(HttpStatus.FORBIDDEN, "MENTOR_011", "멘토링 접근 권한이 없습니다."),
 
     // 결제 에러
     PRICING_PLAN_NOT_FOUND(HttpStatus.NOT_FOUND, "PAYMENT_001", "가격 정책을 찾을 수 없습니다."),

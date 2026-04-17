@@ -4,6 +4,9 @@ import com.restartpoint.domain.project.entity.Checkpoint;
 import com.restartpoint.domain.project.entity.Project;
 import com.restartpoint.domain.project.repository.CheckpointRepository;
 import com.restartpoint.domain.project.repository.ProjectRepository;
+import com.restartpoint.domain.team.entity.Team;
+import com.restartpoint.domain.team.entity.TeamMemberStatus;
+import com.restartpoint.domain.team.repository.TeamMemberRepository;
 import com.restartpoint.domain.user.entity.User;
 import com.restartpoint.domain.user.repository.UserRepository;
 import com.restartpoint.global.exception.BusinessException;
@@ -31,6 +34,7 @@ public class NotionService {
     private final UserRepository userRepository;
     private final ProjectRepository projectRepository;
     private final CheckpointRepository checkpointRepository;
+    private final TeamMemberRepository teamMemberRepository;
     private final NotionApiClient notionApiClient;
 
     @Value("${notion.client-id:}")
@@ -118,6 +122,9 @@ public class NotionService {
         Project project = projectRepository.findById(projectId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.PROJECT_NOT_FOUND));
 
+        // 프로젝트 접근 권한 확인
+        validateProjectAccess(project, userId);
+
         // 이미 설정된 경우
         Optional<ProjectNotionSync> existingSync = syncRepository.findByProjectId(projectId);
         if (existingSync.isPresent()) {
@@ -170,6 +177,9 @@ public class NotionService {
         Project project = projectRepository.findById(projectId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.PROJECT_NOT_FOUND));
 
+        // 프로젝트 접근 권한 확인
+        validateProjectAccess(project, userId);
+
         sync.markSyncing();
 
         try {
@@ -195,25 +205,35 @@ public class NotionService {
         return ProjectNotionSyncResponse.from(sync);
     }
 
-    public ProjectNotionSyncResponse getSyncStatus(Long projectId) {
+    public ProjectNotionSyncResponse getSyncStatus(Long userId, Long projectId) {
         ProjectNotionSync sync = syncRepository.findByProjectId(projectId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.NOTION_SYNC_NOT_FOUND));
+
+        // 프로젝트 접근 권한 확인
+        validateProjectAccess(sync.getProject(), userId);
+
         return ProjectNotionSyncResponse.from(sync);
     }
 
     @Transactional
-    public ProjectNotionSyncResponse enableAutoSync(Long projectId) {
+    public ProjectNotionSyncResponse enableAutoSync(Long userId, Long projectId) {
         ProjectNotionSync sync = syncRepository.findByProjectId(projectId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.NOTION_SYNC_NOT_FOUND));
+
+        // 프로젝트 접근 권한 확인
+        validateProjectAccess(sync.getProject(), userId);
 
         sync.enableAutoSync();
         return ProjectNotionSyncResponse.from(sync);
     }
 
     @Transactional
-    public ProjectNotionSyncResponse disableAutoSync(Long projectId) {
+    public ProjectNotionSyncResponse disableAutoSync(Long userId, Long projectId) {
         ProjectNotionSync sync = syncRepository.findByProjectId(projectId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.NOTION_SYNC_NOT_FOUND));
+
+        // 프로젝트 접근 권한 확인
+        validateProjectAccess(sync.getProject(), userId);
 
         sync.disableAutoSync();
         return ProjectNotionSyncResponse.from(sync);
@@ -226,5 +246,28 @@ public class NotionService {
                 "https://api.notion.com/v1/oauth/authorize?client_id=%s&response_type=code&owner=user&redirect_uri=%s&state=%s",
                 clientId, redirectUri, state
         );
+    }
+
+    // ========== Helper Methods ==========
+
+    /**
+     * 사용자가 해당 프로젝트에 접근할 수 있는지 확인
+     * (팀 리더이거나 ACCEPTED 상태의 팀원인 경우에만 접근 가능)
+     */
+    private void validateProjectAccess(Project project, Long userId) {
+        Team team = project.getTeam();
+
+        // 팀 리더인 경우
+        if (team.getLeader().getId().equals(userId)) {
+            return;
+        }
+
+        // ACCEPTED 상태의 팀원인 경우
+        boolean isTeamMember = teamMemberRepository.existsByTeamAndUserIdAndStatus(
+                team, userId, TeamMemberStatus.ACCEPTED);
+
+        if (!isTeamMember) {
+            throw new BusinessException(ErrorCode.NOT_TEAM_MEMBER);
+        }
     }
 }

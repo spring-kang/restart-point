@@ -30,6 +30,9 @@ public interface TeamMemberRepository extends JpaRepository<TeamMember, Long> {
 
     boolean existsByTeamAndUserAndStatus(Team team, User user, TeamMemberStatus status);
 
+    @Query("SELECT COUNT(tm) > 0 FROM TeamMember tm WHERE tm.team = :team AND tm.user.id = :userId AND tm.status = :status")
+    boolean existsByTeamAndUserIdAndStatus(@Param("team") Team team, @Param("userId") Long userId, @Param("status") TeamMemberStatus status);
+
     // 특정 시즌에서 사용자가 이미 ACCEPTED 상태인 팀이 있는지 확인
     @Query("SELECT COUNT(tm) > 0 FROM TeamMember tm WHERE tm.user = :user AND tm.status = 'ACCEPTED' AND tm.team.season = :season")
     boolean existsAcceptedMemberInSeason(@Param("user") User user, @Param("season") Season season);
