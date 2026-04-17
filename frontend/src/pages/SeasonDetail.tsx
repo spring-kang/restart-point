@@ -31,9 +31,8 @@ export default function SeasonDetailPage() {
 
   const canParticipate = () => {
     if (!isAuthenticated || !user) return false;
-    // 모든 사용자는 회원가입 시 이메일 인증 완료됨
-    if (user.certificationStatus !== 'APPROVED') return false;
     // 백엔드에서 팀 생성/참여 가능 여부를 canJoin으로 전달
+    // 실제 참여 자격(프로필 완성도 등)은 팀 생성/지원 시 백엔드에서 검증
     return season?.canJoin ?? false;
   };
 
@@ -127,13 +126,7 @@ export default function SeasonDetailPage() {
           </div>
         )}
 
-        {isAuthenticated && user?.certificationStatus !== 'APPROVED' && season.canJoin && !season.myTeamId && (
-          <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 mt-4">
-            <p className="text-amber-700">
-              이 시즌에 참여하려면 <Link to="/certification" className="font-semibold underline">수료 인증</Link>이 필요합니다.
-            </p>
-          </div>
-        )}
+        {/* 참여 자격은 팀 생성/지원 시 백엔드에서 검증됩니다 (프로필 완성도 기반) */}
       </div>
 
       {/* 일정 */}

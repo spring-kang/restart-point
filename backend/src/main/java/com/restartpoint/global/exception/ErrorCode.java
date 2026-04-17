@@ -39,6 +39,7 @@ public enum ErrorCode {
     // 프로필 에러
     PROFILE_NOT_FOUND(HttpStatus.NOT_FOUND, "PROFILE_001", "프로필을 찾을 수 없습니다."),
     PROFILE_ALREADY_EXISTS(HttpStatus.CONFLICT, "PROFILE_002", "이미 프로필이 존재합니다."),
+    PROFILE_INCOMPLETE(HttpStatus.FORBIDDEN, "PROFILE_003", "팀 참여를 위해 프로필을 완성해주세요. (직무, 기술 스택, 자기소개 50자 이상)"),
 
     // 시즌 에러
     SEASON_NOT_FOUND(HttpStatus.NOT_FOUND, "SEASON_001", "시즌을 찾을 수 없습니다."),

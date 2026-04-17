@@ -66,7 +66,7 @@ public class Season extends BaseTimeEntity {
 
     // 참여 자격 설정
     @Column(name = "requires_certification", nullable = false)
-    private Boolean requiresCertification = true;  // true: 수료생만, false: 누구나 참여 가능
+    private Boolean requiresCertification = false;  // false: 누구나 참여 가능, true: 수료생만
 
     @Builder
     public Season(String title, String description,
@@ -89,7 +89,7 @@ public class Season extends BaseTimeEntity {
         this.reviewEndAt = reviewEndAt;
         this.expertReviewWeight = expertReviewWeight != null ? expertReviewWeight : 100;
         this.candidateReviewWeight = candidateReviewWeight != null ? candidateReviewWeight : 0;
-        this.requiresCertification = requiresCertification != null ? requiresCertification : true;
+        this.requiresCertification = requiresCertification != null ? requiresCertification : false;
     }
 
     public void updateStatus(SeasonStatus status) {
@@ -115,7 +115,7 @@ public class Season extends BaseTimeEntity {
         this.reviewEndAt = reviewEndAt;
         this.expertReviewWeight = expertReviewWeight != null ? expertReviewWeight : 100;
         this.candidateReviewWeight = candidateReviewWeight != null ? candidateReviewWeight : 0;
-        this.requiresCertification = requiresCertification != null ? requiresCertification : true;
+        this.requiresCertification = requiresCertification != null ? requiresCertification : false;
     }
 
     /**

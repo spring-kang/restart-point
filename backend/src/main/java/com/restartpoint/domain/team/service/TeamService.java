@@ -2,6 +2,8 @@ package com.restartpoint.domain.team.service;
 
 import com.restartpoint.domain.notification.service.NotificationService;
 import com.restartpoint.domain.profile.entity.JobRole;
+import com.restartpoint.domain.profile.entity.Profile;
+import com.restartpoint.domain.profile.repository.ProfileRepository;
 import com.restartpoint.domain.season.entity.Season;
 import com.restartpoint.domain.season.entity.SeasonStatus;
 import com.restartpoint.domain.season.repository.SeasonRepository;
@@ -34,6 +36,7 @@ public class TeamService {
     private final TeamMemberRepository teamMemberRepository;
     private final SeasonRepository seasonRepository;
     private final UserRepository userRepository;
+    private final ProfileRepository profileRepository;
     private final NotificationService notificationService;
 
     // 팀 생성
@@ -42,10 +45,8 @@ public class TeamService {
         User user = findUserById(userId);
         Season season = findSeasonById(request.getSeasonId());
 
-        // 시즌별 참여 자격 확인 (인증 필수 시즌인 경우에만 수료 인증 체크)
-        if (!season.canUserParticipate(user.isCertified())) {
-            throw new BusinessException(ErrorCode.CERTIFICATION_REQUIRED);
-        }
+        // 참여 자격 확인
+        validateParticipationEligibility(user, season);
 
         // 팀 생성 가능한 시즌 상태인지 확인 (RECRUITING 또는 TEAM_BUILDING)
         if (!isTeamCreationAllowed(season.getStatus())) {
@@ -154,10 +155,8 @@ public class TeamService {
         User user = findUserById(userId);
         Team team = findTeamById(teamId);
 
-        // 시즌별 참여 자격 확인 (인증 필수 시즌인 경우에만 수료 인증 체크)
-        if (!team.getSeason().canUserParticipate(user.isCertified())) {
-            throw new BusinessException(ErrorCode.CERTIFICATION_REQUIRED);
-        }
+        // 참여 자격 확인
+        validateParticipationEligibility(user, team.getSeason());
 
         // 팀이 모집 중인지 확인
         if (team.getStatus() != TeamStatus.RECRUITING) {
@@ -367,5 +366,25 @@ public class TeamService {
 
         // 팀원으로서 ACCEPTED 상태인 팀이 있는지 확인
         return teamMemberRepository.existsAcceptedMemberInSeason(user, season);
+    }
+
+    /**
+     * 사용자의 시즌 참여 자격을 확인합니다.
+     * 1. 프로필 완성도 확인 (필수)
+     * 2. 수료 인증 확인 (시즌 설정에 따라)
+     */
+    private void validateParticipationEligibility(User user, Season season) {
+        // 1. 프로필 완성도 확인 (모든 시즌 공통)
+        Profile profile = profileRepository.findByUserId(user.getId())
+                .orElseThrow(() -> new BusinessException(ErrorCode.PROFILE_INCOMPLETE));
+
+        if (!profile.isComplete()) {
+            throw new BusinessException(ErrorCode.PROFILE_INCOMPLETE);
+        }
+
+        // 2. 수료 인증 확인 (인증 필수 시즌인 경우에만)
+        if (!season.canUserParticipate(user.isCertified())) {
+            throw new BusinessException(ErrorCode.CERTIFICATION_REQUIRED);
+        }
     }
 }

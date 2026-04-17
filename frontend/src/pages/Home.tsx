@@ -39,7 +39,7 @@ export default function Home() {
               AI 기반 프로젝트 러닝 플랫폼
             </div>
             <h1 className="text-4xl lg:text-6xl font-bold text-neutral-900 mb-6 leading-tight">
-              부트캠프 수료 이후,
+              IT 취업을 준비하는 당신,
               <br />
               <span className="text-primary-600">성장을 다시 시작하세요</span>
             </h1>
@@ -85,10 +85,10 @@ export default function Home() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="max-w-3xl mx-auto text-center mb-16">
             <h2 className="text-3xl font-bold text-neutral-900 mb-4">
-              수료 이후, 이런 고민 있으셨나요?
+              취업 준비 중, 이런 고민 있으셨나요?
             </h2>
             <p className="text-neutral-600">
-              부트캠프는 수료까지는 체계적이지만, 수료 이후는 개인에게 맡겨집니다.
+              학습은 끝났지만, 실전 경험이 부족하다면. 혼자서 포트폴리오를 만드는 게 막막하다면.
             </p>
           </div>
 
@@ -145,7 +145,7 @@ export default function Home() {
 
           <div className="grid md:grid-cols-5 gap-4">
             {[
-              { step: '01', title: '수료 인증', desc: '부트캠프 수료 인증' },
+              { step: '01', title: '회원가입', desc: '간단한 가입 절차' },
               { step: '02', title: '프로필 작성', desc: '역할 및 기술 스택 입력' },
               { step: '03', title: '팀 구성', desc: 'AI 추천으로 팀 매칭' },
               { step: '04', title: '프로젝트', desc: 'AI 코칭과 함께 진행' },
@@ -170,8 +170,8 @@ export default function Home() {
             지금 바로 시작하세요
           </h2>
           <p className="text-primary-100 mb-8 max-w-2xl mx-auto">
-            부트캠프 수료 이후에도 성장을 멈추지 마세요.
-            Re:Start Point에서 다시 시작할 수 있습니다.
+            취업 준비, 혼자가 아닙니다.
+            Re:Start Point에서 팀과 함께 성장하세요.
           </p>
           {!isAuthenticated && (
             <Link

@@ -108,19 +108,11 @@ export default function MyTeamPage() {
           <Users className="w-16 h-16 text-neutral-300 mx-auto mb-4" />
           <h2 className="text-lg font-semibold text-neutral-900 mb-2">아직 팀이 없습니다</h2>
           <p className="text-neutral-500 mb-6">
-            {user?.certificationStatus === 'APPROVED'
-              ? '팀을 만들거나 다른 팀에 지원해보세요!'
-              : '수료 인증을 완료하면 팀에 참여할 수 있습니다.'}
+            팀을 만들거나 다른 팀에 지원해보세요!
           </p>
-          {user?.certificationStatus === 'APPROVED' ? (
-            <Link to="/teams" className="btn-primary">
-              팀 둘러보기
-            </Link>
-          ) : (
-            <Link to="/certification" className="btn-primary">
-              수료 인증하기
-            </Link>
-          )}
+          <Link to="/teams" className="btn-primary">
+            팀 둘러보기
+          </Link>
         </div>
       ) : (
         <div className="space-y-8">

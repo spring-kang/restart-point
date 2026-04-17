@@ -92,4 +92,14 @@ public class Profile extends BaseTimeEntity {
         this.preferredDifficulty = preferredDifficulty;
         this.introduction = introduction;
     }
+
+    /**
+     * 프로필 완성 여부를 확인합니다.
+     * 팀 참여를 위한 최소 조건: 직무, 기술 스택(1개 이상), 자기소개(50자 이상)
+     */
+    public boolean isComplete() {
+        return this.jobRole != null
+                && this.techStacks != null && !this.techStacks.isEmpty()
+                && this.introduction != null && this.introduction.length() >= 50;
+    }
 }
