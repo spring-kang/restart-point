@@ -64,8 +64,8 @@ public class Season extends BaseTimeEntity {
     @Column(name = "candidate_review_weight")
     private Integer candidateReviewWeight = 0;  // 참여자 심사는 비활성화
 
-    // 참여 자격 설정
-    @Column(name = "requires_certification", nullable = false)
+    // 참여 자격 설정 (기존 데이터 호환성을 위해 nullable)
+    @Column(name = "requires_certification")
     private Boolean requiresCertification = false;  // false: 누구나 참여 가능, true: 수료생만
 
     @Builder
@@ -119,11 +119,18 @@ public class Season extends BaseTimeEntity {
     }
 
     /**
+     * 수료 인증이 필요한 시즌인지 확인 (null 안전 처리)
+     */
+    public Boolean getRequiresCertification() {
+        return requiresCertification != null ? requiresCertification : false;
+    }
+
+    /**
      * 해당 사용자가 이 시즌에 참여할 자격이 있는지 확인
      */
     public boolean canUserParticipate(boolean isCertified) {
         // 인증이 필요 없는 시즌이거나, 인증된 사용자면 참여 가능
-        return !this.requiresCertification || isCertified;
+        return !getRequiresCertification() || isCertified;
     }
 
     public boolean isRecruiting() {
