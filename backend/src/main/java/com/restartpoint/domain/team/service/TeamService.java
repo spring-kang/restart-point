@@ -42,8 +42,8 @@ public class TeamService {
         User user = findUserById(userId);
         Season season = findSeasonById(request.getSeasonId());
 
-        // 수료 인증 확인
-        if (!user.isCertified()) {
+        // 시즌별 참여 자격 확인 (인증 필수 시즌인 경우에만 수료 인증 체크)
+        if (!season.canUserParticipate(user.isCertified())) {
             throw new BusinessException(ErrorCode.CERTIFICATION_REQUIRED);
         }
 
@@ -154,8 +154,8 @@ public class TeamService {
         User user = findUserById(userId);
         Team team = findTeamById(teamId);
 
-        // 수료 인증 확인
-        if (!user.isCertified()) {
+        // 시즌별 참여 자격 확인 (인증 필수 시즌인 경우에만 수료 인증 체크)
+        if (!team.getSeason().canUserParticipate(user.isCertified())) {
             throw new BusinessException(ErrorCode.CERTIFICATION_REQUIRED);
         }
 

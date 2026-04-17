@@ -55,6 +55,7 @@ public class SeasonService {
                 .reviewEndAt(request.getReviewEndAt())
                 .expertReviewWeight(request.getExpertReviewWeight())
                 .candidateReviewWeight(request.getCandidateReviewWeight())
+                .requiresCertification(request.getRequiresCertification())
                 .build();
 
         Season savedSeason = seasonRepository.save(season);
@@ -86,7 +87,8 @@ public class SeasonService {
                 request.getReviewStartAt(),
                 request.getReviewEndAt(),
                 request.getExpertReviewWeight(),
-                request.getCandidateReviewWeight()
+                request.getCandidateReviewWeight(),
+                request.getRequiresCertification()
         );
 
         return SeasonResponse.from(season);

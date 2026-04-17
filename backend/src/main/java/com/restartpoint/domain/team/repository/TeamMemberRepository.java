@@ -37,4 +37,10 @@ public interface TeamMemberRepository extends JpaRepository<TeamMember, Long> {
     // 특정 시즌에서 사용자가 리더인 팀이 있는지 확인
     @Query("SELECT COUNT(t) > 0 FROM Team t WHERE t.leader = :user AND t.season = :season")
     boolean existsLeaderInSeason(@Param("user") User user, @Param("season") Season season);
+
+    // 특정 시즌에서 사용자의 ACCEPTED 팀 멤버십 조회 (멘토링용)
+    @Query("SELECT tm FROM TeamMember tm " +
+           "JOIN tm.team t " +
+           "WHERE tm.user.id = :userId AND t.season.id = :seasonId AND tm.status = 'ACCEPTED'")
+    Optional<TeamMember> findByUserIdAndSeasonId(@Param("userId") Long userId, @Param("seasonId") Long seasonId);
 }

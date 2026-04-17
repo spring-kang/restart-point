@@ -106,7 +106,43 @@ public enum ErrorCode {
     COMMENT_NOT_BELONG_TO_POST(HttpStatus.BAD_REQUEST, "COMMUNITY_007", "해당 댓글은 이 게시글에 속하지 않습니다."),
 
     // 알림 에러
-    NOTIFICATION_NOT_FOUND(HttpStatus.NOT_FOUND, "NOTIFICATION_001", "알림을 찾을 수 없습니다.");
+    NOTIFICATION_NOT_FOUND(HttpStatus.NOT_FOUND, "NOTIFICATION_001", "알림을 찾을 수 없습니다."),
+
+    // 가이드 에러
+    TEMPLATE_NOT_FOUND(HttpStatus.NOT_FOUND, "GUIDE_001", "프로젝트 템플릿을 찾을 수 없습니다."),
+    GUIDELINE_NOT_FOUND(HttpStatus.NOT_FOUND, "GUIDE_002", "가이드라인을 찾을 수 없습니다."),
+    INVALID_WEEK_NUMBER(HttpStatus.BAD_REQUEST, "GUIDE_003", "유효하지 않은 주차 번호입니다."),
+    DUPLICATE_WEEK_NUMBER(HttpStatus.CONFLICT, "GUIDE_004", "해당 주차의 가이드라인이 이미 존재합니다."),
+    COMPLETION_NOT_FOUND(HttpStatus.NOT_FOUND, "GUIDE_005", "가이드 완료 기록을 찾을 수 없습니다."),
+
+    // 멘토링 에러
+    MENTORING_NOT_FOUND(HttpStatus.NOT_FOUND, "MENTOR_001", "멘토링 프로그램을 찾을 수 없습니다."),
+    MENTORING_MODULE_NOT_FOUND(HttpStatus.NOT_FOUND, "MENTOR_002", "멘토링 모듈을 찾을 수 없습니다."),
+    MENTORING_SESSION_NOT_FOUND(HttpStatus.NOT_FOUND, "MENTOR_003", "멘토링 세션을 찾을 수 없습니다."),
+    DUPLICATE_MENTORING(HttpStatus.CONFLICT, "MENTOR_004", "해당 직무의 멘토링이 이미 존재합니다."),
+    DUPLICATE_MODULE_WEEK(HttpStatus.CONFLICT, "MENTOR_005", "해당 주차의 모듈이 이미 존재합니다."),
+    SESSION_ALREADY_EXISTS(HttpStatus.CONFLICT, "MENTOR_006", "이미 해당 모듈의 세션이 존재합니다."),
+    INVALID_SESSION_STATUS(HttpStatus.BAD_REQUEST, "MENTOR_007", "해당 상태에서는 이 작업을 수행할 수 없습니다."),
+    NOT_SESSION_MENTEE(HttpStatus.FORBIDDEN, "MENTOR_008", "세션 멘티만 수행할 수 있는 작업입니다."),
+    NOT_SESSION_MENTOR(HttpStatus.FORBIDDEN, "MENTOR_009", "세션 멘토만 수행할 수 없는 작업입니다."),
+    TEAM_MEMBER_NOT_FOUND(HttpStatus.NOT_FOUND, "MENTOR_010", "팀원 정보를 찾을 수 없습니다."),
+
+    // 결제 에러
+    PRICING_PLAN_NOT_FOUND(HttpStatus.NOT_FOUND, "PAYMENT_001", "가격 정책을 찾을 수 없습니다."),
+    ORDER_NOT_FOUND(HttpStatus.NOT_FOUND, "PAYMENT_002", "주문을 찾을 수 없습니다."),
+    SUBSCRIPTION_NOT_FOUND(HttpStatus.NOT_FOUND, "PAYMENT_003", "구독 정보를 찾을 수 없습니다."),
+    DUPLICATE_PRICING_PLAN(HttpStatus.CONFLICT, "PAYMENT_004", "이미 같은 이름의 가격 정책이 존재합니다."),
+    ALREADY_SUBSCRIBED(HttpStatus.CONFLICT, "PAYMENT_005", "이미 해당 시즌에 구독 중입니다."),
+    PAYMENT_FAILED(HttpStatus.BAD_REQUEST, "PAYMENT_006", "결제에 실패했습니다."),
+    INVALID_ORDER_STATUS(HttpStatus.BAD_REQUEST, "PAYMENT_007", "해당 상태에서는 이 작업을 수행할 수 없습니다."),
+    REFUND_FAILED(HttpStatus.BAD_REQUEST, "PAYMENT_008", "환불에 실패했습니다."),
+    NO_ACTIVE_SUBSCRIPTION(HttpStatus.FORBIDDEN, "PAYMENT_009", "활성 구독이 없습니다."),
+
+    // Notion 에러
+    NOTION_NOT_CONNECTED(HttpStatus.NOT_FOUND, "NOTION_001", "Notion이 연동되지 않았습니다."),
+    NOTION_SYNC_NOT_FOUND(HttpStatus.NOT_FOUND, "NOTION_002", "Notion 동기화 설정을 찾을 수 없습니다."),
+    NOTION_SYNC_FAILED(HttpStatus.SERVICE_UNAVAILABLE, "NOTION_003", "Notion 동기화에 실패했습니다."),
+    NOTION_API_ERROR(HttpStatus.SERVICE_UNAVAILABLE, "NOTION_004", "Notion API 호출에 실패했습니다.");
 
     private final HttpStatus httpStatus;
     private final String code;
