@@ -8,6 +8,9 @@ import SeasonsPage from './pages/Seasons';
 import CertificationsPage from './pages/Certifications';
 import UsersPage from './pages/Users';
 import ReviewAnalysisPage from './pages/ReviewAnalysis';
+import GuidesPage from './pages/Guides';
+import MentoringPage from './pages/Mentoring';
+import PaymentsPage from './pages/Payments';
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { isAuthenticated, isLoading } = useAuthStore();
@@ -51,6 +54,9 @@ function App() {
           <Route path="seasons" element={<SeasonsPage />} />
           <Route path="seasons/:seasonId/review-analysis" element={<ReviewAnalysisPage />} />
           <Route path="certifications" element={<CertificationsPage />} />
+          <Route path="guides" element={<GuidesPage />} />
+          <Route path="mentoring" element={<MentoringPage />} />
+          <Route path="payments" element={<PaymentsPage />} />
         </Route>
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
