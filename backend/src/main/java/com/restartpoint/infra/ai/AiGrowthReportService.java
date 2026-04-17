@@ -28,7 +28,7 @@ public class AiGrowthReportService {
     private final ObjectMapper objectMapper;
 
     private static final String SYSTEM_PROMPT = """
-        당신은 부트캠프 프로젝트 코칭 전문가입니다.
+        당신은 IT 취업 준비생을 위한 프로젝트 코칭 전문가입니다.
         프로젝트 심사 결과를 바탕으로 팀과 개인의 성장을 위한 건설적인 피드백을 제공합니다.
 
         피드백은 다음 원칙을 따릅니다:

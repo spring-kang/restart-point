@@ -51,7 +51,7 @@ public class SwaggerConfig {
                 .description("""
                         ## Re:Start Point API 문서
 
-                        부트캠프 수료 이후의 성장을 다시 시작하는 AI 프로젝트 러닝 플랫폼
+                        IT 취업을 준비하는 당신의 성장을 다시 시작하는 AI 프로젝트 러닝 플랫폼
 
                         ### 주요 기능
                         - **인증**: 회원가입, 로그인, 이메일 인증

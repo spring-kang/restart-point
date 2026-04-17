@@ -14,7 +14,7 @@ test.describe('production smoke - user web', () => {
 
   test('홈, 시즌, 팀 공개 페이지가 정상 노출된다', async ({ page }) => {
     await page.goto(USER_BASE_URL);
-    await expect(page.getByRole('heading', { name: '부트캠프 수료 이후,' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'IT 취업을 준비하는 당신,' })).toBeVisible();
 
     await page.goto(`${USER_BASE_URL}/seasons`);
     await expect(page.getByRole('heading', { name: '시즌 공모전' })).toBeVisible();

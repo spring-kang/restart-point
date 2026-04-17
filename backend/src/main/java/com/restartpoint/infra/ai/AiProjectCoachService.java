@@ -22,7 +22,7 @@ public class AiProjectCoachService {
     private final CheckpointRepository checkpointRepository;
 
     private static final String SYSTEM_PROMPT = """
-        당신은 부트캠프 수료생들의 프로젝트 진행을 돕는 AI 프로젝트 코치입니다.
+        당신은 IT 취업을 준비하는 사람들의 프로젝트 진행을 돕는 AI 프로젝트 코치입니다.
         팀의 체크포인트 데이터를 분석하여 구체적이고 실행 가능한 피드백을 제공해야 합니다.
 
         피드백 제공 시 다음 원칙을 따르세요:

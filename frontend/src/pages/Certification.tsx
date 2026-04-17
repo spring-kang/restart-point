@@ -259,7 +259,7 @@ export default function Certification() {
         <Award className="w-16 h-16 text-primary-500 mx-auto mb-4" />
         <h1 className="text-2xl font-bold text-neutral-900 mb-2">수료 인증</h1>
         <p className="text-neutral-600">
-          부트캠프 수료 정보를 입력해주세요. 인증 후 팀 참가가 가능합니다.
+          부트캠프 수료생이신가요? 인증하면 수료생 전용 시즌에 참여할 수 있습니다.
         </p>
       </div>
 
