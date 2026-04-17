@@ -51,5 +51,5 @@ public class SeasonRequest {
     private Integer candidateReviewWeight = 0;
 
     // 참여 자격 설정 (true: 수료생만, false: 누구나 참여 가능)
-    private Boolean requiresCertification = true;
+    private Boolean requiresCertification = false;
 }
