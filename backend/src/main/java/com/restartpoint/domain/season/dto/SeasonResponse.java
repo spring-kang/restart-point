@@ -26,6 +26,7 @@ public class SeasonResponse {
     private LocalDateTime reviewEndAt;
     private Integer expertReviewWeight;
     private Integer candidateReviewWeight;
+    private Boolean requiresCertification;  // true: 수료생만, false: 누구나 참여 가능
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 
@@ -53,6 +54,7 @@ public class SeasonResponse {
                 .reviewEndAt(season.getReviewEndAt())
                 .expertReviewWeight(season.getExpertReviewWeight())
                 .candidateReviewWeight(season.getCandidateReviewWeight())
+                .requiresCertification(season.getRequiresCertification())
                 .createdAt(season.getCreatedAt())
                 .updatedAt(season.getUpdatedAt())
                 .currentPhase(calculateCurrentPhase(season))
@@ -76,6 +78,7 @@ public class SeasonResponse {
                 .reviewEndAt(season.getReviewEndAt())
                 .expertReviewWeight(season.getExpertReviewWeight())
                 .candidateReviewWeight(season.getCandidateReviewWeight())
+                .requiresCertification(season.getRequiresCertification())
                 .createdAt(season.getCreatedAt())
                 .updatedAt(season.getUpdatedAt())
                 .currentPhase(calculateCurrentPhase(season))

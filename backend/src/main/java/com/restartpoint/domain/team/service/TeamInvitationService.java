@@ -127,16 +127,18 @@ public class TeamInvitationService {
     public TeamInvitationResponse acceptInvitation(Long userId, Long invitationId) {
         TeamInvitation invitation = findInvitationById(invitationId);
         Team team = invitation.getTeam();
+        User invitedUser = invitation.getInvitedUser();
 
         // 검증
         validateInvitedUser(invitation, userId);
         validateInvitationPending(invitation);
         validateInvitationNotExpired(invitation);
+        validateCertificationRequirement(team.getSeason(), invitedUser);  // 시즌별 인증 요구사항 확인
         validateTeamRecruiting(team);  // 팀이 아직 모집 중인지 확인
         validateRecruitingRole(team, invitation.getSuggestedRole());  // 역할이 아직 열려있는지 확인
         validateTeamNotFull(team);
-        validateNotAlreadyApplied(team, invitation.getInvitedUser());  // 중복 TeamMember 방지
-        validateNotAlreadyInTeam(invitation.getInvitedUser(), team.getSeason());
+        validateNotAlreadyApplied(team, invitedUser);  // 중복 TeamMember 방지
+        validateNotAlreadyInTeam(invitedUser, team.getSeason());
 
         // 영입 요청 수락
         invitation.accept();
@@ -321,6 +323,12 @@ public class TeamInvitationService {
     private void validateInvitationNotExpired(TeamInvitation invitation) {
         if (invitation.isExpired()) {
             throw new BusinessException(ErrorCode.INVITATION_EXPIRED);
+        }
+    }
+
+    private void validateCertificationRequirement(Season season, User user) {
+        if (!season.canUserParticipate(user.isCertified())) {
+            throw new BusinessException(ErrorCode.CERTIFICATION_REQUIRED);
         }
     }
 }

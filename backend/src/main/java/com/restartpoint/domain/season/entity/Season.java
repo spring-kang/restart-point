@@ -64,13 +64,18 @@ public class Season extends BaseTimeEntity {
     @Column(name = "candidate_review_weight")
     private Integer candidateReviewWeight = 0;  // 참여자 심사는 비활성화
 
+    // 참여 자격 설정
+    @Column(name = "requires_certification", nullable = false)
+    private Boolean requiresCertification = true;  // true: 수료생만, false: 누구나 참여 가능
+
     @Builder
     public Season(String title, String description,
                   LocalDateTime recruitmentStartAt, LocalDateTime recruitmentEndAt,
                   LocalDateTime teamBuildingStartAt, LocalDateTime teamBuildingEndAt,
                   LocalDateTime projectStartAt, LocalDateTime projectEndAt,
                   LocalDateTime reviewStartAt, LocalDateTime reviewEndAt,
-                  Integer expertReviewWeight, Integer candidateReviewWeight) {
+                  Integer expertReviewWeight, Integer candidateReviewWeight,
+                  Boolean requiresCertification) {
         this.title = title;
         this.description = description;
         this.status = SeasonStatus.DRAFT;
@@ -84,6 +89,7 @@ public class Season extends BaseTimeEntity {
         this.reviewEndAt = reviewEndAt;
         this.expertReviewWeight = expertReviewWeight != null ? expertReviewWeight : 100;
         this.candidateReviewWeight = candidateReviewWeight != null ? candidateReviewWeight : 0;
+        this.requiresCertification = requiresCertification != null ? requiresCertification : true;
     }
 
     public void updateStatus(SeasonStatus status) {
@@ -95,7 +101,8 @@ public class Season extends BaseTimeEntity {
                        LocalDateTime teamBuildingStartAt, LocalDateTime teamBuildingEndAt,
                        LocalDateTime projectStartAt, LocalDateTime projectEndAt,
                        LocalDateTime reviewStartAt, LocalDateTime reviewEndAt,
-                       Integer expertReviewWeight, Integer candidateReviewWeight) {
+                       Integer expertReviewWeight, Integer candidateReviewWeight,
+                       Boolean requiresCertification) {
         this.title = title;
         this.description = description;
         this.recruitmentStartAt = recruitmentStartAt;
@@ -108,6 +115,15 @@ public class Season extends BaseTimeEntity {
         this.reviewEndAt = reviewEndAt;
         this.expertReviewWeight = expertReviewWeight != null ? expertReviewWeight : 100;
         this.candidateReviewWeight = candidateReviewWeight != null ? candidateReviewWeight : 0;
+        this.requiresCertification = requiresCertification != null ? requiresCertification : true;
+    }
+
+    /**
+     * 해당 사용자가 이 시즌에 참여할 자격이 있는지 확인
+     */
+    public boolean canUserParticipate(boolean isCertified) {
+        // 인증이 필요 없는 시즌이거나, 인증된 사용자면 참여 가능
+        return !this.requiresCertification || isCertified;
     }
 
     public boolean isRecruiting() {
