@@ -207,9 +207,13 @@ public class MentoringService {
         return MentoringSessionResponse.from(saved);
     }
 
-    public MentoringSessionResponse getSession(Long sessionId) {
+    public MentoringSessionResponse getSession(Long sessionId, Long userId) {
         MentoringSession session = sessionRepository.findById(sessionId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.MENTORING_SESSION_NOT_FOUND));
+
+        // 세션 접근 권한 확인 (멘티 본인 또는 담당 멘토만 조회 가능)
+        validateSessionAccess(session, userId);
+
         return MentoringSessionResponse.from(session);
     }
 
@@ -365,6 +369,24 @@ public class MentoringService {
             throw new BusinessException(ErrorCode.MENTORING_ACCESS_DENIED,
                     "현재 구독 플랜에 멘토링이 포함되어 있지 않습니다.");
         }
+    }
+
+    /**
+     * 사용자가 해당 세션에 접근할 수 있는지 확인
+     * (멘티 본인 또는 담당 멘토만 접근 가능)
+     */
+    private void validateSessionAccess(MentoringSession session, Long userId) {
+        // 멘티 본인인지 확인
+        if (session.getMentee().getUser().getId().equals(userId)) {
+            return;
+        }
+
+        // 담당 멘토인지 확인
+        if (session.getMentor() != null && session.getMentor().getId().equals(userId)) {
+            return;
+        }
+
+        throw new BusinessException(ErrorCode.ACCESS_DENIED, "해당 세션에 접근할 권한이 없습니다.");
     }
 
     private String toJson(Object obj) {

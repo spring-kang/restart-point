@@ -133,8 +133,10 @@ public class MentoringController {
 
     @Operation(summary = "세션 상세 조회", description = "멘토링 세션의 상세 정보를 조회합니다.")
     @GetMapping("/sessions/{sessionId}")
-    public ResponseEntity<MentoringSessionResponse> getSession(@PathVariable Long sessionId) {
-        return ResponseEntity.ok(mentoringService.getSession(sessionId));
+    public ResponseEntity<MentoringSessionResponse> getSession(
+            @Parameter(hidden = true) @CurrentUser CustomUserPrincipal userPrincipal,
+            @PathVariable Long sessionId) {
+        return ResponseEntity.ok(mentoringService.getSession(sessionId, userPrincipal.getUserId()));
     }
 
     @Operation(summary = "내 세션 목록 조회", description = "해당 시즌에서 내 멘토링 세션 목록을 조회합니다.")
