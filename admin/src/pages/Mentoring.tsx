@@ -7,7 +7,7 @@ import {
   ChevronDown,
   ChevronRight,
   BookOpen,
-  Users,
+  AlertCircle,
 } from 'lucide-react';
 import adminService from '../services/adminService';
 
@@ -58,6 +58,8 @@ export default function MentoringPage() {
   const [expandedMentoring, setExpandedMentoring] = useState<number | null>(null);
   const [modules, setModules] = useState<Record<number, MentoringModule[]>>({});
   const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [moduleErrors, setModuleErrors] = useState<Record<number, string>>({});
   const [showMentoringModal, setShowMentoringModal] = useState(false);
   const [showModuleModal, setShowModuleModal] = useState(false);
   const [editingMentoring, setEditingMentoring] = useState<JobRoleMentoring | null>(null);
@@ -81,29 +83,37 @@ export default function MentoringPage() {
       if (data.content.length > 0) {
         setSelectedSeasonId(data.content[0].id);
       }
-    } catch (error) {
-      console.error('Failed to load seasons:', error);
+    } catch (err) {
+      console.error('Failed to load seasons:', err);
+      setError('시즌 목록을 불러오는데 실패했습니다.');
     } finally {
       setIsLoading(false);
     }
   };
 
   const loadMentorings = async (seasonId: number) => {
+    setError(null);
     try {
       const data = await adminService.getMentorings(seasonId);
-      setMentorings(data);
-    } catch (error) {
-      console.error('Failed to load mentorings:', error);
+      setMentorings(data || []);
+    } catch (err) {
+      console.error('Failed to load mentorings:', err);
+      setError('멘토링 목록을 불러오는데 실패했습니다.');
       setMentorings([]);
     }
   };
 
   const loadModules = async (mentoringId: number) => {
+    setModuleErrors((prev) => ({ ...prev, [mentoringId]: '' }));
     try {
       const data = await adminService.getMentoringModules(mentoringId);
-      setModules((prev) => ({ ...prev, [mentoringId]: data }));
-    } catch (error) {
-      console.error('Failed to load modules:', error);
+      setModules((prev) => ({ ...prev, [mentoringId]: data || [] }));
+    } catch (err) {
+      console.error('Failed to load modules:', err);
+      setModuleErrors((prev) => ({
+        ...prev,
+        [mentoringId]: '모듈을 불러오는데 실패했습니다.',
+      }));
     }
   };
 
@@ -210,9 +220,17 @@ export default function MentoringPage() {
         </div>
       </div>
 
+      {/* Error State */}
+      {error && (
+        <div className="card bg-red-50 border-red-200 flex items-center gap-3">
+          <AlertCircle className="w-5 h-5 text-red-500" />
+          <p className="text-red-700">{error}</p>
+        </div>
+      )}
+
       {/* Mentorings List */}
       <div className="space-y-4">
-        {mentorings.length === 0 ? (
+        {mentorings.length === 0 && !error ? (
           <div className="card text-center py-12">
             <GraduationCap className="w-12 h-12 text-gray-300 mx-auto mb-4" />
             <p className="text-gray-500">등록된 멘토링 프로그램이 없습니다.</p>
@@ -314,47 +332,57 @@ export default function MentoringPage() {
                       </button>
                     </div>
 
+                    {/* Module Error */}
+                    {moduleErrors[mentoring.id] && (
+                      <div className="mb-3 p-3 bg-red-50 border border-red-200 rounded-lg flex items-center gap-2">
+                        <AlertCircle className="w-4 h-4 text-red-500" />
+                        <p className="text-sm text-red-700">{moduleErrors[mentoring.id]}</p>
+                      </div>
+                    )}
+
                     {modules[mentoring.id]?.length > 0 ? (
                       <div className="space-y-2">
-                        {modules[mentoring.id].map((module) => (
-                          <div
-                            key={module.id}
-                            className="flex items-center justify-between p-3 bg-gray-50 rounded-lg"
-                          >
-                            <div className="flex items-center gap-3">
-                              <span className="w-8 h-8 bg-primary-100 text-primary-700 rounded-full flex items-center justify-center text-sm font-medium">
-                                {module.weekNumber}
-                              </span>
-                              <div>
-                                <p className="font-medium text-gray-900">{module.title}</p>
-                                <p className="text-xs text-gray-500">
-                                  예상 {module.estimatedMinutes}분 ·{' '}
-                                  {module.practiceTasks?.length || 0}개 실습
-                                </p>
+                        {modules[mentoring.id]
+                          .sort((a, b) => a.weekNumber - b.weekNumber)
+                          .map((module) => (
+                            <div
+                              key={module.id}
+                              className="flex items-center justify-between p-3 bg-gray-50 rounded-lg"
+                            >
+                              <div className="flex items-center gap-3">
+                                <span className="w-8 h-8 bg-primary-100 text-primary-700 rounded-full flex items-center justify-center text-sm font-medium">
+                                  {module.weekNumber}
+                                </span>
+                                <div>
+                                  <p className="font-medium text-gray-900">{module.title}</p>
+                                  <p className="text-xs text-gray-500">
+                                    예상 {module.estimatedMinutes}분 ·{' '}
+                                    {module.practiceTasks?.length || 0}개 실습
+                                  </p>
+                                </div>
+                              </div>
+                              <div className="flex items-center gap-1">
+                                <button
+                                  onClick={() => handleEditModule(module)}
+                                  className="p-1.5 text-gray-500 hover:text-primary-600 hover:bg-gray-100 rounded"
+                                >
+                                  <Edit2 className="w-4 h-4" />
+                                </button>
+                                <button
+                                  onClick={() => handleDeleteModule(module.id, mentoring.id)}
+                                  className="p-1.5 text-gray-500 hover:text-red-600 hover:bg-gray-100 rounded"
+                                >
+                                  <Trash2 className="w-4 h-4" />
+                                </button>
                               </div>
                             </div>
-                            <div className="flex items-center gap-1">
-                              <button
-                                onClick={() => handleEditModule(module)}
-                                className="p-1.5 text-gray-500 hover:text-primary-600 hover:bg-gray-100 rounded"
-                              >
-                                <Edit2 className="w-4 h-4" />
-                              </button>
-                              <button
-                                onClick={() => handleDeleteModule(module.id, mentoring.id)}
-                                className="p-1.5 text-gray-500 hover:text-red-600 hover:bg-gray-100 rounded"
-                              >
-                                <Trash2 className="w-4 h-4" />
-                              </button>
-                            </div>
-                          </div>
-                        ))}
+                          ))}
                       </div>
-                    ) : (
+                    ) : !moduleErrors[mentoring.id] ? (
                       <p className="text-sm text-gray-500 text-center py-4">
                         등록된 모듈이 없습니다.
                       </p>
-                    )}
+                    ) : null}
                   </div>
                 </div>
               )}

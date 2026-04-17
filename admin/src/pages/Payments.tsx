@@ -8,10 +8,10 @@ import {
   DollarSign,
   Package,
   Users,
-  TrendingUp,
   CheckCircle,
   XCircle,
   Clock,
+  AlertCircle,
 } from 'lucide-react';
 import adminService from '../services/adminService';
 
@@ -101,6 +101,7 @@ export default function PaymentsPage() {
   const [orders, setOrders] = useState<Order[]>([]);
   const [subscriptions, setSubscriptions] = useState<Subscription[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [showPlanModal, setShowPlanModal] = useState(false);
   const [editingPlan, setEditingPlan] = useState<PricingPlan | null>(null);
 
@@ -128,8 +129,9 @@ export default function PaymentsPage() {
       if (data.content.length > 0) {
         setSelectedSeasonId(data.content[0].id);
       }
-    } catch (error) {
-      console.error('Failed to load seasons:', error);
+    } catch (err) {
+      console.error('Failed to load seasons:', err);
+      setError('시즌 목록을 불러오는데 실패했습니다.');
     } finally {
       setIsLoading(false);
     }
@@ -137,24 +139,31 @@ export default function PaymentsPage() {
 
   const loadData = async () => {
     if (!selectedSeasonId) return;
+    setError(null);
 
     try {
       if (activeTab === 'plans') {
         const data = await adminService.getPricingPlans(selectedSeasonId);
-        setPlans(data);
+        setPlans(data || []);
       } else if (activeTab === 'orders') {
         const data = await adminService.getOrders(selectedSeasonId);
-        setOrders(data);
+        setOrders(data || []);
       } else if (activeTab === 'subscriptions') {
         const data = await adminService.getSubscriptions(selectedSeasonId);
-        setSubscriptions(data);
+        setSubscriptions(data || []);
       }
 
       // Load stats
-      const statsData = await adminService.getPaymentStats(selectedSeasonId);
-      setStats(statsData);
-    } catch (error) {
-      console.error('Failed to load data:', error);
+      try {
+        const statsData = await adminService.getPaymentStats(selectedSeasonId);
+        setStats(statsData || { totalRevenue: 0, activeSubscriptions: 0, pendingOrders: 0 });
+      } catch {
+        // Stats loading failure shouldn't block other data
+        console.error('Failed to load stats');
+      }
+    } catch (err) {
+      console.error('Failed to load data:', err);
+      setError('데이터를 불러오는데 실패했습니다.');
     }
   };
 
@@ -213,6 +222,14 @@ export default function PaymentsPage() {
         <h1 className="text-2xl font-bold text-gray-900">결제/구독 관리</h1>
         <p className="text-gray-500 mt-1">가격 정책, 주문, 구독을 관리합니다.</p>
       </div>
+
+      {/* Error State */}
+      {error && (
+        <div className="card bg-red-50 border-red-200 flex items-center gap-3">
+          <AlertCircle className="w-5 h-5 text-red-500" />
+          <p className="text-red-700">{error}</p>
+        </div>
+      )}
 
       {/* Stats */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -314,12 +331,12 @@ export default function PaymentsPage() {
             </button>
           </div>
 
-          {plans.length === 0 ? (
+          {plans.length === 0 && !error ? (
             <div className="card text-center py-12">
               <Package className="w-12 h-12 text-gray-300 mx-auto mb-4" />
               <p className="text-gray-500">등록된 가격 정책이 없습니다.</p>
             </div>
-          ) : (
+          ) : plans.length > 0 ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {plans.map((plan) => (
                 <div
@@ -414,18 +431,18 @@ export default function PaymentsPage() {
                 </div>
               ))}
             </div>
-          )}
+          ) : null}
         </div>
       )}
 
       {activeTab === 'orders' && (
         <div className="card">
-          {orders.length === 0 ? (
+          {orders.length === 0 && !error ? (
             <div className="text-center py-12">
               <CreditCard className="w-12 h-12 text-gray-300 mx-auto mb-4" />
               <p className="text-gray-500">주문 내역이 없습니다.</p>
             </div>
-          ) : (
+          ) : orders.length > 0 ? (
             <div className="overflow-x-auto">
               <table className="w-full">
                 <thead>
@@ -474,18 +491,18 @@ export default function PaymentsPage() {
                 </tbody>
               </table>
             </div>
-          )}
+          ) : null}
         </div>
       )}
 
       {activeTab === 'subscriptions' && (
         <div className="card">
-          {subscriptions.length === 0 ? (
+          {subscriptions.length === 0 && !error ? (
             <div className="text-center py-12">
               <Users className="w-12 h-12 text-gray-300 mx-auto mb-4" />
               <p className="text-gray-500">구독 현황이 없습니다.</p>
             </div>
-          ) : (
+          ) : subscriptions.length > 0 ? (
             <div className="overflow-x-auto">
               <table className="w-full">
                 <thead>
@@ -533,7 +550,7 @@ export default function PaymentsPage() {
                 </tbody>
               </table>
             </div>
-          )}
+          ) : null}
         </div>
       )}
 
