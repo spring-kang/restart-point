@@ -2,6 +2,8 @@ package com.restartpoint.domain.team.service;
 
 import com.restartpoint.domain.notification.service.NotificationService;
 import com.restartpoint.domain.profile.entity.JobRole;
+import com.restartpoint.domain.profile.entity.Profile;
+import com.restartpoint.domain.profile.repository.ProfileRepository;
 import com.restartpoint.domain.season.entity.Season;
 import com.restartpoint.domain.team.dto.TeamInvitationRequest;
 import com.restartpoint.domain.team.dto.TeamInvitationResponse;
@@ -31,6 +33,7 @@ public class TeamInvitationService {
     private final TeamRepository teamRepository;
     private final TeamMemberRepository teamMemberRepository;
     private final UserRepository userRepository;
+    private final ProfileRepository profileRepository;
     private final NotificationService notificationService;
 
     /**
@@ -133,7 +136,7 @@ public class TeamInvitationService {
         validateInvitedUser(invitation, userId);
         validateInvitationPending(invitation);
         validateInvitationNotExpired(invitation);
-        validateCertificationRequirement(team.getSeason(), invitedUser);  // 시즌별 인증 요구사항 확인
+        validateParticipationEligibility(invitedUser, team.getSeason());  // 참여 자격 확인 (프로필 완성도 + 인증)
         validateTeamRecruiting(team);  // 팀이 아직 모집 중인지 확인
         validateRecruitingRole(team, invitation.getSuggestedRole());  // 역할이 아직 열려있는지 확인
         validateTeamNotFull(team);
@@ -326,7 +329,21 @@ public class TeamInvitationService {
         }
     }
 
-    private void validateCertificationRequirement(Season season, User user) {
+    /**
+     * 사용자의 시즌 참여 자격을 확인합니다.
+     * 1. 프로필 완성도 확인 (필수)
+     * 2. 수료 인증 확인 (시즌 설정에 따라)
+     */
+    private void validateParticipationEligibility(User user, Season season) {
+        // 1. 프로필 완성도 확인 (모든 시즌 공통)
+        Profile profile = profileRepository.findByUserId(user.getId())
+                .orElseThrow(() -> new BusinessException(ErrorCode.PROFILE_INCOMPLETE));
+
+        if (!profile.isComplete()) {
+            throw new BusinessException(ErrorCode.PROFILE_INCOMPLETE);
+        }
+
+        // 2. 수료 인증 확인 (인증 필수 시즌인 경우에만)
         if (!season.canUserParticipate(user.isCertified())) {
             throw new BusinessException(ErrorCode.CERTIFICATION_REQUIRED);
         }

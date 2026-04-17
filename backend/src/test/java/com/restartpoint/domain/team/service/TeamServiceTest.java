@@ -2,6 +2,8 @@ package com.restartpoint.domain.team.service;
 
 import com.restartpoint.domain.notification.service.NotificationService;
 import com.restartpoint.domain.profile.entity.JobRole;
+import com.restartpoint.domain.profile.entity.Profile;
+import com.restartpoint.domain.profile.repository.ProfileRepository;
 import com.restartpoint.domain.season.entity.Season;
 import com.restartpoint.domain.season.entity.SeasonStatus;
 import com.restartpoint.domain.season.repository.SeasonRepository;
@@ -21,6 +23,8 @@ import com.restartpoint.domain.user.entity.User;
 import com.restartpoint.domain.user.repository.UserRepository;
 import com.restartpoint.global.exception.BusinessException;
 import com.restartpoint.global.exception.ErrorCode;
+
+import java.util.Arrays;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -57,6 +61,9 @@ class TeamServiceTest {
   private UserRepository userRepository;
 
   @Mock
+  private ProfileRepository profileRepository;
+
+  @Mock
   private NotificationService notificationService;
 
   @InjectMocks
@@ -67,15 +74,17 @@ class TeamServiceTest {
   class CreateTeam {
 
     @Test
-    @DisplayName("수료 인증된 사용자가 팀빌딩 기간에 팀을 생성할 수 있다")
+    @DisplayName("프로필이 완성된 사용자가 팀빌딩 기간에 팀을 생성할 수 있다")
     void createTeamSuccess() {
       // given
       User certifiedUser = createCertifiedUser(1L, "user@example.com", "팀장");
+      Profile completeProfile = createCompleteProfile(1L, certifiedUser);
       Season season = createSeason(1L, "시즌1", SeasonStatus.TEAM_BUILDING);
       TeamRequest request = createTeamRequest(1L, "팀이름", "팀설명", JobRole.BACKEND);
 
       given(userRepository.findById(1L)).willReturn(Optional.of(certifiedUser));
       given(seasonRepository.findById(1L)).willReturn(Optional.of(season));
+      given(profileRepository.findByUserId(1L)).willReturn(Optional.of(completeProfile));
       given(teamRepository.findByLeader(certifiedUser)).willReturn(List.of());
       given(teamMemberRepository.existsAcceptedMemberInSeason(certifiedUser, season)).willReturn(false);
       given(teamRepository.save(any(Team.class))).willAnswer(invocation -> {
@@ -100,35 +109,38 @@ class TeamServiceTest {
     }
 
     @Test
-    @DisplayName("수료 인증되지 않은 사용자는 팀을 생성할 수 없다")
-    void createTeamFailsWhenNotCertified() {
+    @DisplayName("프로필이 완성되지 않은 사용자는 팀을 생성할 수 없다")
+    void createTeamFailsWhenProfileIncomplete() {
       // given
-      User uncertifiedUser = createUser(1L, "user@example.com", "사용자");
+      User user = createUser(1L, "user@example.com", "사용자");
       Season season = createSeason(1L, "시즌1", SeasonStatus.TEAM_BUILDING);
       TeamRequest request = createTeamRequest(1L, "팀이름", "팀설명", JobRole.BACKEND);
 
-      given(userRepository.findById(1L)).willReturn(Optional.of(uncertifiedUser));
+      given(userRepository.findById(1L)).willReturn(Optional.of(user));
       given(seasonRepository.findById(1L)).willReturn(Optional.of(season));
+      given(profileRepository.findByUserId(1L)).willReturn(Optional.empty());
 
       // when & then
       assertThatThrownBy(() -> teamService.createTeam(1L, request))
           .isInstanceOf(BusinessException.class)
           .extracting("errorCode")
-          .isEqualTo(ErrorCode.CERTIFICATION_REQUIRED);
+          .isEqualTo(ErrorCode.PROFILE_INCOMPLETE);
 
       verify(teamRepository, never()).save(any(Team.class));
     }
 
     @Test
-    @DisplayName("수료 인증된 사용자가 모집 기간에 팀을 생성할 수 있다")
+    @DisplayName("프로필이 완성된 사용자가 모집 기간에 팀을 생성할 수 있다")
     void createTeamSuccessInRecruitingPeriod() {
       // given
       User certifiedUser = createCertifiedUser(1L, "user@example.com", "팀장");
+      Profile completeProfile = createCompleteProfile(1L, certifiedUser);
       Season season = createSeason(1L, "시즌1", SeasonStatus.RECRUITING);
       TeamRequest request = createTeamRequest(1L, "팀이름", "팀설명", JobRole.BACKEND);
 
       given(userRepository.findById(1L)).willReturn(Optional.of(certifiedUser));
       given(seasonRepository.findById(1L)).willReturn(Optional.of(season));
+      given(profileRepository.findByUserId(1L)).willReturn(Optional.of(completeProfile));
       given(teamRepository.findByLeader(certifiedUser)).willReturn(List.of());
       given(teamMemberRepository.existsAcceptedMemberInSeason(certifiedUser, season)).willReturn(false);
       given(teamRepository.save(any(Team.class))).willAnswer(invocation -> {
@@ -157,11 +169,13 @@ class TeamServiceTest {
     void createTeamFailsWhenSeasonInProgress() {
       // given
       User certifiedUser = createCertifiedUser(1L, "user@example.com", "팀장");
+      Profile completeProfile = createCompleteProfile(1L, certifiedUser);
       Season season = createSeason(1L, "시즌1", SeasonStatus.IN_PROGRESS);
       TeamRequest request = createTeamRequest(1L, "팀이름", "팀설명", JobRole.BACKEND);
 
       given(userRepository.findById(1L)).willReturn(Optional.of(certifiedUser));
       given(seasonRepository.findById(1L)).willReturn(Optional.of(season));
+      given(profileRepository.findByUserId(1L)).willReturn(Optional.of(completeProfile));
 
       // when & then
       assertThatThrownBy(() -> teamService.createTeam(1L, request))
@@ -177,11 +191,13 @@ class TeamServiceTest {
     void createTeamFailsWhenSeasonReviewing() {
       // given
       User certifiedUser = createCertifiedUser(1L, "user@example.com", "팀장");
+      Profile completeProfile = createCompleteProfile(1L, certifiedUser);
       Season season = createSeason(1L, "시즌1", SeasonStatus.REVIEWING);
       TeamRequest request = createTeamRequest(1L, "팀이름", "팀설명", JobRole.BACKEND);
 
       given(userRepository.findById(1L)).willReturn(Optional.of(certifiedUser));
       given(seasonRepository.findById(1L)).willReturn(Optional.of(season));
+      given(profileRepository.findByUserId(1L)).willReturn(Optional.of(completeProfile));
 
       // when & then
       assertThatThrownBy(() -> teamService.createTeam(1L, request))
@@ -197,11 +213,13 @@ class TeamServiceTest {
     void createTeamFailsWhenSeasonCompleted() {
       // given
       User certifiedUser = createCertifiedUser(1L, "user@example.com", "팀장");
+      Profile completeProfile = createCompleteProfile(1L, certifiedUser);
       Season season = createSeason(1L, "시즌1", SeasonStatus.COMPLETED);
       TeamRequest request = createTeamRequest(1L, "팀이름", "팀설명", JobRole.BACKEND);
 
       given(userRepository.findById(1L)).willReturn(Optional.of(certifiedUser));
       given(seasonRepository.findById(1L)).willReturn(Optional.of(season));
+      given(profileRepository.findByUserId(1L)).willReturn(Optional.of(completeProfile));
 
       // when & then
       assertThatThrownBy(() -> teamService.createTeam(1L, request))
@@ -217,12 +235,14 @@ class TeamServiceTest {
     void createTeamFailsWhenAlreadyInTeam() {
       // given
       User certifiedUser = createCertifiedUser(1L, "user@example.com", "팀장");
+      Profile completeProfile = createCompleteProfile(1L, certifiedUser);
       Season season = createSeason(1L, "시즌1", SeasonStatus.TEAM_BUILDING);
       Team existingTeam = createTeam(1L, "기존팀", season, certifiedUser);
       TeamRequest request = createTeamRequest(1L, "새팀", "팀설명", JobRole.BACKEND);
 
       given(userRepository.findById(1L)).willReturn(Optional.of(certifiedUser));
       given(seasonRepository.findById(1L)).willReturn(Optional.of(season));
+      given(profileRepository.findByUserId(1L)).willReturn(Optional.of(completeProfile));
       given(teamRepository.findByLeader(certifiedUser)).willReturn(List.of(existingTeam));
 
       // when & then
@@ -295,17 +315,19 @@ class TeamServiceTest {
   class ApplyToTeam {
 
     @Test
-    @DisplayName("수료 인증된 사용자가 모집 중인 팀에 지원할 수 있다")
+    @DisplayName("프로필이 완성된 사용자가 모집 중인 팀에 지원할 수 있다")
     void applyToTeamSuccess() {
       // given
       User leader = createCertifiedUser(1L, "leader@example.com", "팀장");
       User applicant = createCertifiedUser(2L, "applicant@example.com", "지원자");
+      Profile applicantProfile = createCompleteProfile(2L, applicant);
       Season season = createSeason(1L, "시즌1", SeasonStatus.TEAM_BUILDING);
       Team team = createTeamWithRecruiting(1L, "팀이름", season, leader, true, false, false, true);
       TeamApplyRequest request = createApplyRequest(JobRole.BACKEND, "지원합니다");
 
       given(userRepository.findById(2L)).willReturn(Optional.of(applicant));
       given(teamRepository.findById(1L)).willReturn(Optional.of(team));
+      given(profileRepository.findByUserId(2L)).willReturn(Optional.of(applicantProfile));
       given(teamRepository.findByLeader(applicant)).willReturn(List.of());
       given(teamMemberRepository.existsAcceptedMemberInSeason(applicant, season)).willReturn(false);
       given(teamMemberRepository.existsByTeamAndUser(team, applicant)).willReturn(false);
@@ -326,23 +348,24 @@ class TeamServiceTest {
     }
 
     @Test
-    @DisplayName("수료 인증되지 않은 사용자는 팀에 지원할 수 없다")
-    void applyToTeamFailsWhenNotCertified() {
+    @DisplayName("프로필이 완성되지 않은 사용자는 팀에 지원할 수 없다")
+    void applyToTeamFailsWhenProfileIncomplete() {
       // given
       User leader = createCertifiedUser(1L, "leader@example.com", "팀장");
-      User uncertifiedUser = createUser(2L, "user@example.com", "사용자");
+      User applicant = createUser(2L, "user@example.com", "사용자");
       Season season = createSeason(1L, "시즌1", SeasonStatus.TEAM_BUILDING);
       Team team = createTeam(1L, "팀이름", season, leader);
       TeamApplyRequest request = createApplyRequest(JobRole.BACKEND, "지원합니다");
 
-      given(userRepository.findById(2L)).willReturn(Optional.of(uncertifiedUser));
+      given(userRepository.findById(2L)).willReturn(Optional.of(applicant));
       given(teamRepository.findById(1L)).willReturn(Optional.of(team));
+      given(profileRepository.findByUserId(2L)).willReturn(Optional.empty());
 
       // when & then
       assertThatThrownBy(() -> teamService.applyToTeam(2L, 1L, request))
           .isInstanceOf(BusinessException.class)
           .extracting("errorCode")
-          .isEqualTo(ErrorCode.CERTIFICATION_REQUIRED);
+          .isEqualTo(ErrorCode.PROFILE_INCOMPLETE);
 
       verify(teamMemberRepository, never()).save(any(TeamMember.class));
     }
@@ -353,6 +376,7 @@ class TeamServiceTest {
       // given
       User leader = createCertifiedUser(1L, "leader@example.com", "팀장");
       User applicant = createCertifiedUser(2L, "applicant@example.com", "지원자");
+      Profile applicantProfile = createCompleteProfile(2L, applicant);
       Season season = createSeason(1L, "시즌1", SeasonStatus.TEAM_BUILDING);
       Team team = createTeam(1L, "팀이름", season, leader);
       team.updateStatus(TeamStatus.COMPLETE);
@@ -360,6 +384,7 @@ class TeamServiceTest {
 
       given(userRepository.findById(2L)).willReturn(Optional.of(applicant));
       given(teamRepository.findById(1L)).willReturn(Optional.of(team));
+      given(profileRepository.findByUserId(2L)).willReturn(Optional.of(applicantProfile));
 
       // when & then
       assertThatThrownBy(() -> teamService.applyToTeam(2L, 1L, request))
@@ -376,12 +401,14 @@ class TeamServiceTest {
       // given
       User leader = createCertifiedUser(1L, "leader@example.com", "팀장");
       User applicant = createCertifiedUser(2L, "applicant@example.com", "지원자");
+      Profile applicantProfile = createCompleteProfile(2L, applicant);
       Season season = createSeason(1L, "시즌1", SeasonStatus.TEAM_BUILDING);
       Team team = createTeamWithRecruiting(1L, "팀이름", season, leader, true, false, false, true);
       TeamApplyRequest request = createApplyRequest(JobRole.BACKEND, "지원합니다");
 
       given(userRepository.findById(2L)).willReturn(Optional.of(applicant));
       given(teamRepository.findById(1L)).willReturn(Optional.of(team));
+      given(profileRepository.findByUserId(2L)).willReturn(Optional.of(applicantProfile));
       given(teamRepository.findByLeader(applicant)).willReturn(List.of());
       given(teamMemberRepository.existsAcceptedMemberInSeason(applicant, season)).willReturn(false);
       given(teamMemberRepository.existsByTeamAndUser(team, applicant)).willReturn(true);
@@ -401,12 +428,14 @@ class TeamServiceTest {
       // given
       User leader = createCertifiedUser(1L, "leader@example.com", "팀장");
       User applicant = createCertifiedUser(2L, "applicant@example.com", "지원자");
+      Profile applicantProfile = createCompleteProfile(2L, applicant);
       Season season = createSeason(1L, "시즌1", SeasonStatus.TEAM_BUILDING);
       Team team = createTeamWithRecruiting(1L, "팀이름", season, leader, false, false, true, false);
       TeamApplyRequest request = createApplyRequest(JobRole.BACKEND, "지원합니다"); // BACKEND는 모집 안함
 
       given(userRepository.findById(2L)).willReturn(Optional.of(applicant));
       given(teamRepository.findById(1L)).willReturn(Optional.of(team));
+      given(profileRepository.findByUserId(2L)).willReturn(Optional.of(applicantProfile));
       given(teamRepository.findByLeader(applicant)).willReturn(List.of());
       given(teamMemberRepository.existsAcceptedMemberInSeason(applicant, season)).willReturn(false);
       given(teamMemberRepository.existsByTeamAndUser(team, applicant)).willReturn(false);
@@ -595,7 +624,19 @@ class TeamServiceTest {
     }
   }
 
-  // 헬퍼 메서드
+  // ========== 헬퍼 메서드 ==========
+
+  private Profile createCompleteProfile(Long id, User user) {
+    Profile profile = Profile.builder()
+        .user(user)
+        .jobRole(JobRole.BACKEND)
+        .techStacks(Arrays.asList("Java", "Spring"))
+        .introduction("안녕하세요. 백엔드 개발자입니다. 프로젝트에 함께 참여하고 싶습니다. 잘 부탁드립니다. 열심히 하겠습니다.")
+        .build();
+    setField(profile, "id", id);
+    return profile;
+  }
+
   private User createUser(Long id, String email, String name) {
     User user = User.builder()
         .email(email)

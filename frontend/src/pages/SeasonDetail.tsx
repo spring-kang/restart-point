@@ -1,13 +1,26 @@
 import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { Calendar, Users, Clock, Award, ChevronLeft, UserPlus, ClipboardCheck } from 'lucide-react';
+import { Calendar, Users, Clock, Award, ChevronLeft, UserPlus, ClipboardCheck, AlertCircle } from 'lucide-react';
 import { seasonService, type Season, SEASON_STATUS_LABELS, SEASON_STATUS_COLORS } from '../services/seasonService';
+import { profileService } from '../services/profileService';
 import { useAuthStore } from '../stores/authStore';
+import type { Profile } from '../types';
+
+// 프로필 완성 여부 체크 (백엔드 Profile.isComplete()와 동일한 조건)
+const isProfileComplete = (profile: Profile | null): boolean => {
+  if (!profile) return false;
+  return !!(
+    profile.jobRole &&
+    profile.techStacks && profile.techStacks.length > 0 &&
+    profile.introduction && profile.introduction.length >= 50
+  );
+};
 
 export default function SeasonDetailPage() {
   const { seasonId } = useParams<{ seasonId: string }>();
   const { isAuthenticated, user } = useAuthStore();
   const [season, setSeason] = useState<Season | null>(null);
+  const [profile, setProfile] = useState<Profile | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
 
@@ -16,6 +29,22 @@ export default function SeasonDetailPage() {
       loadSeason(Number(seasonId));
     }
   }, [seasonId]);
+
+  useEffect(() => {
+    if (isAuthenticated) {
+      loadProfile();
+    }
+  }, [isAuthenticated]);
+
+  const loadProfile = async () => {
+    try {
+      const data = await profileService.getMyProfile();
+      setProfile(data);
+    } catch (err) {
+      // 프로필이 없는 경우 무시
+      console.log('프로필 없음');
+    }
+  };
 
   const loadSeason = async (id: number) => {
     try {
@@ -126,7 +155,20 @@ export default function SeasonDetailPage() {
           </div>
         )}
 
-        {/* 참여 자격은 팀 생성/지원 시 백엔드에서 검증됩니다 (프로필 완성도 기반) */}
+        {isAuthenticated && !isProfileComplete(profile) && season.canJoin && !season.myTeamId && (
+          <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 mt-4 flex items-start gap-3">
+            <AlertCircle className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" />
+            <div>
+              <p className="text-amber-700 font-medium">프로필을 완성해주세요</p>
+              <p className="text-amber-600 text-sm mt-1">
+                팀 참여를 위해 직무, 기술 스택, 자기소개(50자 이상)를 입력해주세요.
+              </p>
+              <Link to="/profile" className="inline-block mt-2 text-sm font-medium text-amber-700 underline hover:text-amber-800">
+                프로필 작성하러 가기
+              </Link>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* 일정 */}

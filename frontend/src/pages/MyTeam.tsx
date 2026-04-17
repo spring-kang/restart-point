@@ -1,10 +1,21 @@
 import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Users, Crown, UserCheck, Clock, ChevronRight, Plus, FolderKanban, Mail, Check, X, Loader2 } from 'lucide-react';
+import { Users, Crown, UserCheck, Clock, ChevronRight, Plus, FolderKanban, Mail, Check, X, Loader2, AlertCircle } from 'lucide-react';
 import { teamService, TEAM_STATUS_LABELS, TEAM_STATUS_COLORS, JOB_ROLE_LABELS, JOB_ROLE_COLORS } from '../services/teamService';
 import { invitationService, INVITATION_STATUS_LABELS, INVITATION_STATUS_COLORS } from '../services/invitationService';
+import { profileService } from '../services/profileService';
 import { useAuthStore } from '../stores/authStore';
-import type { Team, TeamMember, TeamInvitation } from '../types';
+import type { Team, TeamMember, TeamInvitation, Profile } from '../types';
+
+// 프로필 완성 여부 체크 (백엔드 Profile.isComplete()와 동일한 조건)
+const isProfileComplete = (profile: Profile | null): boolean => {
+  if (!profile) return false;
+  return !!(
+    profile.jobRole &&
+    profile.techStacks && profile.techStacks.length > 0 &&
+    profile.introduction && profile.introduction.length >= 50
+  );
+};
 
 type MemberStatus = 'PENDING' | 'ACCEPTED' | 'REJECTED';
 
@@ -27,6 +38,7 @@ export default function MyTeamPage() {
   const [memberTeams, setMemberTeams] = useState<Team[]>([]);
   const [applications, setApplications] = useState<TeamMember[]>([]);
   const [invitations, setInvitations] = useState<TeamInvitation[]>([]);
+  const [profile, setProfile] = useState<Profile | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
 
@@ -42,12 +54,14 @@ export default function MyTeamPage() {
     setIsLoading(true);
     setError('');
     try {
-      const [myTeamsData, memberTeamsData, applicationsData, invitationsData] = await Promise.all([
+      const [myTeamsData, memberTeamsData, applicationsData, invitationsData, profileData] = await Promise.all([
         teamService.getMyTeams(),
         teamService.getTeamsAsMember(),
         teamService.getMyApplications(),
         invitationService.getMyInvitations(),
+        profileService.getMyProfile().catch(() => null),
       ]);
+      setProfile(profileData);
       setMyTeams(myTeamsData);
       setMemberTeams(memberTeamsData);
       setApplications(applicationsData);
@@ -95,7 +109,7 @@ export default function MyTeamPage() {
           <h1 className="text-2xl font-bold text-neutral-900">내 팀</h1>
           <p className="text-neutral-600 mt-1">내가 속한 팀과 지원 현황을 확인하세요</p>
         </div>
-        {user?.certificationStatus === 'APPROVED' && (
+        {isProfileComplete(profile) && (
           <Link to="/teams" className="btn-primary flex items-center gap-2">
             <Plus className="w-5 h-5" />
             팀 찾기
@@ -103,16 +117,40 @@ export default function MyTeamPage() {
         )}
       </div>
 
+      {/* 프로필 완성 안내 */}
+      {!isProfileComplete(profile) && (
+        <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 mb-6 flex items-start gap-3">
+          <AlertCircle className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" />
+          <div>
+            <p className="text-amber-700 font-medium">프로필을 완성해주세요</p>
+            <p className="text-amber-600 text-sm mt-1">
+              팀 생성 및 참여를 위해 직무, 기술 스택, 자기소개(50자 이상)를 입력해주세요.
+            </p>
+            <Link to="/profile" className="inline-block mt-2 text-sm font-medium text-amber-700 underline hover:text-amber-800">
+              프로필 작성하러 가기
+            </Link>
+          </div>
+        </div>
+      )}
+
       {hasNoData ? (
         <div className="card text-center py-12">
           <Users className="w-16 h-16 text-neutral-300 mx-auto mb-4" />
           <h2 className="text-lg font-semibold text-neutral-900 mb-2">아직 팀이 없습니다</h2>
           <p className="text-neutral-500 mb-6">
-            팀을 만들거나 다른 팀에 지원해보세요!
+            {isProfileComplete(profile)
+              ? '팀을 만들거나 다른 팀에 지원해보세요!'
+              : '프로필을 완성하고 팀에 참여해보세요!'}
           </p>
-          <Link to="/teams" className="btn-primary">
-            팀 둘러보기
-          </Link>
+          {isProfileComplete(profile) ? (
+            <Link to="/teams" className="btn-primary">
+              팀 둘러보기
+            </Link>
+          ) : (
+            <Link to="/profile" className="btn-primary">
+              프로필 작성하기
+            </Link>
+          )}
         </div>
       ) : (
         <div className="space-y-8">

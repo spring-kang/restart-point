@@ -2,6 +2,8 @@ package com.restartpoint.domain.team.service;
 
 import com.restartpoint.domain.notification.service.NotificationService;
 import com.restartpoint.domain.profile.entity.JobRole;
+import com.restartpoint.domain.profile.entity.Profile;
+import com.restartpoint.domain.profile.repository.ProfileRepository;
 import com.restartpoint.domain.season.entity.Season;
 import com.restartpoint.domain.season.entity.SeasonStatus;
 import com.restartpoint.domain.team.dto.TeamInvitationRequest;
@@ -25,6 +27,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.lang.reflect.Field;
 import java.time.LocalDateTime;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 
@@ -50,6 +53,9 @@ class TeamInvitationServiceTest {
 
   @Mock
   private UserRepository userRepository;
+
+  @Mock
+  private ProfileRepository profileRepository;
 
   @Mock
   private NotificationService notificationService;
@@ -280,11 +286,13 @@ class TeamInvitationServiceTest {
       // given
       User leader = createCertifiedUser(1L, "leader@example.com", "리더");
       User invitedUser = createCertifiedUser(2L, "invited@example.com", "초대대상");
+      Profile invitedUserProfile = createCompleteProfile(2L, invitedUser);
       Season season = createSeason(1L, "시즌1", SeasonStatus.TEAM_BUILDING);
       Team team = createTeamWithRecruiting(1L, "팀이름", season, leader, true, false, false, true);
       TeamInvitation invitation = createInvitation(1L, team, invitedUser, leader, JobRole.BACKEND);
 
       given(invitationRepository.findById(1L)).willReturn(Optional.of(invitation));
+      given(profileRepository.findByUserId(2L)).willReturn(Optional.of(invitedUserProfile));
       given(teamRepository.findByLeader(invitedUser)).willReturn(List.of());
       given(teamMemberRepository.existsAcceptedMemberInSeason(invitedUser, season)).willReturn(false);
       given(teamMemberRepository.existsByTeamAndUser(team, invitedUser)).willReturn(false);
@@ -377,12 +385,14 @@ class TeamInvitationServiceTest {
       // given
       User leader = createCertifiedUser(1L, "leader@example.com", "리더");
       User invitedUser = createCertifiedUser(2L, "invited@example.com", "초대대상");
+      Profile invitedUserProfile = createCompleteProfile(2L, invitedUser);
       Season season = createSeason(1L, "시즌1", SeasonStatus.TEAM_BUILDING);
       Team team = createTeam(1L, "팀이름", season, leader);
       team.updateStatus(TeamStatus.COMPLETE); // 모집 완료
       TeamInvitation invitation = createInvitation(1L, team, invitedUser, leader, JobRole.BACKEND);
 
       given(invitationRepository.findById(1L)).willReturn(Optional.of(invitation));
+      given(profileRepository.findByUserId(2L)).willReturn(Optional.of(invitedUserProfile));
 
       // when & then
       assertThatThrownBy(() -> invitationService.acceptInvitation(2L, 1L))
@@ -399,12 +409,14 @@ class TeamInvitationServiceTest {
       // given
       User leader = createCertifiedUser(1L, "leader@example.com", "리더");
       User invitedUser = createCertifiedUser(2L, "invited@example.com", "초대대상");
+      Profile invitedUserProfile = createCompleteProfile(2L, invitedUser);
       Season season = createSeason(1L, "시즌1", SeasonStatus.TEAM_BUILDING);
       // BACKEND 모집 중이었지만 이제 아님
       Team team = createTeamWithRecruiting(1L, "팀이름", season, leader, false, false, true, false);
       TeamInvitation invitation = createInvitation(1L, team, invitedUser, leader, JobRole.BACKEND);
 
       given(invitationRepository.findById(1L)).willReturn(Optional.of(invitation));
+      given(profileRepository.findByUserId(2L)).willReturn(Optional.of(invitedUserProfile));
 
       // when & then
       assertThatThrownBy(() -> invitationService.acceptInvitation(2L, 1L))
@@ -421,11 +433,13 @@ class TeamInvitationServiceTest {
       // given
       User leader = createCertifiedUser(1L, "leader@example.com", "리더");
       User invitedUser = createCertifiedUser(2L, "invited@example.com", "초대대상");
+      Profile invitedUserProfile = createCompleteProfile(2L, invitedUser);
       Season season = createSeason(1L, "시즌1", SeasonStatus.TEAM_BUILDING);
       Team team = createTeamWithRecruiting(1L, "팀이름", season, leader, true, false, false, true);
       TeamInvitation invitation = createInvitation(1L, team, invitedUser, leader, JobRole.BACKEND);
 
       given(invitationRepository.findById(1L)).willReturn(Optional.of(invitation));
+      given(profileRepository.findByUserId(2L)).willReturn(Optional.of(invitedUserProfile));
       // validateNotAlreadyApplied에서 실패하므로 validateNotAlreadyInTeam 관련 mock은 불필요
       given(teamMemberRepository.existsByTeamAndUser(team, invitedUser)).willReturn(true);
 
@@ -584,6 +598,17 @@ class TeamInvitationServiceTest {
   }
 
   // 헬퍼 메서드
+  private Profile createCompleteProfile(Long id, User user) {
+    Profile profile = Profile.builder()
+        .user(user)
+        .jobRole(JobRole.BACKEND)
+        .techStacks(Arrays.asList("Java", "Spring"))
+        .introduction("안녕하세요. 백엔드 개발자입니다. 프로젝트에 함께 참여하고 싶습니다. 잘 부탁드립니다. 열심히 하겠습니다.")
+        .build();
+    setField(profile, "id", id);
+    return profile;
+  }
+
   private User createCertifiedUser(Long id, String email, String name) {
     User user = User.builder()
         .email(email)
