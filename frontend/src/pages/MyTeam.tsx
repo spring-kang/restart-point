@@ -33,7 +33,7 @@ const MEMBER_STATUS_COLORS: Record<MemberStatus, string> = {
 
 export default function MyTeamPage() {
   const navigate = useNavigate();
-  const { isAuthenticated, user } = useAuthStore();
+  const { isAuthenticated } = useAuthStore();
   const [myTeams, setMyTeams] = useState<Team[]>([]);
   const [memberTeams, setMemberTeams] = useState<Team[]>([]);
   const [applications, setApplications] = useState<TeamMember[]>([]);

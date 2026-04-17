@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { Plus, Edit, Trash2, Play, CheckCircle, BarChart3 } from 'lucide-react';
+import { Plus, Edit, Trash2, Play, CheckCircle, BarChart3, Award, Globe } from 'lucide-react';
 import adminService from '../services/adminService';
 import type { Season, SeasonCreateRequest, SeasonStatus } from '../types';
 import { SEASON_STATUS_LABELS, SEASON_STATUS_COLORS } from '../types';
@@ -18,6 +18,7 @@ const INITIAL_FORM_DATA: SeasonCreateRequest = {
   reviewEndAt: '',
   expertReviewWeight: 100,
   candidateReviewWeight: 0,
+  requiresCertification: false,
 };
 
 // LocalDateTime 형식으로 변환 (YYYY-MM-DDTHH:mm:ss)
@@ -85,6 +86,7 @@ export default function SeasonsPage() {
       reviewEndAt: toDateInput(season.reviewEndAt),
       expertReviewWeight: 100,
       candidateReviewWeight: 0,
+      requiresCertification: season.requiresCertification ?? false,
     });
     setShowModal(true);
   };
@@ -236,7 +238,7 @@ export default function SeasonsPage() {
               <div key={season.id} className="card">
                 <div className="flex items-start justify-between">
                   <div className="flex-1">
-                    <div className="flex items-center gap-3 mb-2">
+                    <div className="flex items-center gap-3 mb-2 flex-wrap">
                       <h3 className="text-lg font-semibold text-gray-900">{season.title}</h3>
                       <span
                         className={`px-2 py-1 rounded text-xs font-medium ${
@@ -245,6 +247,17 @@ export default function SeasonsPage() {
                       >
                         {SEASON_STATUS_LABELS[season.status]}
                       </span>
+                      {season.requiresCertification ? (
+                        <span className="inline-flex items-center gap-1 px-2 py-1 rounded text-xs font-medium bg-amber-100 text-amber-700">
+                          <Award className="w-3 h-3" />
+                          수료생 전용
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center gap-1 px-2 py-1 rounded text-xs font-medium bg-sky-100 text-sky-700">
+                          <Globe className="w-3 h-3" />
+                          누구나 참여
+                        </span>
+                      )}
                       {season.currentPhase && (
                         <span className="text-sm text-gray-500">({season.currentPhase})</span>
                       )}
@@ -468,6 +481,53 @@ export default function SeasonsPage() {
                       required
                     />
                   </div>
+                </div>
+              </div>
+
+              {/* Participation Type */}
+              <div className="space-y-4">
+                <h3 className="font-medium text-gray-900">참여 자격</h3>
+                <div className="flex gap-4">
+                  <label className={`flex-1 flex items-center gap-3 p-4 rounded-lg border-2 cursor-pointer transition-colors ${
+                    !formData.requiresCertification
+                      ? 'border-sky-500 bg-sky-50'
+                      : 'border-gray-200 hover:border-gray-300'
+                  }`}>
+                    <input
+                      type="radio"
+                      name="requiresCertification"
+                      checked={!formData.requiresCertification}
+                      onChange={() => setFormData({ ...formData, requiresCertification: false })}
+                      className="sr-only"
+                    />
+                    <Globe className={`w-5 h-5 ${!formData.requiresCertification ? 'text-sky-600' : 'text-gray-400'}`} />
+                    <div>
+                      <p className={`font-medium ${!formData.requiresCertification ? 'text-sky-700' : 'text-gray-700'}`}>
+                        누구나 참여
+                      </p>
+                      <p className="text-sm text-gray-500">모든 사용자가 참여할 수 있습니다</p>
+                    </div>
+                  </label>
+                  <label className={`flex-1 flex items-center gap-3 p-4 rounded-lg border-2 cursor-pointer transition-colors ${
+                    formData.requiresCertification
+                      ? 'border-amber-500 bg-amber-50'
+                      : 'border-gray-200 hover:border-gray-300'
+                  }`}>
+                    <input
+                      type="radio"
+                      name="requiresCertification"
+                      checked={formData.requiresCertification}
+                      onChange={() => setFormData({ ...formData, requiresCertification: true })}
+                      className="sr-only"
+                    />
+                    <Award className={`w-5 h-5 ${formData.requiresCertification ? 'text-amber-600' : 'text-gray-400'}`} />
+                    <div>
+                      <p className={`font-medium ${formData.requiresCertification ? 'text-amber-700' : 'text-gray-700'}`}>
+                        수료생 전용
+                      </p>
+                      <p className="text-sm text-gray-500">수료 인증된 사용자만 참여 가능</p>
+                    </div>
+                  </label>
                 </div>
               </div>
 

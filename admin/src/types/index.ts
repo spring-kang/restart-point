@@ -63,6 +63,7 @@ export interface Season {
   reviewEndAt: string;
   expertReviewWeight: number;
   candidateReviewWeight: number;
+  requiresCertification: boolean;  // true: 수료생 전용, false: 누구나 참여 가능
   currentPhase?: string;
   canJoin?: boolean;
   createdAt: string;
@@ -90,6 +91,7 @@ export interface SeasonCreateRequest {
   reviewEndAt: string;
   expertReviewWeight: number;
   candidateReviewWeight: number;
+  requiresCertification?: boolean;  // 기본값 false (누구나 참여 가능)
 }
 
 export const SEASON_STATUS_LABELS: Record<SeasonStatus, string> = {

@@ -15,6 +15,7 @@ export interface Season {
   reviewEndAt: string;
   expertReviewWeight: number;
   candidateReviewWeight: number;
+  requiresCertification: boolean;  // true: 수료생 전용, false: 누구나 참여 가능
   createdAt: string;
   updatedAt: string;
   currentPhase: string;

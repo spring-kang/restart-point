@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { Calendar, Users, Clock, Award, ChevronLeft, UserPlus, ClipboardCheck, AlertCircle } from 'lucide-react';
+import { Calendar, Users, Clock, Award, ChevronLeft, UserPlus, ClipboardCheck, AlertCircle, Globe } from 'lucide-react';
 import { seasonService, type Season, SEASON_STATUS_LABELS, SEASON_STATUS_COLORS } from '../services/seasonService';
 import { profileService } from '../services/profileService';
 import { useAuthStore } from '../stores/authStore';
@@ -94,10 +94,21 @@ export default function SeasonDetailPage() {
       </Link>
 
       <div className="card mb-8">
-        <div className="flex items-center gap-3 mb-4">
+        <div className="flex items-center gap-3 mb-4 flex-wrap">
           <span className={`px-3 py-1 rounded-full text-sm font-medium ${SEASON_STATUS_COLORS[season.status]}`}>
             {SEASON_STATUS_LABELS[season.status]}
           </span>
+          {season.requiresCertification ? (
+            <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-sm font-medium bg-amber-100 text-amber-700">
+              <Award className="w-3.5 h-3.5" />
+              수료생 전용
+            </span>
+          ) : (
+            <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-sm font-medium bg-sky-100 text-sky-700">
+              <Globe className="w-3.5 h-3.5" />
+              누구나 참여
+            </span>
+          )}
           <span className="text-neutral-500">{season.currentPhase}</span>
           {season.myTeamId && (
             <span className="px-3 py-1 rounded-full text-sm font-medium bg-blue-100 text-blue-700">
@@ -165,6 +176,21 @@ export default function SeasonDetailPage() {
               </p>
               <Link to="/profile" className="inline-block mt-2 text-sm font-medium text-amber-700 underline hover:text-amber-800">
                 프로필 작성하러 가기
+              </Link>
+            </div>
+          </div>
+        )}
+
+        {isAuthenticated && season.requiresCertification && !season.canJoin && !season.myTeamId && (
+          <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 mt-4 flex items-start gap-3">
+            <Award className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" />
+            <div>
+              <p className="text-amber-700 font-medium">수료생 전용 시즌입니다</p>
+              <p className="text-amber-600 text-sm mt-1">
+                이 시즌은 부트캠프 수료생만 참여할 수 있습니다. 수료 인증을 완료하면 참여 가능합니다.
+              </p>
+              <Link to="/certification" className="inline-block mt-2 text-sm font-medium text-amber-700 underline hover:text-amber-800">
+                수료 인증하러 가기
               </Link>
             </div>
           </div>

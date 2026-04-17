@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { Calendar, Users, Clock, ChevronRight } from 'lucide-react';
+import { Calendar, Users, Clock, ChevronRight, Award, Globe } from 'lucide-react';
 import { seasonService, type Season, SEASON_STATUS_LABELS, SEASON_STATUS_COLORS } from '../services/seasonService';
 
 export default function SeasonsPage() {
@@ -82,10 +82,21 @@ export default function SeasonsPage() {
             >
               <div className="flex items-start justify-between">
                 <div className="flex-1">
-                  <div className="flex items-center gap-3 mb-2">
+                  <div className="flex items-center gap-3 mb-2 flex-wrap">
                     <span className={`px-3 py-1 rounded-full text-sm font-medium ${SEASON_STATUS_COLORS[season.status]}`}>
                       {SEASON_STATUS_LABELS[season.status]}
                     </span>
+                    {season.requiresCertification ? (
+                      <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-sm font-medium bg-amber-100 text-amber-700">
+                        <Award className="w-3.5 h-3.5" />
+                        수료생 전용
+                      </span>
+                    ) : (
+                      <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-sm font-medium bg-sky-100 text-sky-700">
+                        <Globe className="w-3.5 h-3.5" />
+                        누구나 참여
+                      </span>
+                    )}
                     {season.myTeamId ? (
                       <span className="px-3 py-1 rounded-full text-sm font-medium bg-blue-100 text-blue-700">
                         참여 중: {season.myTeamName}
